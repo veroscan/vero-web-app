@@ -1,0 +1,30 @@
+{
+  "name": "vero-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4325",
+    "build": "next build",
+    "start": "node tools/serve.mjs 4326",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "convert": "python tools/html2tsx.py",
+    "parity:dom": "python tools/dom_parity.py",
+    "parity:visual": "node tools/parity.mjs",
+    "parity:behaviour": "node tools/behaviour.mjs",
+    "postinstall": "node tools/prune-optional.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.2",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "eslint": "9.34.0",
+    "eslint-config-next": "15.5.2",
+    "typescript": "5.9.2"
+  }
+}

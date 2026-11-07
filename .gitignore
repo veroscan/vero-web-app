@@ -1,0 +1,9 @@
+.next
+out
+node_modules
+.browser.lock
+*.log
+next-env.d.ts
+*.tsbuildinfo
+.parity
+CONVERSION-GUIDE.md
