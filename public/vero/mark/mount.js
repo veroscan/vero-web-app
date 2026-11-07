@@ -33,6 +33,18 @@
     setTimeout(function () { if (!window.__pdIntroDone) { document.removeEventListener("pd:intro", once); fn(); } }, 6500);
   };
 
+  var SWAP_DELAY = 1700; // ms between the hero intro and showing the live canvas
+
+  // Compile the scene's shaders without blocking the page (parallel compile where the browser has it),
+  // then draw one frame so the post-processing passes are compiled too.
+  function warm(app) {
+    var renderer = app.canvas.renderer.instance, scene = app.world.scene, camera = app.canvas.camera.instance;
+    var draw = function () { try { app.render(0); } catch (e) { /* the first real frame will report it */ } };
+    if (renderer.compileAsync && scene) return renderer.compileAsync(scene, camera).then(draw, draw);
+    draw();
+    return Promise.resolve();
+  }
+
   // warm the cache while the loader runs
   var mods = Promise.all([import(base + "engine.js"), import(base + "world.js"), import(base + "post.js")]);
   fetch(base + "glb/vero-mark-large.glb").catch(function () {});
@@ -45,37 +57,46 @@
       var r = section.getBoundingClientRect();
       return clamp(-r.top / Math.max(1, r.height * 0.9));
     };
+    // Build the renderer and compile its shaders while the loader is still counting, keep it paused, and only
+    // start it when the loader hands over. The first render compiles every shader; doing that during the outro
+    // zoom froze the page for about two seconds.
     mods.then(function (m) {
-      start(function () {
+      var World = m[1].default, VIEWS = m[1].VIEWS, App = m[0].App, Post = m[2].default;
+      var view = el.dataset.view || "Home Hero";
+      if (VIEWS[view]) VIEWS[view] = Object.assign({}, VIEWS[view], { shift: [parseFloat(el.dataset.shift || "0"), 0], dist: parseFloat(el.dataset.dist || "2.75") });
+      var bg = el.dataset.bg || "#F6F5F7";
+      var dir = base + "glb/";
+      var warmed;
+      try {
+        app = new App({
+          canvas: canvas, container: el, WorldClass: World,
+          services: {
+            modelUrl: dir + "vero-mark-large.glb",
+            modelUrls: { small: dir + "vero-mark-small.glb", medium: dir + "vero-mark-medium.glb", large: dir + "vero-mark-large.glb" },
+            viewsUrl: dir + "vero-mark-views.glb", view: view, background: bg,
+            post: new Post({ background: bg, samples: 2 }), orbit: null, hero: true,
+            look: { glowLight: 0, floorGlow: 0 },
+            scroll: progress
+          }
+        });
+        app.pause();
+        app.resize();
+        warmed = app.world.ready.then(function (ok) { return ok && !dead ? warm(app).then(function () { return true; }) : false; });
+      } catch (err) {
+        console.warn("[vero-mark] live mark unavailable, keeping the flat mark", err && err.message);
+        el.classList.add("is-flat");
+        return;
+      }
+      var introAt = 0;
+      var introduced = new Promise(function (resolve) { start(function () { introAt = performance.now(); resolve(); }); });
+      Promise.all([warmed, introduced]).then(function (done) {
         if (dead) return;
-        var World = m[1].default, VIEWS = m[1].VIEWS, App = m[0].App, Post = m[2].default;
-        var view = el.dataset.view || "Home Hero";
-        if (VIEWS[view]) VIEWS[view] = Object.assign({}, VIEWS[view], { shift: [parseFloat(el.dataset.shift || "0"), 0], dist: parseFloat(el.dataset.dist || "2.75") });
-        var bg = el.dataset.bg || "#F6F5F7";
-        var dir = base + "glb/";
-        try {
-          app = new App({
-            canvas: canvas, container: el, WorldClass: World,
-            services: {
-              modelUrl: dir + "vero-mark-large.glb",
-              modelUrls: { small: dir + "vero-mark-small.glb", medium: dir + "vero-mark-medium.glb", large: dir + "vero-mark-large.glb" },
-              viewsUrl: dir + "vero-mark-views.glb", view: view, background: bg,
-              post: new Post({ background: bg, samples: 2 }), orbit: null, hero: true,
-              look: { glowLight: 0, floorGlow: 0 },
-              scroll: progress
-            }
-          });
-          app.resize();
-          app.world.ready.then(function (ok) {
-            if (dead || !ok) { el.classList.add("is-flat"); return; }
-            el.classList.add("is-live");
-          });
-        } catch (err) {
-          console.warn("[vero-mark] live mark unavailable, keeping the flat mark", err && err.message);
-          el.classList.add("is-flat");
-          return;
-        }
-        var sync = function () { if (!app) return; if (visible && !document.hidden) app.resume(); else app.pause(); };
+        if (!done[0]) { el.classList.add("is-flat"); return; }
+        app.resume();
+        // the flat mark's fly-in (vFlyA / vFlyB in vero.css) covers the swap to the live canvas; measured from the
+        // hand-over, so a model that finishes loading late is shown at once
+        setTimeout(function () { el.classList.add("is-live"); }, Math.max(0, introAt + SWAP_DELAY - performance.now()));
+        var sync = function () { if (visible && !document.hidden) app.resume(); else app.pause(); };
         if ("IntersectionObserver" in window) {
           new IntersectionObserver(function (e) { visible = e[0].isIntersecting; sync(); }, { threshold: 0 }).observe(el);
         }
