@@ -29,6 +29,19 @@ function basedOn(coverage: Coverage | null): string {
   return `Based on ${coverage.counted} of ${coverage.total} checks.`;
 }
 
+/** The short form beside a score: "N of M checks". */
+function ofChecks(coverage: Coverage | null): string {
+  if (!coverage) throw new Error('The API sent no coverage');
+  return `${coverage.counted} of ${coverage.total} checks`;
+}
+
+/** Where each screen says an urgent gap is holding the score at 74. */
+function heldLine(page: Page, path: string) {
+  if (path === '/first-result') return page.getByText('Capped at 74 by an urgent gap');
+  if (path === '/issues') return page.getByText(/the score stays capped at 74\.$/);
+  return page.getByText('An urgent gap holds it at 74 or below.', { exact: false });
+}
+
 /** Says "we don't have it" through the API, and waits until the new score is in. */
 async function declare(page: Page, companyId: string, ruleKey: string): Promise<void> {
   const reply = await page.request.post(`${WEB_URL}/v1/companies/${companyId}/issues/${ruleKey}/missing`, { headers: { origin: WEB_URL } });
@@ -42,19 +55,20 @@ test('every score says what it rests on, on a paid plan', async ({ page }) => {
   const { companyId } = await seedScanned(page, { plan: 'growth' });
   const overview = await overviewOf(page, companyId);
   const words = basedOn(overview.coverage);
+  const short = ofChecks(overview.coverage);
 
   await page.goto('/first-result');
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByText(words, { exact: true })).toBeVisible();
   await page.goto('/');
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByTestId('score-basis')).toHaveText(short);
   await expect(page.getByTestId('score-basis')).toHaveCount(1);
   await page.goto('/issues');
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByTestId('score-basis')).toHaveText(short);
   await expect(page.getByTestId('score-basis')).toHaveCount(1);
 
   const area = await getJson<{ coverage: Coverage }>(page, `/v1/companies/${companyId}/areas/1?scope=company`);
   await page.goto('/areas/1');
-  await expect(page.getByTestId('score-basis')).toHaveText(basedOn(area.coverage));
+  await expect(page.getByTestId('score-basis')).toContainText(`Scored on ${ofChecks(area.coverage)}.`);
 });
 
 test('a Free range says what it used, out of every check that applies', async ({ page }) => {
@@ -64,14 +78,15 @@ test('a Free range says what it used, out of every check that applies', async ({
   const overview = await overviewOf(page, companyId);
   expect(overview.score.kind).toBe('approximate');
   const words = basedOn(overview.coverage);
+  const short = ofChecks(overview.coverage);
 
   await page.goto('/first-result');
   await expect(page.getByTestId('first-score')).toHaveAttribute('aria-label', /to \d+ out of 100/);
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByText(words, { exact: true })).toBeVisible();
   await page.goto('/');
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByTestId('score-basis')).toHaveText(short);
   await page.goto('/issues');
-  await expect(page.getByTestId('score-basis')).toHaveText(words);
+  await expect(page.getByTestId('score-basis')).toHaveText(short);
 });
 
 test('an open urgent gap holds the score, and the screens say so', async ({ page }) => {
@@ -80,7 +95,8 @@ test('an open urgent gap holds the score, and the screens say so', async ({ page
   const { companyId, scanId } = await seedPlain(page);
   expect((await overviewOf(page, companyId)).heldByUrgent).toBe(false);
   await page.goto('/');
-  await expect(page.getByTestId('score-held')).toHaveCount(0);
+  await expect(page.getByTestId('home-score')).toBeVisible();
+  await expect(heldLine(page, '/')).toHaveCount(0);
 
   await holdWithUrgentGaps(scanId, [FOUNDERS]);
   const overview = await overviewOf(page, companyId);
@@ -90,7 +106,7 @@ test('an open urgent gap holds the score, and the screens say so', async ({ page
 
   for (const path of ['/', '/first-result', '/issues']) {
     await page.goto(path);
-    await expect(page.getByTestId('score-held')).toHaveText('Your score is held here until your urgent issues are fixed.');
+    await expect(heldLine(page, path)).toBeVisible();
   }
 });
 
@@ -106,7 +122,7 @@ test('saying "we don\'t have it" explains itself first, lowers the score, and ca
   const choice = page.getByTestId('declare-missing');
   await expect(choice).toContainText('it becomes a gap, which may lower your score');
   // Said once, even though the API's reason opens with the same words.
-  expect((await page.getByTestId('not-seen').innerText()).match(/We haven't seen this yet/g)).toHaveLength(1);
+  expect((await page.getByTestId('not-seen').innerText()).match(/(We|Vero) ha(ve|s)n't seen this yet/g)).toHaveLength(1);
   await expect(choice.getByRole('link', { name: 'Add the document' })).toHaveAttribute('href', /\/documents\/add\?company=/);
 
   // A failure leaves everything as it was, and says so.
@@ -120,14 +136,14 @@ test('saying "we don\'t have it" explains itself first, lowers the score, and ca
   await choice.getByRole('button', { name: "We don't have it" }).click();
   const declared = page.getByTestId('declared-missing');
   await expect(declared).toContainText("You told us you don't have this.", { timeout: 60_000 });
-  await expect(page.getByTestId('issue-chip')).toHaveText('Urgent');
+  await expect(page.getByTestId('issue-chip')).toContainText('Urgent');
 
   const lowered = (await overviewOf(page, companyId)).score.value ?? -1;
   expect(lowered).toBeLessThan(before);
   await page.goto('/');
   await expect(page.getByTestId('home-score')).toHaveText(String(lowered));
   await page.goto('/issues');
-  await expect(page.getByTestId('issue-row').filter({ hasText: "You told us you don't have this." })).toHaveCount(1);
+  await expect(page.getByTestId('issue-row').filter({ hasText: "You told us you don't have this" })).toHaveCount(1);
 
   await page.goto(`/issues/${companyId}/${encodeURIComponent(FOUNDERS)}`);
   await page.getByRole('button', { name: 'Undo this' }).click();
@@ -135,7 +151,7 @@ test('saying "we don\'t have it" explains itself first, lowers the score, and ca
   expect((await overviewOf(page, companyId)).score.value).toBe(before);
   await page.goto('/');
   await expect(page.getByTestId('home-score')).toHaveText(String(before));
-  await expect(page.getByTestId('score-held')).toHaveCount(0);
+  await expect(heldLine(page, '/')).toHaveCount(0);
 });
 
 test('two urgent gaps: no "+0 points" anywhere, and each says why', async ({ page }) => {
@@ -150,22 +166,30 @@ test('two urgent gaps: no "+0 points" anywhere, and each says why', async ({ pag
   expect(detail.pointsHeldByUrgent).toBe(true);
 
   await page.goto('/issues');
-  const urgent = page.getByTestId('group-urgent');
-  await expect(urgent.getByTestId('points-held').first()).toHaveText(heldWords);
-  await expect(urgent.getByTestId('points-held')).toHaveCount(2);
+  // The points panel says both urgent ones come first, and each urgent row says why it adds nothing yet.
+  await expect(page.getByText('The urgent ones come first: until they are cleared, the score stays capped at 74.')).toBeVisible();
+  const urgentRows = page.getByTestId('issue-row').filter({ hasText: 'Urgent' });
+  await expect(urgentRows).toHaveCount(2);
+  for (const row of await urgentRows.all()) {
+    await row.click();
+    await expect(page.getByTestId('finding-drawer')).toContainText('Counts once the urgent findings are cleared');
+    await page.getByTestId('finding-drawer').getByRole('button', { name: 'Close' }).click();
+  }
   await expect(page.locator('main')).not.toContainText('+0');
 
   await page.goto(`/issues/${companyId}/${encodeURIComponent(FOUNDERS)}`);
-  await expect(page.getByTestId('points-held')).toHaveText(heldWords);
+  await expect(page.getByTestId('points-held')).toContainText(heldWords);
   await expect(page.locator('main')).not.toContainText('+0');
 
   await page.goto('/areas/2');
-  await expect(page.getByTestId('area-fix').first()).toContainText(heldWords);
+  const held = page.getByTestId('area-fix').getByTestId('points-held');
+  await expect(held).toHaveCount(2);
+  for (const one of await held.all()) await expect(one).toHaveAttribute('title', heldWords);
   await expect(page.locator('main')).not.toContainText('+0');
 
   await page.goto('/');
-  await expect(page.getByTestId('next-action')).toContainText(heldWords);
-  for (const row of await page.getByTestId('area-row').all()) await row.locator('summary').click();
+  // Fixing one alone moves nothing, so the next step says what clearing both urgent gaps does.
+  await expect(page.getByTestId('next-action').getByTestId('points-held')).toHaveText(/lifting the cap$|^Fixing this won't move your score until the other urgent issues are fixed too\.$/);
   await expect(page.locator('main')).not.toContainText('+0');
 });
 
@@ -188,12 +212,20 @@ for (const theme of ['light', 'dark'] as const) {
     await check();
 
     await page.goto('/issues');
-    const toDo = page.getByTestId('group-to-check');
-    await toDo.locator('summary').first().click();
-    // Not every unchecked item is a document, so find one that offers the choice.
-    const row = toDo.getByTestId('area-check').filter({ has: page.getByTestId('declare-missing') }).first();
-    await row.locator('summary').click();
-    await expect(row.getByTestId('declare-missing')).toBeVisible();
+    await page.getByTestId('group-to-check').click();
+    await page.getByTestId('issue-row').first().click();
+    await expect(page.getByTestId('finding-drawer')).toContainText('Not seen yet');
+    await check();
+
+    // On the area, an unseen check opens in place. Not every one is a document, so find one that offers the choice.
+    await page.goto('/areas/2');
+    const unseen = page.getByTestId('area-check').filter({ hasText: 'Not seen yet' });
+    await expect(unseen.first()).toBeVisible();
+    for (const row of await unseen.all()) {
+      await row.click();
+      if (await page.getByTestId('declare-missing').isVisible()) break;
+    }
+    await expect(page.getByTestId('declare-missing')).toBeVisible();
     await check();
 
     await declare(page, companyId, FOUNDERS);

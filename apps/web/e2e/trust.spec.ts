@@ -57,10 +57,10 @@ test('badge: Free shows the blocker as sent, hides numbers it may not show, and 
   const hero = page.getByTestId('badge-hero');
   await expect(hero).toHaveAttribute('data-earned', 'no');
   await expect(page.getByTestId('badge-state')).toContainText('Not earned yet');
-  await expect(hero).not.toContainText('Legal health verified');
+  await expect(page.getByTestId('badge-state')).not.toContainText('Verified');
   await expect(page.getByTestId('badge-blocker')).toHaveText(status.blockers);
-  await expect(page.locator('[data-testid="badge-requirement"][data-key="score"] .st')).toHaveText('Shown on a paid plan');
-  await expect(page.locator('[data-testid="badge-requirement"][data-key="coverage"] .st')).toHaveText('Shown on a paid plan');
+  await expect(page.locator('[data-testid="badge-requirement"][data-key="score"] .stw')).toHaveText('Shown on a paid plan');
+  await expect(page.locator('[data-testid="badge-requirement"][data-key="coverage"] .stw')).toHaveText('Shown on a paid plan');
   await expect(page.getByTestId('badge-plan')).toHaveAttribute('href', '/plan');
   await expect(page.getByTestId('badge-issue')).toHaveCount(0);
   await expect(page.getByTestId('share-links')).toHaveCount(0);
@@ -78,10 +78,10 @@ test('badge: on a paid plan, every blocker as sent, with the real numbers and co
   const { requirements: need } = status;
   const row = (key: string) => page.locator(`[data-testid="badge-requirement"][data-key="${key}"]`);
   await expect(row('score')).toContainText(`Score of ${need.minScore} or more`);
-  await expect(row('score').locator('.st')).toHaveText(`You're at ${need.currentScore}`);
+  await expect(row('score').locator('.stw')).toHaveText(`You're at ${need.currentScore}`);
   await expect(row('coverage')).toContainText(`At least ${need.minCoveragePercent}% of the checks that apply counted`);
-  await expect(row('coverage').locator('.st')).toHaveText(`${need.coverage.counted} of ${need.coverage.total} counted`);
-  await expect(row('urgent').locator('.st')).toHaveText(need.openUrgent === 0 ? 'None open' : `${need.openUrgent} open`);
+  await expect(row('coverage').locator('.stw')).toHaveText(`${need.coverage.counted} of ${need.coverage.total} counted`);
+  await expect(row('urgent').locator('.stw')).toHaveText(need.openUrgent === 0 ? 'None open' : `${need.openUrgent} open`);
   await expect(page.getByTestId('badge-state')).toContainText('Not earned yet');
   await expect(page.getByTestId('badge-issue')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'See what to fix' })).toHaveAttribute('href', '/issues');
@@ -104,7 +104,7 @@ test('badge: eligible is not earned until issued, its link works once, and withd
 
   await page.getByTestId('badge-issue').click();
   await expect(hero).toHaveAttribute('data-earned', 'yes');
-  await expect(page.getByTestId('badge-state')).toContainText('Legal health verified');
+  await expect(page.getByTestId('badge-state')).toContainText('Verified');
   const url = await page.getByTestId('badge-link').locator('input').inputValue();
   expect(url).toContain('/verified/');
   const status = await apiJson<{ badge: { active: boolean } | null }>(page, 'get', `/v1/companies/${seed.companyId}/badge`);
@@ -176,7 +176,7 @@ test('shared report: opens with no sign-in, keeps its notes, shows no ids, and e
 
   await page.goto('/badge');
   await expect(page.getByTestId('share-none')).toBeVisible();
-  await page.getByLabel('How long it stays open').selectOption('7');
+  await page.getByRole('group', { name: 'How long it stays open' }).getByRole('button', { name: '7 days' }).click();
   await page.getByRole('button', { name: 'Make a public link' }).click();
   const url = await page.getByTestId('share-fresh').locator('input').inputValue();
   expect(url).toContain('/r/');
@@ -191,7 +191,7 @@ test('shared report: opens with no sign-in, keeps its notes, shows no ids, and e
 
   const screen = stranger.getByTestId('shared-report');
   await expect(stranger).toHaveURL(url);
-  await expect(screen.getByRole('heading', { level: 1 })).toHaveText(report.companyName);
+  await expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(report.companyName);
   await expect(stranger.getByTestId('report-not-advice')).toHaveText(report.notLegalAdvice);
   await expect(stranger.getByTestId('report-not-advice')).toContainText('not legal advice');
   await expect(stranger.getByTestId('report-coverage')).toContainText(`${report.coverage.counted} of ${report.coverage.total}`);
@@ -199,14 +199,16 @@ test('shared report: opens with no sign-in, keeps its notes, shows no ids, and e
   await expect(stranger.getByTestId('report-dates')).toContainText('Link expires in 7 days.');
   await expect(stranger.getByText(`Shared by ${report.companyName}`)).toBeVisible();
   await expect(stranger.getByTestId('report-area')).toHaveCount(report.areas.length);
-  await expect(screen.locator('.r-count .num')).toHaveText([report.openIssues.urgent, report.openIssues.important, report.openIssues.worthDoing].map(String));
+  await expect(screen.getByRole('complementary', { name: 'Open issues' }).locator('.pixel')).toHaveText([report.openIssues.urgent, report.openIssues.important, report.openIssues.worthDoing].map(String));
   await expect(stranger.locator('body')).not.toContainText(UUID);
   await expect(stranger.getByRole('button', { name: /account menu/ })).toHaveCount(0);
   await expect(stranger.getByRole('button', { name: /request documents/i })).toHaveCount(0);
 
   await page.getByTestId('share-row').getByRole('button', { name: 'Withdraw' }).click();
   await page.getByTestId('share-row').getByRole('button', { name: 'Yes, withdraw it' }).click();
-  await expect(page.getByTestId('share-none')).toBeVisible();
+  // A withdrawn link stays listed as ended, and nothing is open.
+  await expect(page.getByTestId('share-row')).toHaveCount(0);
+  await expect(page.getByTestId('share-ended')).toContainText('Withdrawn');
   await stranger.reload();
   await expect(stranger.getByTestId('report-gone')).toContainText("This link isn't open any more");
   await stranger.context().close();
@@ -240,8 +242,8 @@ test('shared report: a bad link, a slow answer, a failure, and no score are all 
   await expect(page.getByTestId('sample-note')).toHaveCount(0);
   const checked = page.getByTestId('report-checked');
   await expect(checked.first()).toContainText('dated 12 October 2026');
-  await expect(checked.first().locator('.st')).toHaveText('Checked');
-  await expect(checked.nth(1).locator('.st')).toHaveText('Not checked');
+  await expect(checked.first().locator('em')).toHaveText('Checked');
+  await expect(checked.nth(1).locator('em')).toHaveText('Not checked');
   await expect(page.getByTestId('report-what-vero-checked')).toHaveText('This shows only what Vero checked: public records, and the answers and documents the company added.');
 });
 
@@ -254,8 +256,9 @@ test('settings: your name, your companies, and the sections all reach somewhere 
   await page.goto('/settings');
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
   await expect(page.getByTestId('settings-company')).toHaveAttribute('href', `/company/${companyId}`);
-  await expect(page.getByTestId('settings-plan')).toContainText('Free');
-  await expect(page.getByTestId('settings-notifications')).toContainText("You can't choose between them yet.");
+  await expect(page.getByTestId('settings-plan')).toHaveAttribute('href', '/plan');
+  await expect(page.getByText('Your plan', { exact: true }).locator('..')).toContainText('Free');
+  await expect(page.getByTestId('settings-notifications')).toContainText("You can't choose between them");
 
   await page.getByLabel('Your name').fill('Amara Okafor');
   await page.getByRole('button', { name: 'Save your name' }).click();
@@ -263,7 +266,7 @@ test('settings: your name, your companies, and the sections all reach somewhere 
   await page.reload();
   await expect(page.getByLabel('Your name')).toHaveValue('Amara Okafor');
 
-  await page.getByRole('group', { name: 'Light or dark' }).getByRole('button', { name: 'Dark' }).click();
+  await page.getByRole('group', { name: 'Display' }).getByRole('button', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('navigation', { name: 'Settings sections' }).getByRole('link', { name: 'Team' }).click();
   await expect(page).toHaveURL(/#team$/);
@@ -416,7 +419,9 @@ test('settings: two-step sign-in goes on only with a real code, and off the same
   await expect(page.getByTestId('two-step-state')).toHaveText('Off');
 });
 
-test('settings: signing out everywhere really ends the session', async ({ page }) => {
+test('settings: signing out everywhere really ends the session', async ({ page, watch }) => {
+  // This session ends too, so a call already on its way can come back 401 before the page leaves.
+  watch.allow(/status of 401/);
   await calm(page);
   await signIn(page);
   await seedScanned(page);
@@ -486,26 +491,29 @@ test("plan: no invented prices, checkout is Stripe's own, and it says what reall
   await expect(page.getByTestId('plan-change')).toContainText("Payments go through Stripe's own checkout");
   await expect(page.getByTestId('plan-change')).toContainText('our team can change your plan by hand');
   await expect(page.locator('[data-plan="free"]').getByText('Your plan')).toBeVisible();
-  await expect(page.getByTestId('plan-score')).toContainText('is your read today');
+  await expect(page.getByTestId('plan-score')).toContainText('Your read today');
 
   const scale = page.locator('[data-testid="plan-card"][data-plan="scale"]');
   await expect(scale).toContainText("aren't running yet");
   await expect(screen).not.toContainText(/automatic monitoring|all year|someone watching/i);
+  // The columns follow the plan cards: free, growth, scale.
+  await expect(page.getByTestId('plan-card')).toHaveCount(3);
+  await expect(page.getByTestId('plan-card').nth(0)).toHaveAttribute('data-plan', 'free');
+  await expect(page.getByTestId('plan-card').nth(2)).toHaveAttribute('data-plan', 'scale');
+  const cell = (key: string, column: number) => page.locator(`[data-testid="compare-row"][data-key="${key}"]`).getByRole('cell').nth(column);
   for (const key of ['deadlineWatching', 'rulesChangeAlerts', 'annualVerification']) {
-    const row = page.locator(`[data-testid="compare-row"][data-key="${key}"]`);
-    await expect(row.locator('[data-plan="scale"]')).toContainText('Planned');
-    await expect(row.locator('[data-plan="growth"]')).toContainText('No');
-    await row.locator('summary').click();
-    await expect(row).toContainText('not running yet');
+    await expect(cell(key, 3)).toContainText('Planned');
+    await expect(cell(key, 2)).toContainText('Not included');
+    await expect(cell(key, 0)).toContainText('not running yet');
   }
-  await expect(page.locator('[data-testid="compare-row"][data-key="gaps"] [data-plan="free"]')).toContainText('Top 3');
-  await expect(page.locator('[data-testid="compare-row"][data-key="score"] [data-plan="free"]')).toContainText('Approximate');
+  await expect(cell('gaps', 1)).toContainText('Top 3');
+  await expect(cell('score', 1)).toContainText('Approximate');
 
   // Moving starts checkout. With payments not switched on, it says so plainly, and the plan stays as it was.
   const move = page.getByTestId('checkout-growth');
   await expect(move).toHaveText('Move to Growth');
   await move.click();
-  await expect(page.locator('[data-testid="plan-card"][data-plan="growth"]').getByRole('alert')).toContainText("Payments aren't switched on yet.");
+  await expect(page.getByRole('alert').filter({ hasText: "Payments aren't switched on yet." })).toBeVisible();
   await expect(page).toHaveURL(/\/plan$/);
   const after = await apiJson<{ current: string }>(page, 'get', '/v1/plans');
   expect(after.current).toBe('free');
@@ -621,12 +629,10 @@ for (const theme of ['light', 'dark'] as const) {
     await page.goto('/plan');
     await expect(page.getByTestId('plan-page')).toBeVisible();
     await checkScreen(page);
-    await page.locator('[data-testid="compare-row"]').first().locator('summary').click();
-    await checkScreen(page);
   });
 }
 
-test('the Free states pass axe, and the five tabs fit a 375px phone', async ({ page }) => {
+test('the Free states pass axe, and the main menu fits a 375px phone', async ({ page }) => {
   test.setTimeout(150_000);
   await calm(page);
   await signIn(page);
@@ -638,8 +644,10 @@ test('the Free states pass axe, and the five tabs fit a 375px phone', async ({ p
   }
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/settings');
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  for (const name of ['Home', 'Issues', 'Documents', 'Deadlines', 'Company']) {
+  // On a phone the side menu opens as a drawer.
+  await page.getByRole('button', { name: 'Open the menu' }).click();
+  const nav = page.getByRole('complementary', { name: 'Main' }).getByRole('navigation');
+  for (const name of ['Overview', 'Findings', 'Documents', 'Deadlines', 'Registry records']) {
     const box = await nav.getByRole('link', { name }).boundingBox();
     expect(box, `${name} is on the page`).not.toBeNull();
     expect((box?.x ?? 0) + (box?.width ?? 0), `${name} fits a 375px phone`).toBeLessThanOrEqual(375);

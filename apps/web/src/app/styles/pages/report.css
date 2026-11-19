@@ -1,0 +1,87 @@
+/* The printable report. The paper always stays bright,in both themes,because it is what gets printed. */
+
+.pg-report{min-height:100vh;background:var(--bg)}
+.pg-report .rp-hero{position:relative;overflow:hidden;background:#00004A;color:#fff;padding-bottom:150px}
+.pg-report .rp-hero>.pubbar{position:relative;z-index:2}
+.pg-report .rp-head{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:40px 32px 0;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.pg-report .rp-head h1{font-size:44px;line-height:1.08;margin-top:10px;color:#fff}
+.pg-report .rp-head .meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.62)}
+.pg-report .rp-head .lede{margin-top:12px;max-width:560px;font-size:15px;font-weight:600;color:rgba(255,255,255,.72);line-height:1.55}
+.pg-report .acts2{display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:300px}
+.pg-report .rp-head>.acts2:only-child,.pg-report main.rp-head .acts2{align-items:flex-start;margin-top:20px}
+.pg-report main.rp-head{display:block}
+.pg-report .acts2 p{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.55);text-align:right;line-height:1.45}
+.pg-report .acts2 .btn .i{width:16px;height:16px}
+.pg-report .rp-state{max-width:900px;margin:-110px auto 0;position:relative;z-index:3;background:var(--panel);border-radius:22px;padding:30px}
+
+/* paper */
+.pg-report .rp-sheets{position:relative;z-index:3;margin-top:-110px;padding:0 24px 80px;display:flex;flex-direction:column;align-items:center;gap:28px}
+.pg-report .rp[data-theme="light"]{width:210mm;min-height:297mm;background:#fff;color:#0B0E3A;border-radius:10px;box-shadow:0 40px 90px -40px rgba(0,0,40,.55),0 0 0 1px rgba(11,14,58,.06);padding:0 18mm 16mm;display:flex;flex-direction:column;animation:up .8s var(--ease) both;--ink:#0B0E3A;--ink-2:#3A3F66;--ink-3:#6B7092;--line:#E3E8F2;--line-2:#EEF1F7}
+.pg-report .rp[data-theme="light"]+.rp{animation-delay:.12s}
+.pg-report [data-theme="light"] .rp-band{margin:0 -18mm;padding:10mm 18mm 26mm;background:radial-gradient(70% 120% at 10% 0%,#0182FA,transparent 70%),radial-gradient(60% 100% at 100% 0%,rgba(3,177,250,.65),transparent 70%),#00004A;color:#fff;display:flex;justify-content:space-between;align-items:center;border-radius:10px 10px 0 0}
+.pg-report [data-theme="light"] .rp-band img{height:22px}
+.pg-report [data-theme="light"] .rp-band span{font-size:12px;font-weight:600;color:rgba(255,255,255,.75)}
+.pg-report [data-theme="light"] .rp-title{margin-top:-18mm;background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 18px 40px -24px rgba(0,0,40,.4)}
+.pg-report [data-theme="light"] .rp-title h2{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.pg-report [data-theme="light"] .rp-title p{font-size:13px;font-weight:600;color:var(--ink-3);margin-top:2px}
+.pg-report [data-theme="light"] .rp-sample{margin-top:12px;padding:10px 14px;border-radius:10px;background:#FFF7E8;font-size:12px;font-weight:600;color:var(--ink-2)}
+.pg-report [data-theme="light"] .rp-score{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:22px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pg-report [data-theme="light"] .rp-score .num{display:flex;flex-direction:column}
+.pg-report [data-theme="light"] .rp-score .num .pixel{font-size:84px;line-height:.9;color:#00004A}
+.pg-report [data-theme="light"] .rp-score .num>span:not(.pixel){font-size:12px;font-weight:600;color:var(--ink-3);margin-top:6px}
+.pg-report [data-theme="light"] .rp-score .say b{font-size:15px;font-weight:700;display:none}
+.pg-report [data-theme="light"] .rp-score .say p{font-size:15px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.pg-report [data-theme="light"] .rp-score .blk{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-top:12px}
+.pg-report [data-theme="light"] .rp-score .blk i{height:8px;border-radius:2px;background:#E3E8F2;transform-origin:left}
+.pg-report [data-theme="light"] .rp-score .blk i.on{background:#0182FA}
+.pg-report [data-theme="light"] .rp-basis{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.pg-report [data-theme="light"] .rp-h{font-size:14px;font-weight:700;margin-top:22px}
+.pg-report [data-theme="light"] .rp-h.big{font-size:20px;letter-spacing:-.01em}
+.pg-report [data-theme="light"] .rp-t{width:100%;border-collapse:collapse;margin-top:8px}
+.pg-report [data-theme="light"] .rp-t td,.pg-report [data-theme="light"] .rp-t th{padding:10px 0;border-top:1px solid var(--line-2);font-size:13px;vertical-align:top;text-align:left}
+.pg-report [data-theme="light"] .rp-t b{display:block;font-weight:700}
+.pg-report [data-theme="light"] .rp-t small{display:block;font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:2px;line-height:1.4}
+.pg-report [data-theme="light"] .rp-t .w{font-weight:700;white-space:nowrap;padding-left:16px}
+.pg-report [data-theme="light"] .rp-t .n{font-family:"Lowres Pixel";font-size:20px;text-align:right;color:#00004A;width:48px}
+.pg-report [data-theme="light"] .rp-t.how th{width:34%;font-weight:700;padding-right:16px}
+.pg-report [data-theme="light"] .rp-t.how td{color:var(--ink-2);font-weight:500;line-height:1.5}
+.pg-report [data-theme="light"] .rp-note{margin-top:auto;padding-top:18px;font-size:11.5px;font-weight:500;color:var(--ink-3);line-height:1.5}
+.pg-report [data-theme="light"] .rp-foot{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3)}
+.pg-report [data-theme="light"] .rp-top{display:flex;justify-content:space-between;padding:12mm 0 8px;border-bottom:1px solid var(--line);font-size:12px;font-weight:600;color:var(--ink-3)}
+.pg-report [data-theme="light"] .rp-top b{color:var(--ink)}
+.pg-report [data-theme="light"] .rp-sec{margin-top:8px}
+.pg-report [data-theme="light"] .rp-lede{font-size:12.5px;font-weight:600;color:var(--ink-3);margin-top:2px}
+.pg-report [data-theme="light"] .rp-acts{list-style:none;margin:10px 0 0;padding:0;counter-reset:fix}
+.pg-report [data-theme="light"] .rp-acts li{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--line-2);counter-increment:fix}
+.pg-report [data-theme="light"] .rp-acts li::before{content:counter(fix);font-family:"Lowres Pixel";font-size:20px;color:#0182FA;line-height:1}
+.pg-report [data-theme="light"] .rp-acts b{display:block;font-size:13.5px;font-weight:700}
+.pg-report [data-theme="light"] .rp-acts span{display:block;font-size:12px;font-weight:600;color:var(--ink-3);margin-top:2px}
+.pg-report [data-theme="light"] .rp-acts i{font-style:normal;font-size:12px;font-weight:700;color:#0E9F78;white-space:nowrap}
+.pg-report [data-theme="light"] .rp-sum{margin-top:10px;padding:10px 14px;border-radius:10px;background:#F4F6FB;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+
+@media (max-width:900px){
+  .pg-report .rp[data-theme="light"]{width:100%;min-height:0;padding:0 18px 18px}
+  .pg-report [data-theme="light"] .rp-band{margin:0 -18px;padding:18px 18px 60px}
+  .pg-report [data-theme="light"] .rp-title{margin-top:-40px}
+  .pg-report [data-theme="light"] .rp-top{padding-top:18px}
+  .pg-report .rp-head{padding:28px 16px 0}
+  .pg-report .rp-head h1{font-size:32px}
+  .pg-report .acts2{align-items:flex-start;max-width:none}
+  .pg-report .acts2 p{text-align:left}
+  .pg-report .rp-sheets{padding:0 12px 60px}
+}
+@media (max-width:560px){
+  .pg-report [data-theme="light"] .rp-score{grid-template-columns:1fr;gap:12px}
+  .pg-report [data-theme="light"] .rp-t.how th{width:auto;display:block;border-top:1px solid var(--line-2);padding-bottom:0}
+  .pg-report [data-theme="light"] .rp-t.how td{display:block;border-top:0;padding-top:4px}
+}
+
+@media print{
+  .pg-report{background:#fff}
+  .pg-report .rp-hero{display:none}
+  .pg-report .rp-sheets{margin:0;padding:0;gap:0;display:block}
+  .pg-report .rp[data-theme="light"]{width:210mm;height:297mm;box-shadow:none;border-radius:0;animation:none;page-break-after:always;break-after:page}
+  .pg-report [data-theme="light"] .rp-band{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pg-report [data-theme="light"] .rp-score .blk i,.pg-report [data-theme="light"] .rp-sample,.pg-report [data-theme="light"] .rp-sum{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sidebar,.side,.topbar,.toast{display:none!important}
+}

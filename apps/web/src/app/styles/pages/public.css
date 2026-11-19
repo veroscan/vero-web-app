@@ -1,0 +1,159 @@
+/* Pages anyone can open with a link, and the plain states (not found, error, legal, invitation).
+   Ported from the SharedReport and NotFound boards: the navy atmosphere on top, white panels below. Bright colours only. */
+
+.pg-pub{min-height:100vh;background:var(--bg)}
+.pg-pub .wrap{max-width:1180px;margin:0 auto}
+.pg-pub .hero{padding-bottom:132px}
+.pg-pub .hero.tall{min-height:100vh;display:flex;flex-direction:column;padding-bottom:0}
+.pg-pub .pubbar{padding:0 32px}
+.pg-pub .pubbar .in{max-width:1116px;margin:0 auto;width:100%;display:flex;align-items:center;gap:18px}
+.pg-pub .pubbar img{height:24px}
+.pg-pub .pubbar .by{margin-left:auto;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.7)}
+.pg-pub .pubbar .by b{color:#fff;font-weight:700}
+.pg-pub .pubbar .in>.ibtn:first-of-type{margin-left:auto}
+.pg-pub .pubbar .by+.ibtn{margin-left:0}
+.pg-pub .hero .ibtn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);color:#fff}
+.pg-pub .hero .content{padding-top:40px}
+.pg-pub .samplebar{margin-bottom:18px;max-width:640px}
+
+/* page head on the atmosphere */
+.pg-pub .ph2{margin-bottom:26px}
+.pg-pub .ph2 .k{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.62)}
+.pg-pub .ph2 h1{font-size:40px;font-weight:700;letter-spacing:-.03em;margin-top:6px;line-height:1.1}
+.pg-pub .ph2 .meta{display:flex;flex-wrap:wrap;gap:6px 16px;color:rgba(255,255,255,.62);font-weight:600;margin-top:10px}
+
+/* row 1: the glass score panel and the open issues card */
+.pg-pub .r1{display:grid;grid-template-columns:1fr 360px;gap:20px}
+.pg-pub .gl{color:#fff}
+.pg-pub .sp{display:grid;grid-template-columns:300px 1fr;min-height:330px}
+.pg-pub .sp .l{padding:24px 26px;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.1)}
+.pg-pub .sp h2{font-size:15px;font-weight:700}
+.pg-pub .sp .big{display:flex;align-items:flex-end;gap:8px;margin-top:20px}
+.pg-pub .sp .big .pixel{font-size:112px;color:#fff;text-shadow:0 0 40px rgba(157,218,247,.45)}
+.pg-pub .sp .big small{font-size:15px;color:rgba(255,255,255,.6);font-weight:600;padding-bottom:12px}
+.pg-pub .sp .noscore{font-size:22px;font-weight:700;margin-top:22px;letter-spacing:-.01em}
+.pg-pub .sp .verdict{font-size:17px;font-weight:700;letter-spacing:-.01em;margin-top:12px;line-height:1.35}
+.pg-pub .sp .basis{margin-top:auto;padding-top:18px;font-size:12.5px;line-height:1.55;font-weight:600;color:rgba(255,255,255,.62);display:flex;flex-direction:column;gap:6px}
+.pg-pub .sp .basis b{color:#fff}
+.pg-pub .sp .r{padding:24px 26px;display:flex;flex-direction:column;min-width:0}
+.pg-pub .sp .r h2{color:rgba(255,255,255,.75);font-size:14px}
+.pg-pub .rl2{margin-top:12px}
+.pg-pub .rl2>div{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(255,255,255,.12);font-size:13.5px;font-weight:600}
+.pg-pub .rl2>div:first-child{border-top:0}
+.pg-pub .rl2 small{display:block;font-size:12px;color:rgba(255,255,255,.55);font-weight:600;margin-top:2px;line-height:1.45}
+.pg-pub .rl2 em{font-style:normal;font-weight:700;font-size:13px;white-space:nowrap}
+.pg-pub .rl2 em.good{color:#6EE7C5}.pg-pub .rl2 em.watch{color:#FCD34D}
+.pg-pub .sp .note2{margin-top:auto;padding-top:14px;font-size:12.5px;line-height:1.55;color:rgba(255,255,255,.62);font-weight:600}
+.pg-pub .sp .note2 b{color:#fff}
+
+.pg-pub .opencard{background:#fff;color:var(--ink);box-shadow:0 40px 80px -40px rgba(0,0,30,.7);border:0;padding:22px 24px;display:flex;flex-direction:column}
+.pg-pub .opencard .k{font-size:13px;font-weight:600;color:var(--ink-3)}
+.pg-pub .opencard h3{font-size:22px;line-height:1.25;letter-spacing:-.02em;margin-top:12px;font-weight:700}
+.pg-pub .opencard .cnt{margin-top:18px;display:flex;flex-direction:column}
+.pg-pub .opencard .cnt>div{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line-2);font-weight:700;font-size:14px}
+.pg-pub .opencard .cnt>div:first-child{border-top:0}
+.pg-pub .opencard .cnt .pixel{font-size:30px}
+.pg-pub .opencard .cnt .risk{color:var(--urgent)}.pg-pub .opencard .cnt .watch{color:var(--warn)}.pg-pub .opencard .cnt .none{color:var(--ink-2)}
+.pg-pub .opencard .why{margin-top:auto;padding-top:16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--ink-3);font-weight:600;line-height:1.5}
+
+/* working area under the atmosphere */
+.pg-pub .after{margin:-92px auto 0;position:relative;z-index:2;padding-top:0}
+.pg-pub .after .mod{box-shadow:0 1px 2px rgba(11,14,58,.04),0 24px 48px -32px rgba(11,14,58,.25)}
+.pg-pub .r3b{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+.pg-pub .r3b>.mod{display:flex;flex-direction:column}
+.pg-pub .ar2{padding:12px 22px 18px;flex:1;display:flex;flex-direction:column}
+.pg-pub .ar{display:grid;grid-template-columns:200px 1fr 44px 16px;gap:16px;align-items:center;padding:13px 0;border-top:1px solid var(--line-2);cursor:pointer;list-style:none}
+.pg-pub .ar::-webkit-details-marker{display:none}
+.pg-pub details:first-child .ar{border-top:0}
+.pg-pub .ar b{display:block;font-size:13.5px;font-weight:700}.pg-pub .ar small{font-size:12px;color:var(--ink-3);font-weight:600}
+.pg-pub .ar small.risk{color:var(--urgent)}.pg-pub .ar small.watch{color:var(--warn)}
+.pg-pub .ar .tr{height:8px;border-radius:4px;background:#EEF1F7;position:relative;overflow:hidden}
+.pg-pub .ar .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--navy)}
+.pg-pub .ar .tr i.risk{background:var(--urgent)}
+.pg-pub .ar .pixel{font-size:24px;text-align:right;color:var(--navy)}
+.pg-pub .ar .pixel.risk{color:var(--urgent)}
+.pg-pub .ar .chev{color:var(--ink-4);transition:transform .3s var(--ease)}
+.pg-pub details[open] .ar .chev{transform:rotate(180deg)}
+.pg-pub .ar-body{padding:0 0 14px;font-size:13px;color:var(--ink-2);font-weight:600;line-height:1.55}
+.pg-pub .how{margin-top:auto;padding:16px 18px;border-radius:16px;background:#F4F6FB}
+.pg-pub .how b{font-size:13.5px}.pg-pub .how p{font-size:13px;color:var(--ink-2);font-weight:600;line-height:1.55;margin-top:4px}
+.pg-pub .dl{padding:8px 22px 6px}
+.pg-pub .dl>div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line-2);font-size:13.5px;font-weight:700}
+.pg-pub .dl>div:first-child{border-top:0}
+.pg-pub .dl small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
+.pg-pub .dl em{font-style:normal;font-size:13px;white-space:nowrap}
+.pg-pub .dl em.good{color:var(--good)}.pg-pub .dl em.watch{color:var(--warn)}.pg-pub .dl em.risk{color:var(--urgent)}
+.pg-pub .fnote{margin-top:auto;padding:14px 22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);font-weight:600;line-height:1.5}
+.pg-pub .foot2{margin-top:36px;padding:26px 0 40px;border-top:1px solid var(--line);display:flex;align-items:flex-start;gap:24px}
+.pg-pub .foot2 img{height:20px;margin-top:2px}
+.pg-pub .foot2 p{font-size:13.5px;font-weight:700;color:var(--ink);max-width:560px;line-height:1.5}
+.pg-pub .foot2 small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:4px}
+.pg-pub .foot2 .r{margin-left:auto;text-align:right;font-size:12.5px;color:var(--ink-3);font-weight:600;line-height:1.6;white-space:nowrap}
+
+/* the plain states: a centred message on the atmosphere */
+.pg-pub .msg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px 24px 96px;gap:16px}
+.pg-pub .msg .mono{color:rgba(255,255,255,.6)}
+.pg-pub .msg h1{font-size:52px;line-height:1.06;letter-spacing:-.04em;font-weight:300;max-width:760px}
+.pg-pub .msg p{font-size:17px;line-height:1.6;color:rgba(255,255,255,.72);max-width:520px}
+.pg-pub .msg .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
+.pg-pub .msg .btn-g{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff}
+.pg-pub .msg .btn-g:hover{background:rgba(255,255,255,.14)}
+.pg-pub .msg .formerror{color:#FFA3A6}
+.pg-pub .msg .art{width:150px;height:120px;margin-bottom:6px}
+.pg-pub .msg .state-mark{width:64px;height:64px;border-radius:16px}
+
+/* the invitation card on the atmosphere */
+.pg-pub .invite{width:min(520px,100%);padding:30px 32px;text-align:left;display:flex;flex-direction:column;gap:12px}
+.pg-pub .invite h1{font-size:30px;font-weight:700;letter-spacing:-.025em;line-height:1.15;max-width:none}
+.pg-pub .invite p{font-size:15px;max-width:none}
+.pg-pub .invite .btns{justify-content:flex-start}
+
+/* legal pages: the words on white under a short atmosphere head */
+.pg-pub .hero.short{padding-bottom:56px}
+.pg-pub .doc{max-width:760px;margin:-32px auto 0;position:relative;z-index:2;padding:32px 36px}
+.pg-pub .doc h2{font-size:17px;font-weight:700;letter-spacing:-.01em;margin-top:22px}
+.pg-pub .doc h2:first-child{margin-top:0}
+.pg-pub .doc p{color:var(--ink-2);font-size:14.5px;line-height:1.65;margin-top:8px}
+.pg-pub .doc .back{display:inline-flex;margin-top:26px}
+
+/* the verified badge page */
+.pg-pub .vb{display:grid;grid-template-columns:340px 1fr;gap:40px;align-items:center;padding-top:12px}
+.pg-pub .seal{aspect-ratio:1;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center}
+.pg-pub .seal svg{width:120px;height:auto}
+.pg-pub .seal .big{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.pg-pub .seal small{font-size:13px;color:rgba(255,255,255,.65);font-weight:600}
+.pg-pub .vb h1{font-size:44px;font-weight:300;letter-spacing:-.04em;line-height:1.08}
+.pg-pub .vb .lead2{font-size:17px;color:rgba(255,255,255,.72);margin-top:12px;line-height:1.55}
+.pg-pub .vb .facts{margin-top:26px;padding:6px 22px}
+.pg-pub .vb .facts>div{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-top:1px solid rgba(255,255,255,.12);font-weight:600;font-size:14px}
+.pg-pub .vb .facts>div:first-child{border-top:0}
+.pg-pub .vb .facts span{color:rgba(255,255,255,.62)}
+.pg-pub .vb .facts b{font-weight:700}
+.pg-pub .vb .fine{margin-top:18px;font-size:12.5px;color:rgba(255,255,255,.55);font-weight:600;line-height:1.55;max-width:560px}
+
+@media (max-width:1180px){
+  .pg-pub .r1{grid-template-columns:1fr}
+  .pg-pub .r3b{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .pg-pub .pubbar{padding:0 16px}
+  .pg-pub .pubbar .by{display:none}
+  .pg-pub .ph2 h1{font-size:30px}
+  .pg-pub .sp{grid-template-columns:1fr}
+  .pg-pub .sp .l{border-right:0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .pg-pub .sp .big .pixel{font-size:88px}
+  .pg-pub .ar{grid-template-columns:1fr 44px 16px}
+  .pg-pub .ar .tr{display:none}
+  .pg-pub .foot2{flex-direction:column;gap:12px}
+  .pg-pub .foot2 .r{margin-left:0;text-align:left}
+  .pg-pub .msg h1{font-size:36px}
+  .pg-pub .vb{grid-template-columns:1fr;gap:24px}
+  .pg-pub .seal{max-width:280px}
+  .pg-pub .vb h1{font-size:32px}
+  .pg-pub .doc{padding:24px 20px;margin:-32px 16px 0}
+}
+.pg-pub .narrow{max-width:760px}
+.pg-pub .btn-g,.pg-staff .btn-g{border:1px solid var(--line)}
+.pg-pub .hero .btn-g{border-color:rgba(255,255,255,.16)}
+.pg-pub .hero .gl{background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 40px 80px -40px rgba(0,0,30,.7)}
+.pg-pub .opencard .cnt .zero{color:var(--ink-4)}

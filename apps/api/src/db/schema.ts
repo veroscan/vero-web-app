@@ -926,3 +926,16 @@ export const mfaRecoveryCode = pgTable('mfa_recovery_code', {
   usedAt: ts('used_at'),
   ...timestamps,
 });
+
+/** The website's waitlist. No organisation: these people have no account yet. System scope only. */
+export const waitlistEntry = pgTable('waitlist_entry', {
+  id: id(),
+  email: text('email').notNull(),
+  name: text('name').notNull(),
+  company: text('company'),
+  message: text('message'),
+  details: jsonb('details').notNull().default({}),
+  submissions: integer('submissions').notNull().default(1),
+  invitedAt: ts('invited_at'),
+  ...timestamps,
+});

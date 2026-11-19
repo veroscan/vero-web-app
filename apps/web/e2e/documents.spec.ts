@@ -28,13 +28,27 @@ async function checkScreen(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1440, height: 900 });
 }
 
-/** Opens the row, wherever its area sits on the page. */
-async function openSlot(page: Page, slotKey: string) {
+/** The row for one slot, showing more of the list until it's there. */
+async function slotRow(page: Page, slotKey: string) {
   const row = page.locator(`[data-slot="${slotKey}"]`);
-  const outer = page.getByTestId('slot-group-more').filter({ has: row });
-  if ((await outer.count()) > 0) await outer.locator('summary').first().click();
-  await row.getByTestId('slot-toggle').click();
+  await expect(page.getByTestId('slot-row').first()).toBeVisible();
+  const more = page.getByRole('button', { name: /^Show \d+ more of \d+$/ });
+  while ((await row.count()) === 0 && (await more.count()) > 0) await more.click();
+  await expect(row).toBeVisible();
   return row;
+}
+
+/** The row's status word, in its own column. */
+function statusOf(row: ReturnType<Page['locator']>) {
+  return row.getByRole('cell').nth(4);
+}
+
+/** Opens the row and gives back what it shows underneath. */
+async function openSlot(page: Page, slotKey: string) {
+  const row = await slotRow(page, slotKey);
+  await row.getByTestId('slot-toggle').click();
+  await expect(row.getByTestId('slot-toggle')).toHaveAttribute('aria-expanded', 'true');
+  return { row, body: page.locator(`#slot-${slotKey}`) };
 }
 
 test('Documents lists the slots, with an empty one as "Not checked yet" and never held against you', async ({ page }) => {
@@ -43,20 +57,20 @@ test('Documents lists the slots, with an empty one as "Not checked yet" and neve
   const { companyId } = await seedPlain(page);
   await page.goto('/documents');
   await expect(page.getByTestId('documents-count')).toHaveText(/^0 of \d+ documents in place$/);
-  await expect(page.locator('main')).toContainText("An empty slot doesn't count against you");
+  await expect(page.locator('main')).toContainText('Empty slots never lower the score.');
   await expect(page.locator('main')).not.toContainText('counts as a gap until');
-  await expect(page.getByRole('progressbar')).toBeVisible();
 
-  const row = await openSlot(page, FOUNDER_SLOT);
-  await expect(row.locator('.st')).toHaveText('Not checked yet');
-  await expect(row).toContainText("It doesn't count for or against your score");
-  await expect(row.getByRole('link', { name: 'Add', exact: true })).toHaveAttribute('href', new RegExp(`slot=${FOUNDER_SLOT}`));
+  const { row, body } = await openSlot(page, FOUNDER_SLOT);
+  await expect(statusOf(row)).toHaveText('Not checked yet');
+  // Only saying "we don't have it" makes an empty slot count, and it says so first.
+  await expect(body.getByTestId('declare-missing')).toContainText('If you don\'t have it, tell us and it becomes a gap');
+  await expect(row.getByRole('link', { name: 'Upload', exact: true })).toHaveAttribute('href', new RegExp(`slot=${FOUNDER_SLOT}`));
 
-  // The list really filters, and the words are the owner's: a to-do list.
-  const filters = page.getByRole('group', { name: 'Filter documents' });
-  await filters.getByRole('button', { name: 'In place' }).click();
-  await expect(page.getByTestId('empty-state')).toContainText('Nothing in place yet');
-  await filters.getByRole('button', { name: 'To do' }).click();
+  // The list really filters.
+  const filters = page.getByRole('tablist', { name: 'Filter documents' });
+  await filters.getByRole('tab', { name: /^In order/ }).click();
+  await expect(page.getByTestId('empty-state')).toContainText('Nothing in order yet');
+  await filters.getByRole('tab', { name: /^Missing/ }).click();
   await expect(page.getByTestId('slot-row').first()).toBeAttached();
   expect(companyId).toBeTruthy();
 });
@@ -66,12 +80,11 @@ test('"We don\'t have it" on a slot shows as declared, and can be undone', async
   await signIn(page);
   await seedPlain(page);
   await page.goto('/documents');
-  const row = await openSlot(page, FOUNDER_SLOT);
-  await expect(row).toContainText('it becomes a gap, which may lower your score');
-  await row.getByRole('button', { name: "We don't have it" }).click();
-  const declared = page.locator(`[data-slot="${FOUNDER_SLOT}"]`);
-  await expect(declared.locator('.st')).toHaveText("You don't have this", { timeout: 60_000 });
-  await expect(declared.getByRole('button', { name: 'Undo this', includeHidden: true })).toHaveCount(1);
+  const { row, body } = await openSlot(page, FOUNDER_SLOT);
+  await expect(body).toContainText('it becomes a gap, which may lower your score');
+  await body.getByRole('button', { name: "We don't have it" }).click();
+  await expect(statusOf(row)).toHaveText("You don't have this", { timeout: 60_000 });
+  await expect(body.getByRole('button', { name: 'Undo this' })).toHaveCount(1);
 });
 
 test('adding a document: upload, read, confirm, filed, and it can be downloaded and removed', async ({ page }) => {
@@ -79,7 +92,7 @@ test('adding a document: upload, read, confirm, filed, and it can be downloaded 
   await signIn(page);
   const { companyId } = await seedPlain(page);
   await page.goto(`/documents/add?company=${companyId}&slot=${FOUNDER_SLOT}&rule=${encodeURIComponent(FOUNDER_RULE)}`);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText("Add your founders' IP assignments");
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/^Add the founders' IP assignments?$/);
   await expect(page.getByTestId('connection-row').first()).toContainText("isn't connected yet");
 
   await page.locator('input[type="file"]').setInputFiles(signedPdf());
@@ -91,23 +104,25 @@ test('adding a document: upload, read, confirm, filed, and it can be downloaded 
   // Nothing counts until a person says so.
   expect((await documentsOf(page, companyId))[0]?.status).toBe('needs_confirmation');
   await confirm.getByRole('button', { name: 'Yes, file it' }).click();
-  await expect(page.getByTestId('drop-done')).toContainText('Filed. Your score is updating.');
-  await expect(page.getByTestId('drop-done').getByRole('link', { name: 'Back to the issue' })).toBeVisible();
+  await expect(page.getByTestId('drop-done')).toContainText("Filed as the founders' IP assignment");
+  await expect(page.getByTestId('drop-done').getByRole('link', { name: 'Back to the finding' })).toBeVisible();
   expect((await documentsOf(page, companyId))[0]).toMatchObject({ status: 'filed', slotKey: FOUNDER_SLOT });
 
   await page.goto('/documents');
   await expect(page.getByTestId('documents-count')).toHaveText(/^1 of \d+ documents in place$/);
-  const row = await openSlot(page, FOUNDER_SLOT);
-  await expect(row.locator('.st')).toHaveText('We read it');
-  await expect(row).toContainText('You uploaded this and we read it.');
+  const { row, body } = await openSlot(page, FOUNDER_SLOT);
+  await expect(statusOf(row)).toHaveText('We read it');
+  await expect(row).toContainText('Shared by you');
+  await expect(row).toContainText('Read and in order');
+  await expect(body).toContainText('founder-ip-assignment.pdf');
   await expect(row.getByRole('button', { name: 'Download' })).toBeVisible();
 
   const direct = await page.request.get(`${WEB_URL}/v1/documents/${(await documentsOf(page, companyId))[0]?.id ?? ''}/download`);
   expect(direct.ok()).toBe(true);
 
-  await row.getByRole('button', { name: 'Remove this document' }).click();
-  await expect(row.getByTestId('remove-confirm')).toContainText('It will stop counting towards your score.');
-  await row.getByRole('button', { name: 'Yes, remove it' }).click();
+  await body.getByRole('button', { name: 'Remove this document' }).click();
+  await expect(body.getByTestId('remove-confirm')).toContainText('It will stop counting towards the score.');
+  await body.getByRole('button', { name: 'Yes, remove it' }).click();
   await expect(page.getByTestId('documents-count')).toHaveText(/^0 of \d+ documents in place$/);
   expect(await documentsOf(page, companyId)).toHaveLength(0);
 });
@@ -117,7 +132,7 @@ test('"No, it\'s something else" lets the person choose where it belongs', async
   await signIn(page);
   const { companyId } = await seedPlain(page);
   await page.goto(`/documents/add?company=${companyId}`);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Add a document');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Add a document');
   await page.locator('input[type="file"]').setInputFiles(signedPdf());
   const confirm = page.getByTestId('confirm-document');
   await expect(confirm).toBeVisible({ timeout: 60_000 });
@@ -139,10 +154,10 @@ test('a document waiting on its confirmation can be picked up from Documents', a
 
   await page.goto('/documents');
   const waiting = page.getByTestId('documents-waiting');
-  await expect(waiting).toContainText("It doesn't count until you confirm where it belongs.");
+  await expect(waiting).toContainText('It counts once you confirm where it belongs.');
   await waiting.getByRole('link', { name: 'Confirm' }).click();
   await page.waitForURL('**/documents/add**');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Where does this belong?');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Where does this belong?');
   await expect(page.getByTestId('confirm-document')).toBeVisible();
 });
 
@@ -164,12 +179,11 @@ test('an unsigned copy gets the not-accepted screen, says it was kept, and a per
 
   await page.waitForURL(`**/documents/${id}/rejected`);
   const screen = page.getByTestId('document-rejected');
-  await expect(screen.getByRole('heading', { level: 1 })).toHaveText("This copy doesn't count yet");
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName("This copy doesn't count yet");
   await expect(screen).toContainText("doesn't look signed yet");
-  await expect(screen).toContainText("We've kept this copy in your documents");
+  await expect(screen).toContainText('Vero kept this copy in your documents');
   expect(((await screen.innerText()).match(/you have the last word/gi) ?? []).length, 'never said twice').toBeLessThanOrEqual(1);
   await expect(screen.getByRole('link', { name: 'Upload the signed copy' })).toHaveAttribute('href', new RegExp(`slot=${FOUNDER_SLOT}`));
-  await expect(page.getByRole('img', { name: /An illustration, not your document/ })).toBeVisible();
   expect((await documentsOf(page, companyId))[0]?.status).toBe('rejected');
 
   await screen.getByRole('button', { name: 'It is signed, file it' }).click();
@@ -177,7 +191,8 @@ test('an unsigned copy gets the not-accepted screen, says it was kept, and a per
   expect((await documentsOf(page, companyId))[0]?.status).toBe('filed');
 
   await page.goto(`/documents/${id}/rejected`);
-  await expect(page.getByTestId('not-rejected')).toContainText("wasn't turned away");
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('This document was not turned away');
+  await expect(page.getByTestId('not-rejected')).toContainText('Nothing to fix here');
 });
 
 test('Free has no vault: Documents and Add a document show the way to upgrade', async ({ page }) => {

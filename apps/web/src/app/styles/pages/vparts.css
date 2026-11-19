@@ -1,0 +1,35 @@
+/* Pieces shared by the overview, area, history and watchlist screens (components/overview/parts.tsx). */
+.next .imps{font-size:12.5px;color:var(--ink-3);font-weight:600;line-height:1.35;max-width:170px}
+.next .imps-plain{margin-top:auto;padding-top:18px;font-size:13px;font-weight:600;color:var(--ink-3);line-height:1.5}
+.next .imps-plain .link{color:var(--sky-2)}
+.vchg{font-family:"Lowres Pixel";font-size:20px;font-weight:400;white-space:nowrap}
+.vchg.pos{color:var(--good)}
+.vchg.neg{color:var(--urgent)}
+.vchg.no{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink-4)}
+.vblocks i{animation:vblk .5s var(--ease) both;animation-delay:calc(var(--i,0) * 35ms + 350ms);transform-origin:bottom}
+@keyframes vblk{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+.next .art~h3{padding-right:96px}
+.btn[disabled]{cursor:default;opacity:.78}
+/* a hairline table row that opens something */
+tr.f a.rowlink{color:inherit}
+tr.f a.rowlink:hover{text-decoration:underline}
+.vmore{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-top:1px solid var(--line)}
+.vmore .muted{font-size:13px}
+.vempty{padding:26px 22px 28px;color:var(--ink-3);font-weight:600;font-size:14px;line-height:1.55}
+.vempty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+[data-theme="dark"] .next .imps,[data-theme="dark"] .next .imps-plain{color:rgba(225,233,255,.7)}
+[data-theme="dark"] .next .imps-plain .link{color:#fff}
+@media (prefers-reduced-motion:reduce){
+  .vblocks i{animation:none}
+}
+/* phones: tables keep their main columns, the page heads wrap whole items */
+@media (max-width:560px){
+  .mod table.vtable{display:table;width:100%;overflow:visible}
+  table.vtable .opt{display:none}
+  table.vtable th:first-child{width:auto!important}
+  table.vtable td,table.vtable th{padding-left:16px;padding-right:16px}
+  .pg-ov .pagehead .meta,.pg-area .pagehead .meta,.pg-hist .pagehead .meta,.pg-wl .pagehead .meta{flex-wrap:wrap;gap:4px 14px}
+  .pg-ov .pagehead .meta span,.pg-area .pagehead .meta span,.pg-hist .pagehead .meta span,.pg-wl .pagehead .meta span{white-space:nowrap}
+  .pg-ov .mh .sub,.pg-area .mh .sub,.pg-hist .mh .sub,.pg-wl .mh .sub{display:none}
+  .pg-ov .tab,.pg-area .tab,.pg-hist .tab,.pg-wl .tab{white-space:nowrap}
+}

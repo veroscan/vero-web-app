@@ -20,7 +20,7 @@ export function packWords(pack: Pick<RulePack, 'status' | 'approvedBy' | 'approv
     return { word: 'Approved', tone: 'good', approved: true, line: `Approved by ${pack.approvedBy} on ${longDate(pack.approvedAt)}` };
   }
   if (pack.status === 'retired') return { word: 'Retired', tone: 'none', approved: false, line: 'No longer in use' };
-  return { word: 'Draft', tone: 'watch', approved: false, line: 'Not approved by Code & Clause. Its rules stay labelled as drafts.' };
+  return { word: 'Draft', tone: 'watch', approved: false, line: 'Not approved by a lawyer yet. Its rules stay labelled as drafts.' };
 }
 
 /** How a rule pack reads on a customer's report. Anything not approved says draft, and no reviewer is named. */

@@ -1,0 +1,62 @@
+/* Dark polish from the approved dark boards (make_dark.py POLISH, 19 Nov 2026). Rules here apply only in dark. */
+/* ===== dark navy theme: depth comes from light, not from boxes ===== */
+html,body,.vroot{background:var(--bg)}
+.vroot{background:radial-gradient(1200px 700px at 78% 0%,rgba(29,52,214,.30),transparent 60%),radial-gradient(900px 600px at 0% 100%,rgba(1,130,250,.10),transparent 60%),var(--bg);min-height:100vh;color:var(--ink)}
+.side.v3{background:linear-gradient(180deg,#02033A,#01012A)!important;border-right:1px solid var(--line)!important}
+.side.v3 .nv a.on{background:linear-gradient(90deg,rgba(61,123,255,.22),rgba(61,123,255,.06))!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(120,160,255,.18)}
+.side.v3 .nv a.on .i{color:#8FB0FF!important}
+.side.v3 .co:hover,.side.v3 .nv a:hover,.side.v3 .sf>a:hover,.side.v3 .wr:hover{background:var(--hover)!important}
+.side.v3 .av{background:rgba(150,170,255,.12)!important;color:var(--ink-2)!important}
+.side.v3 .wr b{color:var(--ink)!important}
+.atmos{background:#00004A}
+.hero{isolation:isolate}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:160px;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none;z-index:0}
+.hero>*:not(.atmos):not(.flow){position:relative;z-index:1}
+.bar{background:transparent!important;border-bottom-color:rgba(255,255,255,.08)!important}
+.search{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.12)!important;color:rgba(255,255,255,.6)!important}
+.search kbd{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.14)!important;color:rgba(255,255,255,.6)!important}
+.ibtn{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.12)!important;color:#fff!important}
+.ibtn .dot{box-shadow:0 0 0 2px #00004A!important}
+.mod{background:linear-gradient(180deg,rgba(14,20,110,.55),rgba(6,8,74,.55))!important;border:1px solid var(--line)!important;
+  box-shadow:inset 0 1px 0 rgba(170,190,255,.08),0 30px 60px -36px rgba(0,0,10,.9)!important;backdrop-filter:blur(12px)}
+.next{background:linear-gradient(165deg,#1238C9 0%,#0A1B8F 55%,#07106A 100%)!important;color:#fff!important;border:1px solid rgba(140,175,255,.35)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 40px 80px -36px rgba(18,56,201,.65)!important}
+.next *{border-color:rgba(255,255,255,.16)}
+.next .k,.next small,.next p,.next .muted{color:rgba(225,233,255,.75)!important}
+.next h3,.next b{color:#fff!important}
+.next .btn-p,.next .btn{background:#fff!important;color:#00004A!important}
+.btn-p{background:linear-gradient(180deg,#4C86FF,#2F64F0)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 10px 24px -12px rgba(47,100,240,.8)}
+.btn-p:hover{background:linear-gradient(180deg,#5B91FF,#3A6EF6)!important}
+.btn-g{background:rgba(150,170,255,.07)!important;border-color:var(--line)!important;color:var(--ink)!important}
+.hero .btn-g{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important;color:#fff!important}
+th{color:var(--ink-3)!important}
+tbody tr:hover,tr.f:hover{background:var(--hover)}
+input,select,textarea{color:var(--ink);background-color:rgba(150,170,255,.06)}
+input::placeholder{color:var(--ink-4)}
+.drawer,.cmd{background:#05073F!important;border:1px solid var(--line)}
+.pixel{text-shadow:0 0 24px rgba(120,160,255,.25)}
+.tab.on{color:#fff!important}
+.gain{color:var(--good)!important}
+/* auth pages: the form side becomes deep navy too */
+.right{background:radial-gradient(700px 500px at 100% 0%,rgba(29,52,214,.25),transparent 60%),#01012A}
+.right .top a,.form .lead b{color:#8FB0FF!important}
+.field input,.sso button,.sso a,.use button{background:rgba(150,170,255,.06)!important;border-color:rgba(150,170,255,.16)!important;color:var(--ink)!important}
+.field input:focus{border-color:#4C86FF!important;box-shadow:0 0 0 4px rgba(76,134,255,.22)!important}
+.use button.on{background:rgba(61,123,255,.18)!important;border-color:#4C86FF!important;box-shadow:0 0 0 3px rgba(76,134,255,.18)!important}
+.use button.on svg{stroke:#8FB0FF!important}
+.cta{background:linear-gradient(180deg,#4C86FF,#2F64F0)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 40px -18px rgba(47,100,240,.9)}
+.legal a{color:var(--ink-2)!important}
+.cty{background-color:rgba(150,170,255,.10)!important;color:var(--ink)!important}
+.sbox{background:#0A0E5A!important;box-shadow:0 30px 70px -30px rgba(0,0,20,.9),0 0 0 1px rgba(150,170,255,.22),0 0 0 6px rgba(76,134,255,.10)!important}
+.sbox input{color:#fff!important}
+.sbox .go{background:linear-gradient(180deg,#4C86FF,#2F64F0)!important}
+option{background:#06084A;color:#F1F3FF}
+/* documents stay paper: the one bright object on the dark, so the evidence reads first */
+.sheet{background:#F5F7FD!important;--ink:#0B0E3A;--ink-2:#4E5472;--ink-3:#8A90A8;--line:#E3E7F0;--line-2:#EFF1F6;color:#0B0E3A!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 40px 80px -30px rgba(0,0,10,.95)!important}
+.sheet p{color:#2A2F55!important}.sheet *{border-color:#E3E7F0}
+.sheet mark{background:#FFD9DB!important;color:#0B0E3A!important}
+.bk{background:#AFC0EE!important;opacity:.35}
+.next .imp .from{color:rgba(225,233,255,.5)!important}.next .imp span[style]{color:rgba(225,233,255,.7)!important}
+/* coverage blocks on the navy hero stay white in dark, as on the dark boards (the generic mapping turned them panel navy) */
+.hero .blocks i{background:#fff}.hero .blocks i.x{background:#FF6B70}.hero .blocks i.o{background:rgba(255,255,255,.18)}

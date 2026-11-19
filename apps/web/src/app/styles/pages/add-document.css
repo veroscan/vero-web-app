@@ -1,0 +1,54 @@
+/* Add a document and the rejected copy (board: AddDocument.dc.html). The flow itself is in docflow.css. */
+
+.pg-add .pagehead .lead{max-width:640px;margin-top:8px;font-size:15px;font-weight:600;line-height:1.5;color:rgba(255,255,255,.72)}
+.pg-add .add{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+.pg-add .add>div{display:flex;flex-direction:column;gap:20px;min-width:0}
+.pg-add .stage{padding:18px 22px 22px;min-height:600px;display:flex}
+.pg-add .rs{padding:6px 0 4px}
+.pg-add .rr{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:15px 22px;border-top:1px solid var(--line-2);cursor:pointer;transition:background .15s;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;color:var(--ink)}
+.pg-add .rr:first-child{border-top:0}
+.pg-add .rr:hover{background:var(--hover)}
+.pg-add .rr.sel{background:var(--sel)}
+.pg-add .rr:disabled{cursor:default}
+.pg-add .rr b{display:block;font-weight:700;font-size:14px}.pg-add .rr small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px;line-height:1.45}
+.pg-add .rr .gain{font-size:24px}
+.pg-add .rr .nc{font-size:12.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.pg-add .rr .ur{font-size:12.5px;font-weight:700;color:var(--urgent);white-space:nowrap}
+.pg-add .rnote{margin:0 22px 20px;padding:14px 16px;border-radius:14px;background:var(--soft);font-size:13px;line-height:1.55;font-weight:600;color:var(--ink-2)}
+.pg-add .rnote b{color:var(--ink)}
+.pg-add .rempty{padding:14px 22px 20px;font-size:13.5px;font-weight:600;color:var(--ink-3);line-height:1.55}
+.pg-add .priv{padding:16px 22px 20px}
+.pg-add .priv div{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:9px 0;font-size:13.5px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.pg-add .priv .i{color:var(--sky-2);margin-top:1px;width:18px;height:18px}
+.pg-add .conn{padding:4px 22px 14px}
+.pg-add .conn .ci{display:flex;gap:12px;align-items:center;padding:12px 0}
+.pg-add .conn .ci+.ci{border-top:1px solid var(--line-2)}
+.pg-add .conn .ci>div{flex:1;min-width:0}
+.pg-add .conn b{display:block;font-size:13.5px;font-weight:700}
+.pg-add .conn small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px;line-height:1.45}
+.pg-add .lockb{padding:22px;display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.pg-add .lockb p{font-size:14.5px;line-height:1.6;color:var(--ink-2);font-weight:500;max-width:560px}
+.pg-add .lockb h3{font-size:20px;font-weight:700;letter-spacing:-.015em}
+/* the rejected copy: what Vero saw, and the two ways forward */
+.pg-add .rej{padding:18px 22px 26px;display:flex}
+.pg-add .rej .acts2 .btn{white-space:nowrap}
+.pg-add .rej .seen2{margin-top:16px;border-top:1px solid var(--line-2)}
+.pg-add .rej .seen2 div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line-2);font-size:13.5px;font-weight:600}
+.pg-add .rej .seen2 span{color:var(--ink-3)}
+
+@media (max-width:1180px){
+  .pg-add .add{grid-template-columns:1fr}
+}
+@media (max-width:960px){
+  .pg-add .stage{min-height:0;padding:14px 16px 18px}
+  .pg-add .rej{padding:14px 16px 20px}
+}
+@media (max-width:560px){
+  .pg-add .pagehead .meta{flex-wrap:wrap;gap:4px 14px}
+  .pg-add .mh{flex-wrap:wrap;row-gap:4px}
+  .pg-add .mh h2{white-space:nowrap}
+  .pg-add .tab{white-space:nowrap;flex:none}
+  .pg-add table th:first-child{width:auto!important}
+  .pg-add td .st2{white-space:nowrap}
+}
+.pg-add .rej .seen2 span{flex:none}.pg-add .rej .seen2 b{text-align:right}

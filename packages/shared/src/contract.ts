@@ -21,6 +21,7 @@ import * as fp from './file-pickers';
 import * as p from './product';
 import * as v from './vault';
 import * as w from './watchlist';
+import * as wl from './waitlist';
 import {
   companyListQuerySchema,
   companyListResponseSchema,
@@ -816,6 +817,13 @@ export const contract = {
       params: p.publicTokenParamsSchema,
       response: p.publicBadgeResponseSchema,
     }),
+    /** The website's waitlist form. Same answer whether or not the address was already on it. */
+    joinWaitlist: endpoint({
+      method: 'POST',
+      path: '/v1/public/waitlist',
+      body: wl.joinWaitlistBodySchema,
+      response: okResponseSchema,
+    }),
   },
   plans: {
     list: endpoint({ method: 'GET', path: '/v1/plans', response: planListResponseSchema }),
@@ -864,6 +872,13 @@ export const contract = {
       path: '/v1/admin/staff/:userId',
       params: p.staffMemberParamsSchema,
       response: okResponseSchema,
+    }),
+    /** Who joined the website's waitlist, newest first. */
+    waitlist: endpoint({
+      method: 'GET',
+      path: '/v1/admin/waitlist',
+      query: wl.adminWaitlistQuerySchema,
+      response: wl.adminWaitlistResponseSchema,
     }),
   },
   search: {

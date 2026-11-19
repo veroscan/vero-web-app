@@ -4,9 +4,11 @@ import type { SearchResponse } from '@vero/shared';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, asApiError, isRedirecting } from '@/lib/api';
+import { Icon, type IconName } from './Icon';
 
 interface Result {
   key: string;
+  icon: IconName;
   title: string;
   subtitle: string;
   href: string;
@@ -14,21 +16,27 @@ interface Result {
 
 /** Real pages to jump to before anything is typed. No sample data, unlike the prototype's list. */
 const PAGES: Result[] = [
-  { key: 'home', title: 'Home', subtitle: 'Your score', href: '/' },
-  { key: 'issues', title: 'All issues', subtitle: 'What to fix', href: '/issues' },
-  { key: 'new', title: "What's new", subtitle: 'Notifications', href: '/notifications' },
+  { key: 'home', icon: 'home', title: 'Overview', subtitle: 'Your score', href: '/' },
+  { key: 'issues', icon: 'flag', title: 'Findings', subtitle: 'What Vero found', href: '/issues' },
+  { key: 'docs', icon: 'doc', title: 'Documents', subtitle: 'What Vero has read', href: '/documents' },
+  { key: 'deadlines', icon: 'cal', title: 'Deadlines', subtitle: 'Filings coming up', href: '/deadlines' },
+  { key: 'watch', icon: 'eye', title: 'Watchlist', subtitle: 'Companies you follow', href: '/watchlist' },
+  { key: 'scan', icon: 'scan', title: 'Scan a new company', subtitle: 'Action', href: '/scan' },
+  { key: 'share', icon: 'share', title: 'Share your report', subtitle: 'Action', href: '/report' },
+  { key: 'new', icon: 'bell', title: "What's new", subtitle: 'Notifications', href: '/notifications' },
 ];
 
 function toResults(found: SearchResponse): Result[] {
   return [
     ...found.issues.map((item) => ({
       key: `issue-${item.companyId}-${item.ruleKey}`,
+      icon: 'flag' as const,
       title: item.title,
       subtitle: item.subtitle,
       href: `/issues/${item.companyId}/${encodeURIComponent(item.ruleKey)}`,
     })),
-    ...found.deadlines.map((item) => ({ key: `deadline-${item.id}`, title: item.title, subtitle: item.subtitle, href: '/deadlines' })),
-    ...found.documents.map((item) => ({ key: `document-${item.id}`, title: item.title, subtitle: item.subtitle, href: '/documents' })),
+    ...found.deadlines.map((item) => ({ key: `deadline-${item.id}`, icon: 'cal' as const, title: item.title, subtitle: item.subtitle, href: '/deadlines' })),
+    ...found.documents.map((item) => ({ key: `document-${item.id}`, icon: 'doc' as const, title: item.title, subtitle: item.subtitle, href: '/documents' })),
   ];
 }
 
@@ -83,18 +91,19 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
     router.push(result.href);
   };
 
+  useEffect(() => {
+    document.body.classList.add('cmdo');
+    return () => document.body.classList.remove('cmdo');
+  }, []);
+
   return (
-    <div
-      className="pal-scrim"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="pal" role="dialog" aria-modal="true" aria-label="Search">
+    <>
+      <div className="cmdscrim" onMouseDown={onClose} aria-hidden="true" />
+      <div className="cmd" role="dialog" aria-modal="true" aria-label="Search">
         <input
           ref={input}
           type="text"
-          placeholder="Search issues, documents and deadlines"
+          placeholder="Search findings, documents and deadlines"
           aria-label="Search"
           value={query}
           onChange={(event) => {
@@ -110,34 +119,42 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
             if (event.key === 'Enter') go(results[selected]);
           }}
         />
-        <ul>
+        <div className="g" data-lenis-prevent="">
+          <div className="gh">{trimmed.length < 2 ? 'Jump to' : 'Results'}</div>
           {problem ? (
-            <li className="small" role="alert" style={{ padding: '14px 16px' }}>
+            <p className="empty" role="alert">
               {problem}
-            </li>
+            </p>
           ) : results.length === 0 ? (
-            <li className="small" style={{ padding: '14px 16px' }}>
-              {found ? 'Nothing matches that.' : 'Searching.'}
-            </li>
+            <p className="empty">{found ? 'Nothing matches that.' : 'Searching.'}</p>
           ) : (
-            results.map((result, index) => (
-              <li key={result.key}>
-                <a
-                  href={result.href}
-                  className={index === selected ? 'sel' : undefined}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    go(result);
-                  }}
-                >
-                  {result.title}
-                  <span>{result.subtitle}</span>
-                </a>
-              </li>
-            ))
+            <ul style={{ listStyle: 'none' }}>
+              {results.map((result, index) => (
+                <li key={result.key}>
+                  <a
+                    href={result.href}
+                    className={`it${index === selected ? ' on' : ''}`}
+                    onMouseEnter={() => setSelected(index)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      go(result);
+                    }}
+                  >
+                    <Icon name={result.icon} />
+                    <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{result.title}</span>
+                    <small>{result.subtitle}</small>
+                  </a>
+                </li>
+              ))}
+            </ul>
           )}
-        </ul>
+        </div>
+        <div className="ft">
+          <span>Up and down to move</span>
+          <span>Enter to open</span>
+          <span>Esc to close</span>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

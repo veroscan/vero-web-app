@@ -27,7 +27,7 @@ test('a new person asking for a deep page starts onboarding first', async ({ pag
   await requestLink(page, email);
   await page.goto(await linkFromOutbox(email));
   await page.waitForURL('**/onboarding/company**');
-  await expect(page.getByRole('heading', { name: 'Where is your company registered?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Find your company' })).toBeVisible();
 });
 
 test('an expired link says so, and offers a new one', async ({ page, watch }) => {
@@ -63,7 +63,6 @@ test('a used link says so in any browser, and a made-up one is not called used',
   // The API says which it was, so another browser knows too.
   const other = await browser.newContext();
   const elsewhere = await other.newPage();
-  await elsewhere.route('**/vero-3d.js', (route) => route.fulfill({ contentType: 'text/javascript', body: '' }));
   await elsewhere.goto(link);
   await expect(elsewhere.getByTestId('link-used')).toContainText('already been used');
   await other.close();
@@ -82,7 +81,7 @@ test('a revoked session goes back to sign in rather than showing an error', asyn
   page.removeAllListeners('console');
   await page.goto('/issues');
   await page.waitForURL('**/sign-in**');
-  await expect(page.getByRole('heading', { name: 'Get your legal health score' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to Vero' })).toBeVisible();
 });
 
 test('two-step sign-in asks for the code when it is switched on', async ({ page, watch }) => {

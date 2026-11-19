@@ -1,15 +1,16 @@
 import Link from 'next/link';
+import { MissingPage } from '@/components/MissingPage';
+import { PublicMessage } from '@/components/PublicBar';
 
 export default function NotFound() {
   return (
-    <div className="vs">
-      <main className="state">
-        <h1 className="t-1">We can&apos;t find that page</h1>
-        <p className="lead">It may have moved, or the link may be wrong.</p>
-        <Link className="btn btn-ink btn-sm" href="/">
+    <PublicMessage kicker="404 · Page not found" title="We can't find that page" art={<MissingPage />}>
+      <p>It may have moved, or the link may be wrong.</p>
+      <div className="btns">
+        <Link className="btn btn-w btn-lg" href="/">
           Go to your home page
         </Link>
-      </main>
-    </div>
+      </div>
+    </PublicMessage>
   );
 }

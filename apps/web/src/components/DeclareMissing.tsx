@@ -51,7 +51,7 @@ export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: ()
   const footer = (
     <>
       {status ? (
-        <p className="small" role="status" data-testid="missing-status">
+        <p className="muted" style={{ fontSize: 13 }} role="status" data-testid="missing-status">
           {status}
         </p>
       ) : null}
@@ -65,12 +65,12 @@ export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: ()
 
   if (declared) {
     return (
-      <div className="stack g12" data-testid="declared-missing">
-        <p className="quiet">
-          <span className="b">You told us you don&apos;t have this.</span> It counts as a gap in your score until you add it or undo this.
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declared-missing">
+        <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.55, fontWeight: 600 }}>
+          <b style={{ color: 'var(--ink)' }}>You told us you don&apos;t have this.</b> It counts as a gap in your score until you add it or undo this.
         </p>
-        <div className="btns">
-          <button className="btn btn-line btn-sm" type="button" disabled={busy} onClick={() => void change(false)}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => void change(false)}>
             Undo this
           </button>
         </div>
@@ -80,13 +80,13 @@ export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: ()
   }
   if (!item.canDeclareMissing) return null;
   return (
-    <div className="stack g12" data-testid="declare-missing">
-      <p className="quiet">Add it and we&apos;ll read it. If you don&apos;t have it, tell us and it becomes a gap, which may lower your score. You can undo that.</p>
-      <div className="btns">
-        <TLink className="btn btn-ink btn-sm" href={`/documents/add?company=${item.companyId}&rule=${encodeURIComponent(item.ruleKey)}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declare-missing">
+      <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.55, fontWeight: 600 }}>Add it and we&apos;ll read it. If you don&apos;t have it, tell us and it becomes a gap, which may lower your score. You can undo that.</p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <TLink className="btn btn-p btn-sm" href={`/documents/add?company=${item.companyId}&rule=${encodeURIComponent(item.ruleKey)}`}>
           Add the document
         </TLink>
-        <button className="btn btn-line btn-sm" type="button" disabled={busy} onClick={() => void change(true)}>
+        <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => void change(true)}>
           We don&apos;t have it
         </button>
       </div>

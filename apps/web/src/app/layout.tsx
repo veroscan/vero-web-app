@@ -1,22 +1,30 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import '@fontsource/figtree/400.css';
-import '@fontsource/figtree/500.css';
-import '@fontsource/figtree/600.css';
-import '@fontsource/figtree/700.css';
-import './styles/vero.css';
-import './styles/screens.css';
-import './styles/app.css';
+import '@fontsource/plus-jakarta-sans/300.css';
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
+import '@fontsource/plus-jakarta-sans/800.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import './styles/kit.css';
+import './styles/base.css';
+import './styles/motion.css';
+import './styles/kit-dark.css';
+import { IconSprite } from '@/components/Icon';
+import { RouteBar, SmoothScroll } from '@/components/Motion';
 import { ThemeSync } from '@/components/Theme';
 import { ToastProvider } from '@/components/Toast';
 
 export const metadata: Metadata = {
-  title: { default: 'Vero Scan', template: '%s | Vero Scan' },
-  description: 'Know exactly where your company stands.',
+  title: { default: 'Vero', template: '%s | Vero' },
+  description: 'Know exactly where any company stands, checked against the official registers.',
   robots: { index: false, follow: false },
+  icons: { icon: '/brand/app-icon.svg' },
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#000066' };
 
 /**
  * Runs before the first paint, so a dark-mode reader never sees a white flash. A saved choice
@@ -29,9 +37,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <link rel="preload" href="/fonts/LowresPixel-Regular.otf" as="font" type="font/otf" crossOrigin="" />
       </head>
       <body>
+        <IconSprite />
         <ThemeSync />
+        <SmoothScroll />
+        <RouteBar />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

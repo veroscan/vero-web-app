@@ -1,41 +1,49 @@
 'use client';
 
+/* The product shell from the approved v2 kit: a quiet sidebar (company, pages, watchlist, settings, you),
+   a top bar that sits on the navy atmosphere, and the Ctrl K palette. Real data only. */
+
+import type { WatchlistResponse } from '@vero/shared';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { initials } from '@/lib/format';
+import { api } from '@/lib/api';
+import { companyLine, scoreText } from '@/lib/shell';
+import { Icon, type IconName } from './Icon';
+import { Atmos, FlowLines } from './Motion';
 import { SearchPalette } from './Search';
 import { useSession } from './Session';
-import { ThemeToggle } from './Theme';
+import { ThemeSwitch } from './Theme';
 import { TLink } from './TLink';
-import { useToast } from './Toast';
 
-const TABS = [
-  { href: '/', label: 'Home', empty: '' },
-  { href: '/issues', label: 'Issues', empty: 'Your issues will show here after your first scan.' },
-  { href: '/documents', label: 'Documents', empty: 'Your documents will show here after your first scan.' },
-  { href: '/deadlines', label: 'Deadlines', empty: 'Your deadlines will show here after your first scan.' },
-  { href: '/company', label: 'Company', empty: 'Your company records will show here after your first scan.' },
-];
-
-function isOn(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/' || pathname.startsWith('/areas');
-  return pathname === href || pathname.startsWith(`${href}/`);
+interface NavItem {
+  href: string;
+  icon: IconName;
+  label: string;
+  match: (path: string) => boolean;
+  count?: number;
 }
 
-function AccountMenu() {
-  const session = useSession();
-  const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  const { user } = session.me;
+function navItems(open: number): NavItem[] {
+  return [
+    { href: '/', icon: 'home', label: 'Overview', match: (p) => p === '/' || p.startsWith('/areas') },
+    { href: '/issues', icon: 'flag', label: 'Findings', match: (p) => p.startsWith('/issues'), count: open },
+    { href: '/documents', icon: 'doc', label: 'Documents', match: (p) => p.startsWith('/documents') },
+    { href: '/deadlines', icon: 'cal', label: 'Deadlines', match: (p) => p.startsWith('/deadlines') },
+    { href: '/company', icon: 'bank', label: 'Registry records', match: (p) => p.startsWith('/company') },
+    { href: '/history', icon: 'clock', label: 'Scan history', match: (p) => p.startsWith('/history') },
+  ];
+}
 
+/** Closes a popover on an outside click or Escape. */
+function useDismiss(open: boolean, close: () => void) {
+  const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
     const onDown = (event: MouseEvent) => {
-      if (!box.current?.contains(event.target as Node)) setOpen(false);
+      if (!box.current?.contains(event.target as Node)) close();
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') close();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -43,49 +51,124 @@ function AccountMenu() {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, close]);
+  return box;
+}
 
-  const name = session.root?.legalName ?? 'Your account';
+/** The watchlist, shared by the sidebar and the palette. Refreshed when a page says it changed. */
+export function useWatchlist(): WatchlistResponse | null {
+  const [list, setList] = useState<WatchlistResponse | null>(null);
+  useEffect(() => {
+    let live = true;
+    const load = (): void => {
+      void api.watchlist.list().then(
+        (value) => {
+          if (live) setList(value);
+        },
+        () => undefined, // The sidebar keeps what it had. The watchlist page reports its own failures.
+      );
+    };
+    load();
+    window.addEventListener('vero:watchlist', load);
+    return () => {
+      live = false;
+      window.removeEventListener('vero:watchlist', load);
+    };
+  }, []);
+  return list;
+}
+
+function CompanyButton() {
+  const session = useSession();
+  const [open, setOpen] = useState(false);
+  const box = useDismiss(open, () => setOpen(false));
+  const root = session.root;
+  if (!root) {
+    return (
+      <TLink className="co" href="/onboarding/company">
+        <span className="co-t">
+          <b>Add your company</b>
+          <small>Start with a scan</small>
+        </span>
+        <Icon name="plus" />
+      </TLink>
+    );
+  }
+  const group = [root, ...session.related];
   return (
-    <div className="acct" ref={box}>
-      <button className="me" type="button" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((value) => !value)}>
-        {name} <i>{initials(user.name, user.email)}</i>
+    <div ref={box} style={{ position: 'relative' }}>
+      <button className="co" type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)} data-testid="company-switch">
+        <span className="co-t">
+          <b>{root.legalName}</b>
+          <small>{companyLine(root)}</small>
+        </span>
+        <Icon name="updown" />
+      </button>
+      {open ? (
+        <div className="menu comenu" role="menu">
+          <div className="lbl">{group.length > 1 ? 'Your group' : 'Your company'}</div>
+          {group.map((company) => (
+            <TLink key={company.id} role="menuitem" href={`/company/${company.id}`} onClick={() => setOpen(false)}>
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{company.legalName}</span>
+            </TLink>
+          ))}
+          <div className="sep" />
+          <TLink role="menuitem" href="/scan" onClick={() => setOpen(false)}>
+            <Icon name="scan" />
+            Scan another company
+          </TLink>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function UserBlock() {
+  const session = useSession();
+  const [open, setOpen] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const box = useDismiss(open, () => setOpen(false));
+  const { user } = session.me;
+  return (
+    <div className="usr" ref={box}>
+      <button className="usrb" type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)} data-testid="account-menu">
+        <span className="av" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="3.6" />
+            <path d="M5.5 19.5c1.3-3.3 3.8-5 6.5-5s5.2 1.7 6.5 5" />
+          </svg>
+        </span>
+        <span className="t">
+          <b>{user.name ?? user.email.split('@')[0]}</b>
+          <small>{user.email}</small>
+        </span>
         <span className="sr-only">, account menu</span>
       </button>
       {open ? (
-        <div className="acct-menu">
-          <p className="who">
-            <span className="b">{user.name ?? user.email}</span>
-            {user.name ? (
-              <>
-                <br />
-                {user.email}
-              </>
-            ) : null}
-            {session.isDemo ? (
-              <>
-                <br />
-                Demo organisation, with made-up data
-              </>
-            ) : null}
-          </p>
-          <div role="menu" aria-label="Account">
-            <TLink href="/settings" role="menuitem" onClick={() => setOpen(false)}>
-              Settings and team
-            </TLink>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setFailed(false);
-                session.signOut().catch(() => setFailed(true));
-              }}
-            >
-              Sign out
-            </button>
-          </div>
+        <div className="menu usrmenu" role="menu">
+          {session.isDemo ? <div className="lbl">Demo organisation, made-up data</div> : null}
+          <TLink role="menuitem" href="/settings" onClick={() => setOpen(false)}>
+            <Icon name="gear" />
+            Settings and team
+          </TLink>
+          <TLink role="menuitem" href="/plan" onClick={() => setOpen(false)}>
+            <Icon name="card" />
+            Plan and billing
+          </TLink>
+          <div className="sep" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setFailed(false);
+              session.signOut().catch(() => setFailed(true));
+            }}
+          >
+            <Icon name="out" />
+            Sign out
+          </button>
           {failed ? (
-            <p className="formerror" role="alert" style={{ padding: '6px 12px' }}>
+            <p className="formerror" role="alert" style={{ padding: '6px 10px' }}>
               We couldn&apos;t sign you out. Check your connection and try again.
             </p>
           ) : null}
@@ -95,97 +178,184 @@ function AccountMenu() {
   );
 }
 
-/** The header from the designs. Before a first scan it shrinks, as on the design's welcome screen. */
-export function AppShell({ children }: { children: ReactNode }) {
+export function Sidebar() {
   const session = useSession();
   const pathname = usePathname();
-  const toast = useToast();
-  const [searching, setSearching] = useState(false);
+  const watchlist = useWatchlist();
+  const open = (session.overview?.areas ?? []).reduce((sum, area) => sum + (area.openCount ?? 0), 0);
   const ready = session.hasResult;
+  const items = navItems(open);
+  return (
+    <aside className="side v3" id="side" aria-label="Main">
+      <TLink href="/" aria-label="Vero, overview">
+        <img className="logo light-only" src="/brand/wordmark-dark.svg" alt="" />
+        <img className="logo dark-only" src="/brand/wordmark-light.svg" alt="" />
+      </TLink>
+      <CompanyButton />
+      <nav className="nv">
+        {items.map((item) => {
+          const on = item.match(pathname);
+          const locked = !ready && item.href !== '/';
+          return (
+            <TLink key={item.href} className={on ? 'on' : undefined} href={locked ? '/' : item.href} aria-current={on ? 'page' : undefined} aria-disabled={locked || undefined} title={locked ? 'After your first scan' : undefined}>
+              <Icon name={item.icon} />
+              {item.label}
+              {item.count ? <em data-testid={item.href === '/issues' ? 'open-count' : undefined}>{item.count}</em> : null}
+            </TLink>
+          );
+        })}
+      </nav>
+      <div className="grp">
+        <div className="gh">
+          <TLink href="/watchlist" style={{ width: 'auto', height: 'auto', background: 'none', color: pathname.startsWith('/watchlist') ? 'var(--ink)' : undefined }}>
+            Watchlist
+          </TLink>
+          <TLink href="/scan?follow=1" aria-label="Follow a company">
+            <Icon name="plus" />
+          </TLink>
+        </div>
+        {watchlist && watchlist.companies.length === 0 ? <p className="gh-empty">Follow any company to see its score here.</p> : null}
+        {(watchlist?.companies ?? []).slice(0, 6).map((item) => {
+          const score = scoreText(item.score);
+          const low = item.score.kind === 'exact' && item.score.value < 70;
+          return (
+            <TLink key={item.companyId} className="wr" href={`/watchlist/${item.companyId}`}>
+              <span>{item.legalName}</span>
+              <b className={`pixel${low ? ' low' : ''}`}>{score}</b>
+            </TLink>
+          );
+        })}
+      </div>
+      <div className="sf">
+        <TLink className={pathname.startsWith('/settings') ? 'on' : undefined} href="/settings">
+          <Icon name="gear" />
+          Settings
+        </TLink>
+        <ThemeSwitch />
+        <UserBlock />
+      </div>
+    </aside>
+  );
+}
+
+/** The top bar. On a page with a hero it sits on the atmosphere. */
+export function TopBar({ crumb }: { crumb?: ReactNode }) {
+  const session = useSession();
+  return (
+    <header className="bar" id="bar">
+      <button className="mbar" type="button" aria-label="Open the menu" onClick={() => document.body.classList.add('navo')}>
+        <Icon name="menu" />
+      </button>
+      {crumb ? <div className="crumb">{crumb}</div> : null}
+      {/* Named by its own words ("Search Vero Ctrl K"): a different aria-label fails axe's label-content-name-mismatch. */}
+      <button className="search" type="button" id="openCmd" onClick={() => window.dispatchEvent(new Event('vero:search'))}>
+        <Icon name="search" />
+        <span style={{ whiteSpace: 'nowrap' }}>Search Vero</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <TLink className="ibtn hide-s" href="/notifications" aria-label={session.unread > 0 ? `What's new, ${session.unread} unread` : "What's new"} data-testid="bell">
+        <Icon name="bell" />
+        {session.unread > 0 ? <span className="dot" data-testid="bell-count" aria-hidden="true" /> : null}
+      </TLink>
+      {/* Named here too: on a phone the words are hidden and only the icon shows. */}
+      <TLink className="btn btn-p" href="/scan" aria-label="New scan">
+        <Icon name="plus" />
+        <span className="lbl">New scan</span>
+      </TLink>
+    </header>
+  );
+}
+
+/**
+ * A page that opens on the navy atmosphere: the top bar and the page head sit on the light,
+ * the working area below rides up over its edge (<After/>).
+ */
+export function Hero({ crumb, children, className, flow = true }: { crumb?: ReactNode; children?: ReactNode; className?: string; flow?: boolean }) {
+  return (
+    <div className={`hero${className ? ` ${className}` : ''}`}>
+      <Atmos />
+      {flow ? <FlowLines /> : null}
+      <TopBar crumb={crumb} />
+      <div className="content">{children}</div>
+    </div>
+  );
+}
+
+/** The light working area under a hero. */
+export function After({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={`content after${className ? ` ${className}` : ''}`}>{children}</div>;
+}
+
+/** A page with no hero: plain bar, plain content. */
+export function Plain({ crumb, children, className }: { crumb?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <>
+      <TopBar crumb={crumb} />
+      <div className={`content${className ? ` ${className}` : ''}`}>{children}</div>
+    </>
+  );
+}
+
+/** Sidebar + main column, the Ctrl K palette and the mobile menu. */
+export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
-    if (!ready) return;
     const onKey = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setSearching(true);
       }
     };
+    const onOpen = () => setSearching(true);
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [ready]);
+    window.addEventListener('vero:search', onOpen);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('vero:search', onOpen);
+    };
+  }, []);
 
-  const unreadLabel = session.unread > 0 ? `What's new, ${session.unread} unread` : "What's new";
+  useEffect(() => {
+    document.body.classList.remove('navo', 'open');
+  }, [pathname]);
+
   return (
-    <div className="vs">
-      <header className="bar">
-        <TLink href="/" aria-label="Vero Scan home">
-          <img src="/vero-lockup.svg" alt="" />
-        </TLink>
-        <nav className="tabs" aria-label="Main">
-          {TABS.map((tab) =>
-            ready || !tab.empty ? (
-              <TLink key={tab.href} className={isOn(pathname, tab.href) ? 'on' : undefined} href={tab.href} aria-current={isOn(pathname, tab.href) ? 'page' : undefined}>
-                {tab.label}
-              </TLink>
-            ) : (
-              <a
-                key={tab.href}
-                href="#scan"
-                onClick={(event) => {
-                  event.preventDefault();
-                  toast(tab.empty);
-                }}
-              >
-                {tab.label}
-              </a>
-            ),
-          )}
-        </nav>
-        <div className="tools">
-          {ready ? (
-            <button className="searchbtn" type="button" aria-label="Search Ctrl K" onClick={() => setSearching(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-              <span>Search</span> <kbd>Ctrl K</kbd>
-            </button>
-          ) : null}
-          {ready ? (
-            <TLink className="iconbtn" href="/notifications" aria-label={unreadLabel} data-testid="bell">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z" />
-                <path d="M10 20a2.2 2.2 0 0 0 4 0" />
-              </svg>
-              {session.unread > 0 ? (
-                <span className="bell-count" aria-hidden="true" data-testid="bell-count">
-                  {session.unread > 99 ? '99+' : session.unread}
-                </span>
-              ) : null}
-            </TLink>
-          ) : null}
-          <ThemeToggle />
-          <AccountMenu />
-        </div>
-      </header>
-      {children}
+    <div className="vroot">
+      <div className="shell">
+        <Sidebar />
+        <main className="main" id="main">
+          {children}
+        </main>
+      </div>
+      <div className="navscrim" aria-hidden="true" onClick={() => document.body.classList.remove('navo')} />
       {searching ? <SearchPalette onClose={() => setSearching(false)} /> : null}
     </div>
   );
 }
 
-/** The plain top bar used through onboarding. */
+/** The slim bar for pages outside the app (public report, badge, sign-in links), on the atmosphere. */
+export function PublicBar({ right }: { right?: ReactNode }) {
+  return (
+    <header className="pubbar">
+      <a href="/" aria-label="Vero">
+        <img src="/brand/wordmark-light.svg" alt="Vero" />
+      </a>
+      <div className="r">{right}</div>
+    </header>
+  );
+}
+
+/** Kept for onboarding screens: the bar with no sidebar. */
 export function OnboardingBar({ step, live }: { step: ReactNode; live?: boolean }) {
   return (
-    <header className="bar">
-      <img src="/vero-lockup.svg" alt="Vero Scan" />
-      <span className="small num" {...(live ? { 'aria-live': 'polite' as const } : {})}>
-        {step}
-      </span>
-      <div className="tools">
-        <ThemeToggle />
-      </div>
-    </header>
+    <PublicBar
+      right={
+        <span className="muted" style={{ color: 'rgba(255,255,255,.7)' }} {...(live ? { 'aria-live': 'polite' as const } : {})}>
+          {step}
+        </span>
+      }
+    />
   );
 }

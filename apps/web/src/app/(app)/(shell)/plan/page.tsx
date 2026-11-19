@@ -1,66 +1,39 @@
 'use client';
 
+import '@/app/styles/pages/plan.css';
 import type { Plan } from '@vero/shared';
-import { Chevron, ErrorState, Loading } from '@/components/Bits';
+import { useState, type CSSProperties } from 'react';
+import { ErrorState, Loading } from '@/components/Bits';
+import { Icon } from '@/components/Icon';
+import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { After, Hero, Plain, useWatchlist } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
-import { VFill } from '@/components/V3D';
-import { useState } from 'react';
 import { api, asApiError } from '@/lib/api';
-import { scoreLevel, scoreWords } from '@/lib/format';
+import { roleCan } from '@/lib/entitlements';
+import { plural, scoreWords } from '@/lib/format';
 import { COMPARE_ROWS, PLAN_CHANGE, planSay, priceWords, type CompareCell } from '@/lib/plan-words';
 import { useResource } from '@/lib/useResource';
 
-function Tick({ plan }: { plan: string }) {
+function Cell({ plan, cell }: { plan: Plan; cell: CompareCell }) {
+  if (cell.included) {
+    return (
+      <>
+        <Icon name="check" />
+        <span className="sr-only">{plan.name}: included</span>
+      </>
+    );
+  }
   return (
     <>
-      <svg className="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="m5 12.5 4.5 4.5L19 7.5" />
-      </svg>
-      <span className="sr-only">{plan}: included</span>
+      <span className="sr-only">{plan.name}: </span>
+      <span className={cell.word === 'No' ? 'no' : cell.word === 'Planned' ? 'pl' : undefined}>{cell.word === 'No' ? 'Not included' : cell.word}</span>
     </>
   );
 }
 
-function Cell({ plan, cell, growth }: { plan: Plan; cell: CompareCell; growth: boolean }) {
-  const classes = ['c', growth && cell.word !== 'No' ? 'g' : '', cell.word === 'No' ? 'no' : ''].filter(Boolean).join(' ');
-  return (
-    <span className={classes} data-plan={plan.code}>
-      {cell.included ? (
-        <Tick plan={plan.name} />
-      ) : (
-        <>
-          <span className="sr-only">{plan.name}: </span>
-          {cell.word}
-        </>
-      )}
-    </span>
-  );
-}
-
-/** Where someone goes to ask. Nothing changes until our team changes it. */
-function PlanAction({ plan, current, hasResult, primary }: { plan: Plan; current: boolean; hasResult: boolean; primary: boolean }) {
-  const className = `btn ${primary ? 'btn-ink' : 'btn-line'}`;
-  if (current) {
-    if (plan.code !== 'free') return null;
-    return (
-      <TLink className={className} href="/">
-        Stay on Free
-      </TLink>
-    );
-  }
-  if (!hasResult) {
-    return (
-      <TLink className={className} href="/onboarding/company">
-        Start with your first scan
-      </TLink>
-    );
-  }
-  return <CheckoutButton className={className} plan={plan} />;
-}
-
 /** Stripe's own checkout. The plan changes only when Stripe tells us the payment went through. */
-function CheckoutButton({ className, plan }: { className: string; plan: Plan }) {
+function CheckoutButton({ plan, primary }: { plan: Plan; primary: boolean }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   if (plan.code === 'free') return null;
@@ -78,11 +51,11 @@ function CheckoutButton({ className, plan }: { className: string; plan: Plan }) 
   };
   return (
     <>
-      <button className={className} type="button" disabled={busy} onClick={start} data-testid={`checkout-${code}`}>
+      <button className={`btn ${primary ? 'btn-p' : 'btn-g'}`} type="button" disabled={busy} onClick={start} data-testid={`checkout-${code}`}>
         {busy ? 'Opening checkout' : `Move to ${plan.name}`}
       </button>
       {problem ? (
-        <p className="small" role="alert">
+        <p className="probl" role="alert">
           {problem}
         </p>
       ) : null}
@@ -90,116 +63,288 @@ function CheckoutButton({ className, plan }: { className: string; plan: Plan }) 
   );
 }
 
+function PlanAction({ plan, current, hasResult, primary }: { plan: Plan; current: boolean; hasResult: boolean; primary: boolean }) {
+  if (current) return <span className="curb">Your plan</span>;
+  if (plan.code === 'free') return <span className="curb quiet">Manage it in billing</span>;
+  if (!hasResult) {
+    return (
+      <TLink className={`btn ${primary ? 'btn-p' : 'btn-g'}`} href="/onboarding/company">
+        Start with your first scan
+      </TLink>
+    );
+  }
+  return <CheckoutButton plan={plan} primary={primary} />;
+}
+
+/** Stripe's billing portal: invoices, the card on file and cancelling all live there. */
+function PortalButton({ className }: { className: string }) {
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const open = () => {
+    setBusy(true);
+    setProblem(null);
+    api.billing.portal().then(
+      ({ url }) => window.location.assign(url),
+      (error: unknown) => {
+        setProblem(asApiError(error).message);
+        setBusy(false);
+      },
+    );
+  };
+  return (
+    <>
+      <button className={className} type="button" disabled={busy} onClick={open} data-testid="billing-portal">
+        {busy ? 'Opening billing' : 'Open billing'}
+      </button>
+      {problem ? (
+        <p className="probl" role="alert">
+          {problem}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function Blocks({ used, limit }: { used: number; limit: number }) {
+  const count = Math.min(limit, 50);
+  const on = Math.round((Math.min(used, limit) / limit) * count);
+  return (
+    <div className="bk" style={{ gridTemplateColumns: `repeat(${count},1fr)` }} aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <i key={index} className={`grow${index < on ? ' on' : ''}`} style={{ '--i': index } as CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
 export default function PlanPage() {
   const session = useSession();
+  const watchlist = useWatchlist();
   const resource = useResource(() => api.plans.list(), []);
+  const members = useResource(() => api.members.list().catch(() => null), []);
   const data = resource.data;
 
   if (resource.loading && !data) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <Loading what="Getting the plans" />
-      </main>
+      </Plain>
     );
   }
   if (resource.error && !data) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <ErrorState error={resource.error} onRetry={resource.reload} />
-      </main>
+      </Plain>
     );
   }
   if (!data) return null;
 
   const overview = session.overview;
   const showScore = session.hasResult && overview !== null;
-  const growthIsCurrent = data.current === 'growth';
+  const current = data.plans.find((plan) => plan.code === data.current) ?? data.plans[0];
+  const currentName = current?.name ?? 'Free';
+  const paid = data.current !== 'free';
+  const canBill = roleCan(session.me, 'organisation.update');
+  const own = session.companies.filter((company) => company.relationship !== 'follow').length;
+  const followLimit = current?.entitlements.followLimit ?? 0;
+  const followed = watchlist?.used ?? watchlist?.companies.length ?? 0;
+  const people = members.data?.members.length ?? null;
+  const price = priceWords(current ?? { code: 'free', priceMinor: null, currency: null });
+  const priceLine = price === 'Not set yet' ? 'Price not set yet' : price;
 
   return (
-    <main className="wrap">
-      <section className="sec stack g48" data-testid="plan-page" data-current={data.current}>
-        <div className="stack g16">
-          <h1 className="t-1">Choose how far you want to go</h1>
-          <p className="lead" style={{ maxWidth: '34em' }}>
-            Free shows you where you stand. Paid plans read your documents and show you everything.
-          </p>
-        </div>
-
-        <div className="next band" data-testid="plan-change">
-          <div className="stack g4">
-            <p className="t-3">{PLAN_CHANGE.title}</p>
-            <p className="quiet">{PLAN_CHANGE.body}</p>
-          </div>
-        </div>
-
-        <div className="plans">
-          {data.plans.map((plan) => {
-            const current = plan.code === data.current;
-            const growth = plan.code === 'growth';
-            return (
-              <div className={`plan${growth ? ' next growth' : ''}`} key={plan.code} data-testid="plan-card" data-plan={plan.code}>
-                {growth ? (
-                  <div className="ghead">
-                    <div className="stack g8">
-                      {current ? <span className="st none">Your plan</span> : <span className="st" style={{ color: 'var(--rose-deep)' }}>Recommended</span>}
-                      <h2 className="bigname">{plan.name}</h2>
-                    </div>
-                    {showScore ? <VFill value={scoreLevel(overview.score)} /> : null}
-                  </div>
-                ) : (
-                  <div className="nameline">
-                    <h2 className="t-2">{plan.name}</h2>
-                    {current ? <span className="st none">Your plan</span> : null}
-                  </div>
-                )}
-                <p className={growth ? 'say' : 'quiet say'}>{planSay(plan.code)}</p>
-                {growth && showScore ? (
-                  <p className="livescore" data-testid="plan-score">
-                    <span className="bignum">{scoreWords(overview.score)}</span>
-                    <span className="quiet">{growthIsCurrent ? 'is your score today. It moves as you fix things.' : "is your read today. On Growth you'd see the exact number, and it moves as you fix things."}</span>
-                  </p>
-                ) : null}
-                <p className="price" data-testid="plan-price">
-                  {priceWords(plan)}
-                </p>
-                <PlanAction plan={plan} current={current} hasResult={session.hasResult} primary={growth} />
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="stack g16">
-          <h2 className="t-2">Compare what you get</h2>
+    <div className="pg-plan" data-testid="plan-page" data-current={data.current}>
+      <Hero>
+        <div className="pagehead">
           <div>
-            <div className="cmp cmphead" aria-hidden="true">
-              <span />
-              {data.plans.map((plan) => (
-                <span key={plan.code} className={plan.code === 'growth' ? 'g' : undefined}>
-                  {plan.name}
-                </span>
-              ))}
-              <span />
+            <div className="mono kick">
+              <Scramble text="Account" /> · <b><Scramble text={`${currentName} plan`} delay={120} /></b>
             </div>
-            <div className="rows cmps">
-              {COMPARE_ROWS.map((row) => (
-                <details className="more" name="cmp" key={row.key} data-testid="compare-row" data-key={row.key}>
-                  <summary className="row cmp">
-                    <span className="row-t">{row.label}</span>
-                    {data.plans.map((plan) => (
-                      <Cell key={plan.code} plan={plan} cell={row.cell(plan.entitlements)} growth={plan.code === 'growth'} />
-                    ))}
-                    <Chevron />
-                  </summary>
-                  <div className="more-body cmpbody">
-                    <p className="quiet">{row.body}</p>
-                  </div>
-                </details>
-              ))}
+            <h1 className="disp">
+              <Words text="Plan and billing" />
+            </h1>
+            <div className="meta">
+              <span>{currentName} plan</span>
+              <span>{priceLine}</span>
+              <span>Payments through Stripe</span>
             </div>
+          </div>
+          <div className="acts">
+            <TLink className="btn btn-g" href="/settings">
+              Back to settings
+            </TLink>
           </div>
         </div>
 
-      </section>
-    </main>
+        <section className="r1">
+          <div className="mod gl use">
+            <div className="mh">
+              <h2>Usage</h2>
+              <span className="sub">What your {currentName} plan is holding right now</span>
+            </div>
+            <div className="ur">
+              <div>
+                <b>Your companies</b>
+                <small>Scanned with every check</small>
+              </div>
+              <div className="nl">No limit on {currentName}</div>
+              <div className="v">
+                <CountUp className="pixel" value={own} />
+              </div>
+            </div>
+            <div className="ur">
+              <div>
+                <b>Companies you follow</b>
+                <small>On your watchlist</small>
+              </div>
+              {followLimit > 0 ? <Blocks used={followed} limit={followLimit} /> : <div className="nl">Not included</div>}
+              <div className="v">
+                <CountUp className="pixel" value={followed} />
+                of {followLimit}
+              </div>
+            </div>
+            <div className="ur">
+              <div>
+                <b>People</b>
+                <small>Members of this workspace</small>
+              </div>
+              <div className="nl">No limit on {currentName}</div>
+              <div className="v">{people === null ? <span className="nl">Not shown</span> : <CountUp className="pixel" value={people} />}</div>
+            </div>
+            <div className="ur">
+              <div>
+                <b>Gaps shown</b>
+                <small>In your findings</small>
+              </div>
+              <div className="nl">{current?.entitlements.gapLimit === null ? `Every gap on ${currentName}` : `The top ${current?.entitlements.gapLimit ?? 3} on ${currentName}`}</div>
+              <div className="v">{current?.entitlements.gapLimit === null ? <span className="nl">All</span> : <CountUp className="pixel" value={current?.entitlements.gapLimit ?? 3} />}</div>
+            </div>
+          </div>
+
+          <div className="mod next" data-testid="plan-change">
+            <div className="k">Your plan</div>
+            <div className="price">
+              {currentName} <small>{priceLine}</small>
+            </div>
+            <p>{PLAN_CHANGE.body}</p>
+            {showScore ? (
+              <div className="rows2" data-testid="plan-score">
+                <div className="row2">
+                  <span>{data.current === 'free' ? 'Your read today' : 'Your score today'}</span>
+                  <b>{scoreWords(overview.score)}</b>
+                </div>
+                <div className="row2">
+                  <span>Billing</span>
+                  <b>{paid ? 'Stripe' : 'Nothing to pay'}</b>
+                </div>
+              </div>
+            ) : (
+              <div className="rows2">
+                <div className="row2">
+                  <span>Billing</span>
+                  <b>{paid ? 'Stripe' : 'Nothing to pay'}</b>
+                </div>
+              </div>
+            )}
+            {paid && canBill ? <PortalButton className="btn" /> : <a className="btn" href="#plans">Compare plans</a>}
+          </div>
+        </section>
+      </Hero>
+
+      <After>
+        <Reveal as="section" className="mod" id="plans">
+          <div className="mh">
+            <h2>Plans</h2>
+            <span className="sub">Every plan reads the same official registers</span>
+          </div>
+          <div className="cmpwrap" data-lenis-prevent-horizontal="">
+            <table className="cmp">
+              <colgroup>
+                <col style={{ width: '34%' }} />
+                {data.plans.map((plan) => (
+                  <col key={plan.code} />
+                ))}
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>
+                    <span className="lead2">{PLAN_CHANGE.title}</span>
+                  </th>
+                  {data.plans.map((plan) => {
+                    const isCurrent = plan.code === data.current;
+                    return (
+                      <th key={plan.code} className={isCurrent ? 'cur' : undefined} data-testid="plan-card" data-plan={plan.code}>
+                        <span className={`tag${isCurrent ? '' : plan.code === 'growth' ? '' : ' h'}`}>{isCurrent ? 'Your plan' : plan.code === 'growth' ? 'Most chosen' : '.'}</span>
+                        <span className="pn">{plan.name}</span>
+                        <span className="pd">{planSay(plan.code)}</span>
+                        <span className="pr" data-testid="plan-price">
+                          {priceWords(plan)}
+                        </span>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody className="rows-in">
+                {COMPARE_ROWS.map((row, index) => (
+                  <tr key={row.key} data-testid="compare-row" data-key={row.key} style={{ '--r': index } as CSSProperties}>
+                    <td>
+                      {row.label}
+                      <small>{row.body}</small>
+                    </td>
+                    {data.plans.map((plan) => (
+                      <td key={plan.code} className={plan.code === data.current ? 'cur' : undefined}>
+                        <Cell plan={plan} cell={row.cell(plan.entitlements)} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td />
+                  {data.plans.map((plan) => (
+                    <td key={plan.code} className={plan.code === data.current ? 'cur' : undefined}>
+                      {canBill || plan.code === data.current ? <PlanAction plan={plan} current={plan.code === data.current} hasResult={session.hasResult} primary={plan.code === 'growth'} /> : <span className="curb quiet">Ask an owner</span>}
+                    </td>
+                  ))}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Reveal>
+
+        <Reveal as="section" className="mod billing" i={1}>
+          <div className="mh">
+            <h2>Invoices and payment</h2>
+            <span className="sub">Kept by Stripe</span>
+          </div>
+          <div className="bdl">
+            <div>
+              <span>Billed to</span>
+              <b>
+                {session.root?.legalName ?? 'Your workspace'}
+                <small>{plural(own, 'company', 'companies')} in this workspace</small>
+              </b>
+            </div>
+            <div>
+              <span>Invoices, card and cancelling</span>
+              <b>{paid ? 'In the Stripe billing page' : 'Nothing to bill on Free'}</b>
+            </div>
+          </div>
+          {paid && canBill ? (
+            <div className="cancel">
+              <span>Invoices, the card on file and cancelling are all on Stripe&apos;s billing page. If you cancel, your scan history stays.</span>
+              <PortalButton className="btn btn-g btn-sm" />
+            </div>
+          ) : (
+            <div className="cancel">
+              <span>{paid ? 'Only an owner can change billing.' : 'When you move to a paid plan, invoices and your card are kept by Stripe and open from here.'}</span>
+            </div>
+          )}
+        </Reveal>
+      </After>
+    </div>
   );
 }

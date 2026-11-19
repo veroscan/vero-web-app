@@ -1,63 +1,141 @@
 'use client';
 
-import type { Company, CompanyRecordsResponse } from '@vero/shared';
+import '@/app/styles/pages/records.css';
+import type { Company, CompanyRecordsResponse, IssueSummary, VaultResponse } from '@vero/shared';
 import { notFound, useParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Chevron, Empty, ErrorState, Loading, PlanLink, SampleNote, SourcesDownNote } from '@/components/Bits';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Empty, ErrorState, Loading, PlanLink, SampleNote, SourcesDownNote } from '@/components/Bits';
+import { Icon } from '@/components/Icon';
+import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { After, Hero, Plain } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { CERTIFICATE_SLOT, isInPlace } from '@/lib/documents';
 import { entitlementsOf, roleCan } from '@/lib/entitlements';
-import { plural } from '@/lib/format';
+import { agoWords, plural } from '@/lib/format';
 import { CAC_STATUS_SLOT, checkedWords, countryLong, recordRows, splitStatusNote, type FactRow } from '@/lib/records';
 import { useResource } from '@/lib/useResource';
+import { registerFor, sourceStatus, type Tone } from '@/lib/words';
 
 /** How long "Check again" waits with the screen open. The check carries on either way. */
 const CHECK_WAIT_MS = 120_000;
 
-function FactValue({ row }: { row: FactRow }) {
-  const tone = row.tone === 'none' ? '' : ` ${row.tone}`;
-  return <span className={`b${tone}${row.numeric ? ' num' : ''}`}>{row.value}</span>;
+const TONE_COLOUR: Readonly<Record<Tone, string | undefined>> = { good: 'var(--good)', watch: 'var(--warn)', risk: 'var(--urgent)', none: undefined };
+const COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const countWord = (count: number) => COUNT_WORDS[count] ?? String(count);
+
+interface Loaded {
+  records: CompanyRecordsResponse;
+  issues: IssueSummary[];
+  vault: VaultResponse | null;
 }
 
-function FactLine({ row }: { row: FactRow }) {
-  const expands = row.body !== null || row.links.length > 0;
-  if (!expands) {
-    return (
-      <div className="row fact" data-testid="fact-row" data-key={row.key}>
-        <span className="quiet">{row.label}</span>
-        <FactValue row={row} />
-        <span className="small" data-testid="fact-source">
-          {row.source}
-        </span>
-      </div>
-    );
+interface Standing {
+  word: string;
+  tone: 'ok' | 'warn' | 'none';
+  active: boolean;
+  late: number;
+  idLine: string | null;
+}
+
+/** One company's headline from its own facts: the register's status, and any filing it shows late. */
+function standingOf(records: CompanyRecordsResponse): Standing {
+  const rows = recordRows(records);
+  const late = rows.filter((row) => row.key.endsWith('_next_due') && row.tone === 'risk').length;
+  const number = rows.find((row) => row.numeric);
+  const idLine = number ? `${number.label} ${number.value}` : null;
+  const standing = rows.find((row) => row.key === 'good_standing');
+  const status = rows.find((row) => row.key.endsWith('.status'));
+  const directors = rows.find((row) => row.key.endsWith('directors_count') || row.key.endsWith('directors_active_count'));
+  if (standing) {
+    const good = standing.tone === 'good';
+    return { word: good ? 'In good standing' : 'Needs your certificate', tone: good ? 'ok' : 'warn', active: good, late, idLine };
   }
+  if (!status) return { word: rows.length > 0 ? 'No status yet' : 'Not checked yet', tone: 'none', active: false, late, idLine };
+  const active = status.tone === 'good';
+  let word = status.value;
+  if (active && late > 0) word = `${status.value}, ${late === 1 ? 'one filing' : `${countWord(late)} filings`} late`;
+  else if (active && directors) word = `${status.value}, ${plural(Number(directors.value.split(' ')[0]) || 0, 'director', 'directors')}`;
+  return { word, tone: active && late === 0 ? 'ok' : 'warn', active, late, idLine };
+}
+
+function verdictOf(standings: Standing[]): string {
+  const total = standings.length;
+  const active = standings.filter((item) => item.active).length;
+  const late = standings.reduce((sum, item) => sum + item.late, 0);
+  const first =
+    total === 1 ? (active === 1 ? 'The company is active.' : "The register doesn't show the company as active yet.") : active === total ? `All ${countWord(total)} companies are active.` : `${active} of ${total} companies show as active.`;
+  if (late === 0) return first;
+  return `${first} ${late === 1 ? 'One filing is late.' : `${countWord(late).replace(/^./, (c) => c.toUpperCase())} filings are late.`}`;
+}
+
+function RegisterArt({ tone }: { tone: Standing['tone'] }) {
   return (
-    <details className="more" open={row.needsYou} data-testid="fact-row" data-key={row.key}>
-      <summary className="row fact">
-        <span className="quiet">{row.label}</span>
-        <FactValue row={row} />
-        <span className="small" data-testid="fact-source">
-          {row.source}
+    <svg viewBox="0 0 58 70" aria-hidden="true">
+      <rect x="0" y="0" width="50" height="64" rx="6" fill="#fff" />
+      <rect x="8" y="9" width="20" height="4" rx="2" fill="#0182FA" />
+      <g fill="#C9E4F7">
+        <rect x="8" y="20" width="34" height="3" rx="1.5" />
+        <rect x="8" y="27" width="34" height="3" rx="1.5" />
+        {tone === 'warn' ? null : <rect x="8" y="34" width="26" height="3" rx="1.5" />}
+      </g>
+      {tone === 'warn' ? (
+        <>
+          <rect x="5" y="33" width="40" height="10" rx="2" fill="#FDEFD2" />
+          <rect x="8" y="36.5" width="22" height="3" rx="1.5" fill="#E89B16" />
+        </>
+      ) : null}
+      <circle cx="15" cy="51" r="6" fill="none" stroke="#9DDAF7" strokeWidth="1.5" />
+      <circle cx="15" cy="51" r="2.5" fill="#9DDAF7" />
+      {tone === 'ok' ? (
+        <g className="seal">
+          <circle cx="48" cy="60" r="9" fill="#0E9F78" stroke="#00004A" strokeWidth="2.5" />
+          <path d="M44 60.5l2.8 2.8 5.2-5.6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      ) : tone === 'warn' ? (
+        <g className="seal">
+          <circle cx="48" cy="60" r="9" fill="#E89B16" stroke="#00004A" strokeWidth="2.5" />
+          <path d="M48 55.5v5.5M48 64.3v.4" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+        </g>
+      ) : null}
+    </svg>
+  );
+}
+
+/** Where to read the record yourself. Only for registers with a public search we can point at. */
+function sourceLink(records: CompanyRecordsResponse, rows: FactRow[]): string | null {
+  const number = rows.find((row) => row.numeric)?.value.trim();
+  if (records.country === 'GB' && number && !records.sampleData) return `https://find-and-update.company-information.service.gov.uk/company/${encodeURIComponent(number)}`;
+  if (records.country === 'US-DE') return 'https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx';
+  if (records.country === 'NG') return 'https://search.cac.gov.ng/';
+  return null;
+}
+
+function FactLine({ row, index }: { row: FactRow; index: number }) {
+  const colour = TONE_COLOUR[row.tone];
+  return (
+    <div className={row.needsYou ? 'needs' : undefined} data-testid="fact-row" data-key={row.key} style={{ '--r': index } as CSSProperties}>
+      <dt>{row.label}</dt>
+      <dd>
+        <span className={row.numeric ? 'num' : undefined} style={colour ? { color: colour, fontWeight: 700 } : undefined}>
+          {row.value}
         </span>
-        <Chevron />
-      </summary>
-      <div className="more-body factbody">
-        {row.body ? <p className="quiet">{row.body}</p> : null}
+        <small data-testid="fact-source">{row.source}</small>
+        {row.body ? <p className="body">{row.body}</p> : null}
         {row.links.length > 0 ? (
-          <p className="morelinks">
+          <p className="links">
             {row.links.map((link) => (
-              <TLink className="link" href={link.href} key={link.href}>
+              <TLink className="go" href={link.href} key={link.href}>
                 {link.label}
+                <Icon name="arrow" />
               </TLink>
             ))}
           </p>
         ) : null}
-      </div>
-    </details>
+      </dd>
+    </div>
   );
 }
 
@@ -85,8 +163,7 @@ function CheckAgain({ companyId, onChecked }: { companyId: string; onChecked: ()
           setChecking(false);
           return;
         }
-        const wait = Math.max(500, scan.pollAfterMs);
-        await new Promise((resolve) => setTimeout(resolve, wait));
+        await new Promise((resolve) => setTimeout(resolve, Math.max(500, scan.pollAfterMs)));
         scan = await api.scans.get({ params: { scanId: scan.id } });
       }
       if (!alive.current) return;
@@ -100,15 +177,13 @@ function CheckAgain({ companyId, onChecked }: { companyId: string; onChecked: ()
   };
 
   return (
-    <div className="stack g8 againbox">
-      <button className="btn btn-line btn-sm again" type="button" disabled={checking} data-testid="check-again" onClick={() => void run()}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6" />
-        </svg>
+    <div className="againbox">
+      <button className="btn btn-g" type="button" disabled={checking} data-testid="check-again" onClick={() => void run()}>
+        <Icon name={checking ? 'refresh' : 'scan'} className={checking ? 'spin' : undefined} />
         {checking ? 'Checking' : 'Check again'}
       </button>
       {problem ? (
-        <p className="formerror" role="alert" data-testid="check-again-problem">
+        <p className="againerr" role="alert" data-testid="check-again-problem">
           {problem}
         </p>
       ) : null}
@@ -118,34 +193,20 @@ function CheckAgain({ companyId, onChecked }: { companyId: string; onChecked: ()
 
 function Band({ title, body, testId, action }: { title: string; body: string; testId: string; action: { href: string; label: string } | null }) {
   return (
-    <div className="next band" data-testid={testId}>
-      <div className="stack g4">
-        <p className="t-3">{title}</p>
-        <p className="quiet">{body}</p>
-      </div>
+    <div className="xn band" data-testid={testId}>
+      <b>{title}</b>
+      <span>{body}</span>
       {action ? (
-        <TLink className="btn btn-ink" href={action.href}>
+        <TLink className="btn btn-p btn-sm" href={action.href}>
+          <Icon name="upload" />
           {action.label}
         </TLink>
       ) : (
-        <span className="stack g4" data-testid="records-upload-locked">
-          <span className="small">Uploading documents is part of a paid plan.</span>
-          <PlanLink />
+        <span className="locked" data-testid="records-upload-locked">
+          Uploading documents is part of a paid plan. <PlanLink />
         </span>
       )}
     </div>
-  );
-}
-
-/** A tab is the country, unless two companies share one. Then it's the company's name. */
-function tabLabels(companies: Company[]): Map<string, string> {
-  const counts = new Map<string, number>();
-  for (const company of companies) counts.set(company.incorporationCountry, (counts.get(company.incorporationCountry) ?? 0) + 1);
-  return new Map(
-    companies.map((company) => {
-      const country = company.incorporationCountry;
-      return [company.id, counts.get(country) === 1 ? countryLong(country) : company.legalName];
-    }),
   );
 }
 
@@ -176,14 +237,22 @@ function CountryBand({ records, statusReportFiled, canUpload, rows }: { records:
   return null;
 }
 
+function useAllRecords(companies: Company[]) {
+  return useResource(async () => {
+    const answers = await Promise.all(companies.map((company) => api.records.get({ params: { companyId: company.id } }).catch(() => null)));
+    return answers.filter((item): item is CompanyRecordsResponse => item !== null);
+  }, [companies.map((company) => company.id).join()]);
+}
+
 export default function CompanyRecordsPage() {
   const { id } = useParams<{ id?: string[] }>();
   if (id && id.length > 1) notFound();
   const session = useSession();
   const companyId = id?.[0] ?? session.root?.id ?? null;
   const entitlements = entitlementsOf(session.overview?.plan);
+  const own = useMemo(() => session.companies.filter((company) => company.relationship !== 'follow'), [session.companies]);
 
-  const resource = useResource(async () => {
+  const resource = useResource<Loaded | null>(async () => {
     if (!companyId) return null;
     const records = await api.records.get({ params: { companyId } });
     // Both only add to the page: links to real issues, and whether a status report is on file.
@@ -193,87 +262,207 @@ export default function CompanyRecordsPage() {
     ]);
     return { records, issues: issues?.issues ?? [], vault };
   }, [companyId]);
+  const everyone = useAllRecords(own);
 
-  const labels = useMemo(() => tabLabels(session.companies), [session.companies]);
   const data = resource.data;
   const stale = data && data.records.companyId !== companyId;
   const rows = useMemo(() => (data ? recordRows(data.records, { issues: data.issues, canUpload: entitlements.vault }) : []), [data, entitlements.vault]);
+  const all = useMemo(() => {
+    const list = everyone.data ?? [];
+    // The open company's records are the freshest copy; the hero uses them too.
+    return data && !stale ? list.map((item) => (item.companyId === data.records.companyId ? data.records : item)) : list;
+  }, [everyone.data, data, stale]);
 
   if (resource.error && (!data || stale)) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <ErrorState error={resource.error} onRetry={resource.reload} />
-      </main>
+      </Plain>
     );
   }
   if (!data || stale) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <Loading what="Getting your company records" />
-      </main>
+      </Plain>
     );
   }
 
   const { records } = data;
-  const canCheck = roleCan(session.me, 'scans.write');
+  const canCheck = roleCan(session.me, 'scans.write') && session.companies.find((company) => company.id === records.companyId)?.relationship !== 'follow';
   const down = records.sources.filter((source) => source.down);
   const sample = records.sampleData || records.sources.some((source) => source.sampleData);
   const needYou = rows.filter((row) => row.needsYou).length;
   const companiesHouse = records.sources.find((source) => source.connectorId === 'uk.companies_house');
   const readFrom = records.country === 'GB' && companiesHouse?.state === 'found' && !companiesHouse.sampleData ? 'We read this from Companies House. ' : '';
   const statusReportFiled = data.vault?.slots.some((slot) => slot.key === CAC_STATUS_SLOT && isInPlace(slot.state)) ?? false;
+  const register = registerFor(records.country).register;
+  const registerName = register.replace(/^the /, '').replace(/^./, (c) => c.toUpperCase());
+  const link = sourceLink(records, rows);
+  const standings = all.map((item) => ({ records: item, standing: standingOf(item) }));
+  const activeCount = standings.filter((item) => item.standing.active).length;
+  const lastChecked = all.map((item) => item.checkedAt).filter((value): value is string => value !== null).sort().pop() ?? records.checkedAt;
+  const countries = [...new Set(all.map((item) => countryLong(item.country)))];
+  const asked = records.sources.filter((source) => source.state !== 'waiting' || source.down);
+  const waiting = records.sources.length - asked.length;
 
   const refreshAfterCheck = async () => {
     resource.reload();
+    everyone.reload();
     await session.refresh().catch(() => undefined);
   };
 
   return (
-    <main className="wrap">
-      <section className="sec stack g32" data-testid="company-records" data-country={records.country}>
-        <div className="stack g20">
-          <h1 className="t-1 coname">{records.legalName}</h1>
-          {session.companies.length > 1 ? (
-            <nav className="tabs cotabs" aria-label="Companies">
-              {session.companies.map((company) => (
-                <TLink key={company.id} className={company.id === records.companyId ? 'on' : undefined} href={`/company/${company.id}`} aria-current={company.id === records.companyId ? 'page' : undefined}>
-                  {labels.get(company.id)}
-                </TLink>
-              ))}
-            </nav>
+    <div className="pg-records" data-testid="company-records" data-country={records.country}>
+      <Hero>
+        <div className="pagehead">
+          <div>
+            <div className="mono kick">
+              <Scramble text="Official registries" /> · <b><Scramble text="What each one says" delay={120} /></b>
+            </div>
+            <h1 className="disp">
+              <Words text="Registry records" />
+            </h1>
+            <div className="meta">
+              <span>
+                <span className="live" />
+                {plural(Math.max(all.length, 1), 'official register', 'official registers')}
+              </span>
+              <span>{lastChecked ? `Pulled ${checkedWords(lastChecked).replace(/^Checked /, '').replace(/\.$/, '')}` : 'Not checked yet'}</span>
+              {countries.length > 0 ? <span>{countries.join(', ').replace(/, ([^,]*)$/, ' and $1')}</span> : null}
+            </div>
+          </div>
+          {canCheck ? (
+            <div className="acts">
+              <CheckAgain companyId={records.companyId} onChecked={refreshAfterCheck} />
+            </div>
           ) : null}
         </div>
 
-        <div className="checkedline">
-          <p className="quiet" data-testid="records-checked">
-            {readFrom}
-            {checkedWords(records.checkedAt)}
-            {needYou > 0 ? <span className="b"> {plural(needYou, 'thing needs', 'things need')} you.</span> : null}
-          </p>
-          {canCheck ? <CheckAgain companyId={records.companyId} onChecked={refreshAfterCheck} /> : null}
-        </div>
+        {standings.length > 0 ? (
+          <section className="mod health rs2" style={{ '--n': Math.min(standings.length, 3) } as CSSProperties}>
+            <div className="l">
+              <div className="mh" style={{ padding: 0 }}>
+                <h2>Registry status</h2>
+              </div>
+              <div className="big">
+                <CountUp className="pixel" value={activeCount} />
+                <small>/ {standings.length} active</small>
+              </div>
+              <div className="verdict">{verdictOf(standings.map((item) => item.standing))}</div>
+              <div className="lm">What each register says, word for word.</div>
+            </div>
+            <div className="cos" data-lenis-prevent-horizontal="">
+              {standings.map(({ records: item, standing }) => (
+                <TLink key={item.companyId} href={`/company/${item.companyId}`} className={item.companyId === records.companyId ? 'on' : undefined} aria-current={item.companyId === records.companyId ? 'page' : undefined}>
+                  <RegisterArt tone={standing.tone} />
+                  <div className="rg2">{registerFor(item.country).register.replace(/^the /, '').replace(/^./, (c) => c.toUpperCase())}</div>
+                  <b>{item.legalName}</b>
+                  <div className={`sw2 ${standing.tone === 'ok' ? 'g-ok' : standing.tone === 'warn' ? 'g-wa' : 'g-no'}`}>{standing.word}</div>
+                  <div className="fx">
+                    {standing.idLine ? (
+                      <>
+                        {standing.idLine}
+                        <br />
+                      </>
+                    ) : null}
+                    {item.checkedAt ? `Checked ${agoWords(item.checkedAt)}` : 'Not checked yet'}
+                  </div>
+                </TLink>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </Hero>
 
+      <After>
         {sample || down.length > 0 ? (
-          <div className="stack g8">
+          <div className="notes">
             {sample ? <SampleNote /> : null}
             <SourcesDownNote sources={down} />
           </div>
         ) : null}
 
-        <CountryBand records={records} statusReportFiled={statusReportFiled} canUpload={entitlements.vault} rows={rows} />
+        <Reveal as="section" className="mod">
+          <div className="mh">
+            <h2>The record</h2>
+            <span className="sub">As the register holds it</span>
+          </div>
+          {session.companies.length > 1 ? (
+            <nav className="tabs" aria-label="Companies">
+              {session.companies.map((company) => (
+                <TLink key={company.id} className={`tab${company.id === records.companyId ? ' on' : ''}`} href={`/company/${company.id}`} aria-current={company.id === records.companyId ? 'page' : undefined}>
+                  {company.legalName} <small>{countryLong(company.incorporationCountry)}</small>
+                </TLink>
+              ))}
+            </nav>
+          ) : null}
+          <div className="rec">
+            <div className="facts">
+              <p className="checked" data-testid="records-checked">
+                {readFrom}
+                {checkedWords(records.checkedAt)}
+                {needYou > 0 ? <b> {plural(needYou, 'thing needs', 'things need')} you.</b> : null}
+              </p>
+              {rows.length === 0 ? (
+                <div data-testid="records-empty">
+                  <Empty title="We haven't got any records for this company yet">No check has answered so far. That says nothing either way about the company.</Empty>
+                </div>
+              ) : (
+                <dl className="rows-in" data-testid="records-list">
+                  {rows.map((row, index) => (
+                    <FactLine key={row.key} row={row} index={index} />
+                  ))}
+                </dl>
+              )}
+            </div>
+            <aside className="side2">
+              <div className="src3">
+                <b>{registerName}</b>
+                <small>{records.checkedAt ? `Last checked ${checkedWords(records.checkedAt).replace(/^Checked /, '').replace(/ at /, ', ').replace(/\.$/, '')}` : 'Not checked yet'}</small>
+                {link ? (
+                  <a className="btn btn-g" href={link} target="_blank" rel="noopener noreferrer">
+                    View at source
+                    <Icon name="link" />
+                  </a>
+                ) : null}
+              </div>
 
-        {rows.length === 0 ? (
-          <div data-testid="records-empty">
-            <Empty title="We haven't got any records for this company yet">No check has answered so far. That says nothing either way about the company.</Empty>
+              <CountryBand records={records} statusReportFiled={statusReportFiled} canUpload={entitlements.vault} rows={rows} />
+
+              {asked.length > 0 ? (
+                <div className="lg">
+                  <h3>What we asked</h3>
+                  <ol className="rows-in">
+                    {asked.map((source, index) => {
+                      const status = sourceStatus(source);
+                      const clean = source.connectorId === 'sanctions.lists' && source.state === 'not_found';
+                      return (
+                        <li key={source.connectorId} style={{ '--r': index } as CSSProperties}>
+                          <div>
+                            <b>{source.title}</b>
+                            <small>{source.lastTriedAt ? `Tried ${agoWords(source.lastTriedAt)}` : source.summary}</small>
+                          </div>
+                          <span style={{ color: clean ? 'var(--good)' : TONE_COLOUR[status.tone] }}>{clean ? 'No matches' : status.word}</span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  {waiting > 0 ? <p className="waitnote">{plural(waiting, 'more source is', 'more sources are')} still to answer. They count neither way until they do.</p> : null}
+                </div>
+              ) : null}
+
+              {records.countryCoverage ? (
+                <div className="xn cov">
+                  <b>Coverage in {countryLong(records.country)}</b>
+                  <span>{records.countryCoverage.sentence}</span>
+                </div>
+              ) : null}
+              <p className="changesnote">Vero shows each register as it stands. A history of changes on the register isn&apos;t kept yet.</p>
+            </aside>
           </div>
-        ) : (
-          <div className="rows" data-testid="records-list">
-            {rows.map((row) => (
-              <FactLine key={row.key} row={row} />
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+        </Reveal>
+      </After>
+    </div>
   );
 }

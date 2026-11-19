@@ -71,3 +71,36 @@ export function midSentence(title: string): string {
   const second = title.charAt(1);
   return second && second === second.toUpperCase() && second !== second.toLowerCase() ? title : title.charAt(0).toLowerCase() + title.slice(1);
 }
+
+/** How the company file draws a slot: in order, with a problem, missing, or being read now. */
+export type SlotKind = 'ok' | 'problem' | 'missing' | 'reading';
+
+export function slotKind(state: SlotState): SlotKind {
+  switch (state) {
+    case 'read':
+      return 'ok';
+    case 'needs_confirmation':
+    case 'not_accepted':
+    case 'declared_missing':
+      return 'problem';
+    case 'reading':
+      return 'reading';
+    case 'missing':
+      return 'missing';
+  }
+}
+
+/** The colour token for a slot's status word. An empty slot is plain, never red: it isn't held against anyone. */
+export function slotColour(state: SlotState): string {
+  switch (slotKind(state)) {
+    case 'ok':
+      return 'var(--good)';
+    case 'problem':
+      return state === 'needs_confirmation' ? 'var(--warn)' : 'var(--urgent)';
+    case 'reading':
+      return 'var(--sky-2)';
+    case 'missing':
+      return 'var(--ink-3)';
+  }
+}
+

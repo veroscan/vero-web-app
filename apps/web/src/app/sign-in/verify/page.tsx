@@ -3,11 +3,23 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { CheckEmail, EmailForm } from '@/components/EmailForm';
+import { Words } from '@/components/Motion';
 import { SignInFrame } from '@/components/SignInFrame';
+import { TLink } from '@/components/TLink';
 import { api, asApiError, type ApiError } from '@/lib/api';
 import { peekNext, takeNext } from '@/lib/next-path';
 
 type State = { kind: 'working' } | { kind: 'expired' } | { kind: 'used' } | { kind: 'invalid' } | { kind: 'failed'; error: ApiError };
+
+const SIGN_UP_TOP = (
+  <>
+    New to Vero?
+    {/* Not prefetched: once the link signs you in, /sign-up redirects to /, and the prefetch 404s. */}
+    <TLink href="/sign-up" prefetch={false}>
+      Create an account
+    </TLink>
+  </>
+);
 
 function Verify() {
   const router = useRouter();
@@ -50,47 +62,57 @@ function Verify() {
 
   if (sentTo) {
     return (
-      <SignInFrame>
+      <SignInFrame top={SIGN_UP_TOP}>
         <CheckEmail email={sentTo} onReset={() => setSentTo(null)} />
       </SignInFrame>
     );
   }
   if (state.kind === 'working') {
     return (
-      <SignInFrame>
-        <div role="status">
-          <h1 className="t-1">Signing you in</h1>
+      <SignInFrame top={SIGN_UP_TOP}>
+        <div className="reading" role="status">
+          <span className="state-mark">
+            <img src="/brand/app-icon.svg" alt="" />
+          </span>
+          <div>
+            <h1>
+              <Words text="Signing you in" />
+            </h1>
+            <p className="lead">Checking your link. This takes a moment.</p>
+          </div>
         </div>
       </SignInFrame>
     );
   }
   if (state.kind === 'failed') {
     return (
-      <SignInFrame>
-        <div className="stack g20" role="alert" data-testid="verify-failed">
-          <h1 className="t-1">We couldn&apos;t sign you in</h1>
-          <p className="quiet">{state.error.message}</p>
-          <div>
-            <button className="btn btn-ink" type="button" onClick={() => setAttempt((value) => value + 1)}>
-              Try again
-            </button>
-          </div>
+      <SignInFrame top={SIGN_UP_TOP}>
+        <div role="alert" data-testid="verify-failed">
+          <h1>
+            <Words text="We couldn't sign you in" />
+          </h1>
+          <p className="lead">{state.error.message}</p>
+          <button className="cta" type="button" onClick={() => setAttempt((value) => value + 1)}>
+            Try again
+          </button>
         </div>
       </SignInFrame>
     );
   }
   const words = {
-    used: { title: 'This link has already been used', body: 'Each sign-in link works once. Enter your email and we\'ll send a new one.', id: 'link-used' },
+    used: { title: 'This link has already been used', body: "Each sign-in link works once. Enter your email and we'll send a new one.", id: 'link-used' },
     expired: { title: 'This link has expired', body: "Sign-in links last 15 minutes, so this one has run out. Enter your email and we'll send a new one.", id: 'link-expired' },
     invalid: { title: "This link isn't valid", body: "Part of the link may be missing. Enter your email and we'll send a new one.", id: 'link-invalid' },
   }[state.kind];
   return (
-    <SignInFrame>
-      <div className="stack g8" data-testid={words.id}>
-        <h1 className="t-1">{words.title}</h1>
-        <p className="quiet">{words.body}</p>
+    <SignInFrame top={SIGN_UP_TOP}>
+      <div data-testid={words.id}>
+        <h1>
+          <Words text={words.title} />
+        </h1>
+        <p className="lead">{words.body}</p>
       </div>
-      <EmailForm onSent={setSentTo} buttonLabel="Send a new link" animate={false} />
+      <EmailForm onSent={setSentTo} buttonLabel="Send a new link" />
     </SignInFrame>
   );
 }

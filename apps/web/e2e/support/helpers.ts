@@ -37,24 +37,18 @@ export interface Watch {
 
 interface Fixtures {
   watch: Watch;
-  /** Set to true in a test that needs the real 3D script. */
-  live3d: boolean;
 }
 
-/** Every test blocks the 3D script unless it asks for it, and fails on any console error. */
+/** Every test fails on any console error. */
 export const test = base.extend<Fixtures>({
-  live3d: [false, { option: true }],
   watch: [
-    async ({ page, live3d }, use) => {
+    async ({ page }, use) => {
       const problems: string[] = [];
       const allowed: RegExp[] = [];
       page.on('console', (message) => {
         if (message.type() === 'error') problems.push(`console: ${message.text()}`);
       });
       page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
-      if (!live3d) {
-        await page.route('**/vero-3d.js', (route) => route.fulfill({ contentType: 'text/javascript', body: '' }));
-      }
       await use({ allow: (pattern) => allowed.push(pattern) });
       const real = problems.filter((problem) => !allowed.some((pattern) => pattern.test(problem)));
       expect(real, 'no console errors on this screen').toEqual([]);
@@ -71,7 +65,7 @@ export async function calm(page: Page): Promise<void> {
 
 export async function requestLink(page: Page, email: string): Promise<void> {
   await page.getByLabel('Work email').fill(email);
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: 'Email me a sign-in link' }).click();
   await expect(page.getByTestId('check-email')).toBeVisible();
 }
 
@@ -156,9 +150,14 @@ export async function seedAnswered(page: Page, name: string): Promise<{ id: stri
  * searches, so they arrive after the page does, and each click removes one from this list.
  */
 export async function turnOffRelated(page: Page): Promise<void> {
-  const pressed = page.locator('.cc-opt[aria-pressed="true"]');
-  await expect(pressed.first()).toBeVisible();
-  while ((await pressed.count()) > 0) await pressed.first().click();
+  const on = page.getByRole('switch', { name: /^Include / }).and(page.locator('[aria-checked="true"]'));
+  await expect(on.first()).toBeVisible();
+  while ((await on.count()) > 0) await on.first().click();
+}
+
+/** The one country picker on the search screens, by the name it shows. */
+export async function chooseCountry(page: Page, label: string): Promise<void> {
+  await page.getByLabel('Country of registration').selectOption({ label });
 }
 
 /** Answers on screen until the flow moves on: the first choice, or Continue where there's none. */
@@ -166,19 +165,23 @@ export async function answerQuestions(page: Page, chooser: (fieldId: string) => 
   const seen: string[] = [];
   for (let guard = 0; guard < 200; guard += 1) {
     const step = page.locator('[data-step]');
-    await expect(step.or(page.getByTestId('scan-row')).or(page.getByText('Starting your scan')).first()).toBeVisible();
+    await expect(step.or(page.getByTestId('q-continue')).or(page.getByTestId('scan-row')).or(page.getByText('Starting the scan')).first()).toBeVisible();
     if (!page.url().includes('/onboarding/questions')) return seen;
-    if ((await step.count()) === 0) continue;
+    if ((await step.count()) === 0) {
+      // "Nothing more to ask": only the Continue button is left.
+      if (await page.getByTestId('q-continue').isVisible().catch(() => false)) await page.getByTestId('q-continue').click().catch(() => undefined);
+      continue;
+    }
     const id = (await step.getAttribute('data-field').catch(() => null)) ?? '';
     if (!id) continue;
     seen.push(id);
     const choice = chooser(id);
-    const options = step.locator('.opt');
+    const options = step.locator('[role="radio"], [role="checkbox"]');
     const count = await options.count();
     const radio = count > 0 && (await options.first().getAttribute('role')) === 'radio';
     if (choice !== 'skip' && count > 0) await page.keyboard.press(String(choice));
     if (choice === 'skip' || !radio) {
-      if (count > 0 && choice !== 'skip') await expect(options.nth(choice - 1)).toHaveAttribute('aria-pressed', 'true');
+      if (count > 0 && choice !== 'skip') await expect(options.nth(choice - 1)).toHaveAttribute('aria-checked', 'true');
       await page.getByTestId('q-continue').click();
     }
     await expect

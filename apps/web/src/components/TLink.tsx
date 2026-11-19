@@ -16,6 +16,7 @@ export function NavigationDone() {
   useEffect(() => {
     finishNavigation?.();
     finishNavigation = null;
+    window.dispatchEvent(new Event('vero:nav-end'));
   }, [pathname]);
   return null;
 }
@@ -29,6 +30,7 @@ export function TLink({ onNavigate, ...props }: ComponentProps<typeof Link>) {
       {...props}
       onNavigate={(event) => {
         onNavigate?.(event);
+        if (href && !href.startsWith('#') && new URL(href, window.location.href).pathname !== window.location.pathname) window.dispatchEvent(new Event('vero:nav-start'));
         if (!href || prefersCalm() || !('startViewTransition' in document) || href.startsWith('#')) return;
         if (new URL(href, window.location.href).pathname === window.location.pathname) return;
         event.preventDefault();

@@ -1,0 +1,61 @@
+/* Scan history: ported from the History board, scoped to .pg-hist. */
+.pg-hist .gl{background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 40px 80px -40px rgba(0,0,30,.7);color:#fff}
+.pg-hist .hist{display:grid;grid-template-columns:230px 1fr;min-height:360px}
+.pg-hist .hist .l{padding:22px 0 22px 24px;display:flex;flex-direction:column}
+.pg-hist .hist .l h2{font-size:15px;font-weight:700;color:#fff}
+.pg-hist .hist .now{display:flex;align-items:flex-end;gap:8px;margin-top:22px}
+.pg-hist .hist .now .pixel{font-size:96px;color:#fff;text-shadow:0 0 40px rgba(157,218,247,.45)}
+.pg-hist .hist .now small{font-size:15px;color:rgba(255,255,255,.6);font-weight:600;padding-bottom:10px}
+.pg-hist .hist .facts{margin-top:auto;padding-top:18px;display:flex;flex-direction:column}
+.pg-hist .hist .facts div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;color:rgba(255,255,255,.62)}
+.pg-hist .hist .facts b{color:#fff;font-weight:700}
+.pg-hist .hist .facts .pixel{font-size:22px;color:#fff;font-weight:400}
+.pg-hist .hist .r{min-width:0;display:flex;flex-direction:column}
+.pg-hist .hist .r .mh h2{font-size:14px;color:rgba(255,255,255,.75)}
+.pg-hist .hs-since{margin-left:auto;color:rgba(255,255,255,.55)}
+.pg-hist .hs-nochart{margin:18px 22px 16px 32px;min-height:210px;display:grid;place-items:center;border:1px dashed rgba(255,255,255,.22);border-radius:14px;color:rgba(255,255,255,.62);font-weight:600;font-size:13.5px}
+.pg-hist .hs-co button{white-space:nowrap}
+/* scan again card */
+.pg-hist .next .art2{position:absolute;right:16px;top:14px;width:112px;height:100px}
+.pg-hist .next h3{padding-right:110px}
+.pg-hist .next .meta2{margin-top:auto;padding-top:18px;display:flex;flex-direction:column}
+.pg-hist .next .meta2 div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line-2);font-size:13px;font-weight:600;color:var(--ink-3)}
+.pg-hist .next .meta2 b{color:var(--ink);font-weight:700}
+.pg-hist .next .btn{margin-top:12px;gap:8px}
+.pg-hist .next .hs-err{color:var(--urgent);font-weight:600;font-size:13px}
+@keyframes hsrd{0%{transform:translateY(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(64px);opacity:0}}
+.pg-hist .art2 .rl{opacity:0}
+.pg-hist .art2.run .rl{animation:hsrd 2.8s cubic-bezier(.45,0,.25,1) infinite}
+/* table */
+.pg-hist .scans td{padding:15px 22px}
+.pg-hist .scans .dt b{display:block;font-weight:700;font-size:14px;white-space:nowrap}
+.pg-hist .scans .dt small,.pg-hist .scans .trg small{display:block;color:var(--ink-3);font-size:12.5px;font-weight:600}
+.pg-hist .scans .trg{color:var(--ink-2);font-weight:600;white-space:nowrap}
+.pg-hist .scans .sc{font-family:"Lowres Pixel";font-size:24px;color:var(--navy)}
+.pg-hist .scans .wc{color:var(--ink-2);font-weight:600;font-size:13.5px;line-height:1.45}
+.pg-hist .scans tr.f td:last-child{width:40px;color:var(--ink-4)}
+.pg-hist .hs-open{border:0;background:none;padding:0;font:inherit;cursor:pointer;text-align:left}
+/* drawer extras */
+.pg-hist .db .lb2{font-size:13px;font-weight:700;color:var(--ink-3);margin-top:28px}
+.pg-hist .hs-mv{display:flex;align-items:center;gap:14px;margin-top:18px;padding:16px 18px;border-radius:16px;background:#F4F6FB}
+.pg-hist .hs-mv .pixel{font-size:44px}
+.pg-hist .hs-mv .from{color:var(--ink-4)}
+.pg-hist .hs-mv .to{color:var(--navy)}
+.pg-hist .hs-mv .i{color:var(--ink-4)}
+.pg-hist .hs-mv .t{font-size:13px;color:var(--ink-3);font-weight:600;line-height:1.4;margin-left:6px}
+.pg-hist .hs-ck{margin-top:10px}
+.pg-hist .hs-ck div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line-2);font-size:13.5px;font-weight:600}
+.pg-hist .hs-ck div:first-child{border-top:0}
+.pg-hist .hs-ck small{display:block;color:var(--ink-3);font-size:12.5px;font-weight:600}
+.pg-hist .hs-ck em{font-style:normal;font-weight:700;white-space:nowrap;font-size:13px}
+@media (max-width:1180px){
+  .pg-hist .pagehead .acts{flex-wrap:wrap}
+}
+@media (max-width:960px){
+  .pg-hist .hist{grid-template-columns:1fr}
+  .pg-hist .hist .l{padding:22px 24px 0}
+  .pg-hist .hs-co{max-width:100%;overflow-x:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .pg-hist .art2.run .rl{animation:none;opacity:1}
+}

@@ -1,31 +1,38 @@
 'use client';
 
-import type { IssueSummary, VaultDocument, VaultResponse, VaultSlotView } from '@vero/shared';
+import '@/app/styles/pages/documents.css';
+import type { IssueSummary, ProjectionResponse, VaultDocument, VaultResponse, VaultSlotView } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useMemo, useState } from 'react';
-import { Chevron, Empty, ErrorState, Loading } from '@/components/Bits';
+import { Fragment, Suspense, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { ErrorState, Loading, PlanLink } from '@/components/Bits';
 import { DeclareMissing } from '@/components/DeclareMissing';
-import { DocumentFlow } from '@/components/DocumentFlow';
+import { PaperArt } from '@/components/documents/Paper';
+import { Icon } from '@/components/Icon';
+import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { After, Hero } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { api, asApiError } from '@/lib/api';
-import { CERTIFICATE_SLOT, groupSlots, isInPlace, isToDo, slotTone } from '@/lib/documents';
-import { longDate } from '@/lib/format';
+import { CERTIFICATE_SLOT, isInPlace, midSentence, slotColour, slotKind, type SlotKind } from '@/lib/documents';
+import { longDate, plural, shortDate, whenWords } from '@/lib/format';
+import { isOpenIssue, issuePath } from '@/lib/issues';
 import { softly } from '@/lib/motion';
 import { useResource } from '@/lib/useResource';
 
-type Filter = 'all' | 'todo' | 'in_place';
+type Tab = 'all' | 'ok' | 'problem' | 'missing';
+const PAGE = 40;
+const KIND_ORDER: Record<SlotKind, number> = { problem: 0, missing: 1, reading: 2, ok: 3 };
+const SHELF_WORD: Record<SlotKind, string> = { ok: 's-ok', problem: 's-pr', missing: 's-mi', reading: 's-rd' };
 
 function addHref(companyId: string, slotKey?: string): string {
   return `/documents/add?company=${companyId}${slotKey ? `&slot=${slotKey}` : ''}`;
 }
 
 /** Links are short-lived and always download, so they're asked for only when needed. */
-function DownloadButton({ documentId, label = 'Download' }: { documentId: string; label?: string }) {
+function DownloadButton({ documentId }: { documentId: string }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const download = async (event: React.MouseEvent) => {
-    event.preventDefault();
+  const download = async () => {
     setBusy(true);
     setProblem(null);
     try {
@@ -39,8 +46,8 @@ function DownloadButton({ documentId, label = 'Download' }: { documentId: string
   };
   return (
     <>
-      <button className="link small plainbtn act" type="button" disabled={busy} onClick={(event) => void download(event)}>
-        {label}
+      <button className="lnk" type="button" disabled={busy} onClick={() => void download()}>
+        Download
       </button>
       {problem ? (
         <span className="formerror" role="alert">
@@ -70,19 +77,19 @@ function RemoveDocument({ documentId, filed, onRemoved }: { documentId: string; 
   };
   if (!asking) {
     return (
-      <button className="link small plainbtn" type="button" onClick={() => setAsking(true)}>
+      <button className="lnk" type="button" onClick={() => setAsking(true)}>
         Remove this document
       </button>
     );
   }
   return (
-    <div className="stack g8" data-testid="remove-confirm">
-      <p className="quiet">This deletes the file for good.{filed ? ' It will stop counting towards your score.' : ''}</p>
-      <div className="btns">
-        <button className="btn btn-line btn-sm" type="button" disabled={busy} onClick={() => void remove()}>
+    <div className="xb" data-testid="remove-confirm" style={{ gap: 10 }}>
+      <p>This deletes the file for good.{filed ? ' It will stop counting towards the score.' : ''}</p>
+      <div className="xl">
+        <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => void remove()}>
           {busy ? 'Removing' : 'Yes, remove it'}
         </button>
-        <button className="btn btn-line btn-sm" type="button" disabled={busy} onClick={() => setAsking(false)}>
+        <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => setAsking(false)}>
           Keep it
         </button>
       </div>
@@ -95,95 +102,29 @@ function RemoveDocument({ documentId, filed, onRemoved }: { documentId: string; 
   );
 }
 
-interface RowProps {
+interface SlotFacts {
   slot: VaultSlotView;
+  kind: SlotKind;
   document: VaultDocument | undefined;
+  open: IssueSummary[];
   issue: IssueSummary | undefined;
-  companyId: string;
-  onChanged: () => void;
+  points: number;
+  urgent: boolean;
 }
 
-function SlotAction({ slot, companyId }: Pick<RowProps, 'slot' | 'companyId'>) {
-  if (slot.state === 'missing' || slot.state === 'declared_missing') {
-    return (
-      <TLink className="btn btn-sm btn-line act" href={addHref(companyId, slot.key)}>
-        Add
-      </TLink>
-    );
+function found(facts: SlotFacts): string {
+  const { slot, document, kind } = facts;
+  if (kind === 'problem') {
+    if (slot.state === 'declared_missing') return "You told us the company doesn't have this. It counts as a gap until you add it.";
+    if (slot.state === 'needs_confirmation') return 'Vero has read it. It counts once you confirm where it belongs.';
+    return document?.rejectionReason ?? "This copy doesn't count yet.";
   }
-  if (slot.state === 'needs_confirmation' && slot.documentId) {
-    return (
-      <TLink className="link small act" href={`/documents/add?company=${companyId}&document=${slot.documentId}`}>
-        Confirm
-      </TLink>
-    );
-  }
-  if (slot.state === 'not_accepted' && slot.documentId) {
-    return (
-      <TLink className="link small act" href={`/documents/${slot.documentId}/rejected`}>
-        See why
-      </TLink>
-    );
-  }
-  if (isInPlace(slot.state) && slot.documentId) return <DownloadButton documentId={slot.documentId} />;
-  return <span className="act" />;
-}
-
-function SlotRow({ slot, document, issue, companyId, onChanged }: RowProps) {
-  const certificate = slot.key === CERTIFICATE_SLOT;
-  const ruleKey = slot.ruleKeys[0];
-  const [open, setOpen] = useState(false);
-  const bodyId = `slot-${slot.key}`;
-  return (
-    <div className={`slot${open ? ' open' : ''}`} data-testid="slot-row" data-slot={slot.key}>
-      {/* Not a <summary>: the row holds its own Add or Download control, and a control can't sit inside another. */}
-      <div
-        className="row r-doc"
-        onClick={(event) => {
-          if (!(event.target as HTMLElement).closest('a,button')) setOpen((value) => !value);
-        }}
-      >
-        <span className="stack g4">
-          <span className="row-t">{slot.label}</span>
-          <span className="row-s">{slot.reason}</span>
-        </span>
-        <span className={`st ${slotTone(slot.state)}`}>{slot.stateWord}</span>
-        <SlotAction slot={slot} companyId={companyId} />
-        <button className="chevbtn" type="button" aria-expanded={open} aria-controls={bodyId} aria-label={`More about ${slot.label}`} data-testid="slot-toggle" onClick={() => setOpen((value) => !value)}>
-          <Chevron />
-        </button>
-      </div>
-      <div className="more-body" id={bodyId} hidden={!open}>
-        {slot.state === 'missing' ? <p className="quiet">Nothing on file yet. It doesn&apos;t count for or against your score until you add it or tell us you don&apos;t have it.</p> : null}
-        {slot.state === 'reading' ? <p className="quiet">We&apos;re reading this now. It doesn&apos;t count until you&apos;ve confirmed where it belongs.</p> : null}
-        {slot.state === 'needs_confirmation' ? <p className="quiet">We&apos;ve read this. It doesn&apos;t count until you confirm where it belongs.</p> : null}
-        {slot.state === 'not_accepted' ? <p className="quiet">{document?.rejectionReason ?? "This copy doesn't count yet."}</p> : null}
-        {document && isInPlace(slot.state) ? (
-          <>
-            {document.fileName ? <p className="quiet">{document.fileName}</p> : null}
-            {/* Delaware is never shown as live: only what the certificate says, and when. */}
-            {certificate && document.documentDate ? <p className="quiet">Certified {longDate(document.documentDate)}. {document.validated ? 'You told us you checked it with Delaware.' : "You uploaded this and we read it."}</p> : null}
-            {document.expiresOn ? <p className="quiet">Runs out on {longDate(document.expiresOn)}.</p> : null}
-            <p className="quiet">You uploaded this and we read it.</p>
-          </>
-        ) : null}
-        {issue && (issue.canDeclareMissing || issue.declaredMissing) ? <DeclareMissing key={`${issue.ruleKey}-${String(issue.declaredMissing)}`} item={issue} onChanged={onChanged} /> : null}
-        <p className="morelinks">
-          {ruleKey && (slot.state === 'declared_missing' || issue) ? (
-            <TLink className="link" href={`/issues/${companyId}/${encodeURIComponent(ruleKey)}`}>
-              See the issue
-            </TLink>
-          ) : null}
-          {slot.documentId && document ? <RemoveDocument documentId={slot.documentId} filed={document.status === 'filed'} onRemoved={onChanged} /> : null}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-interface Loaded {
-  vault: VaultResponse;
-  issues: IssueSummary[];
+  if (kind === 'reading') return 'Vero is reading it now.';
+  if (kind === 'missing') return slot.reason;
+  if (document?.expiresOn) return `Read and in order. Runs out on ${longDate(document.expiresOn)}.`;
+  if (slot.key === CERTIFICATE_SLOT && document?.documentDate) return `Certified ${longDate(document.documentDate)}.`;
+  if (document?.documentDate) return `Read and in order, dated ${longDate(document.documentDate)}.`;
+  return 'Read and in order.';
 }
 
 function Documents() {
@@ -191,185 +132,431 @@ function Documents() {
   const params = useSearchParams();
   const companies = session.root ? [session.root, ...session.related] : [];
   const companyId = params.get('company') ?? session.root?.id ?? '';
-  const [filter, setFilter] = useState<Filter>('all');
+  const company = session.companies.find((item) => item.id === companyId);
+  const following = company?.relationship === 'follow';
+  const [tab, setTab] = useState<Tab>('all');
+  const [limit, setLimit] = useState(PAGE);
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const [projection, setProjection] = useState<ProjectionResponse | null>(null);
 
-  const resource = useResource<Loaded | null>(async () => {
+  const resource = useResource<{ vault: VaultResponse; issues: IssueSummary[] } | null>(async () => {
     if (!companyId) return null;
     const vault = await api.vault.get({ params: { companyId } });
-    if (!vault.canUpload) return { vault, issues: [] };
-    // Which slots can take "we don't have this" comes from the issues. Without it, the list still shows.
+    // What each slot is worth comes from the findings. Without them, the list still shows.
     const list = await api.results.issues({ params: { companyId }, query: { scope: 'company', outcome: 'all' } }).catch(() => null);
     return { vault, issues: list?.issues ?? [] };
   }, [companyId]);
 
   const vault = resource.data?.vault;
   const issues = useMemo(() => resource.data?.issues ?? [], [resource.data]);
-  const shown = useMemo(() => {
-    const slots = vault?.slots ?? [];
-    return filter === 'all' ? slots : slots.filter((slot) => (filter === 'todo' ? isToDo(slot.state) : isInPlace(slot.state)));
-  }, [vault, filter]);
-  const groups = useMemo(() => groupSlots(shown), [shown]);
+  const facts = useMemo<SlotFacts[]>(() => {
+    if (!vault) return [];
+    return vault.slots
+      .map((slot) => {
+        const mine = issues.filter((issue) => slot.ruleKeys.includes(issue.ruleKey));
+        const open = mine.filter(isOpenIssue);
+        return {
+          slot,
+          kind: slotKind(slot.state),
+          document: vault.documents.find((document) => document.id === slot.documentId),
+          open,
+          issue: mine.find((issue) => issue.declaredMissing) ?? mine.find((issue) => issue.canDeclareMissing) ?? open[0] ?? mine[0],
+          points: Math.max(0, ...open.map((issue) => issue.points ?? 0)),
+          urgent: open.some((issue) => issue.severity === 'critical'),
+        };
+      })
+      .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || Number(b.urgent) - Number(a.urgent) || b.points - a.points);
+  }, [vault, issues]);
+
+  const counts = useMemo(() => {
+    const result = { ok: 0, problem: 0, missing: 0, reading: 0 };
+    for (const item of facts) result[item.kind] += 1;
+    return result;
+  }, [facts]);
+
+  // The slot to fill first: an empty one tied to an open finding, the urgent ones first.
+  const best = facts.find((item) => (item.kind === 'missing' || item.slot.state === 'declared_missing') && item.open.length > 0) ?? facts.find((item) => item.kind === 'missing');
+  const bestKey = best?.open.map((issue) => issue.ruleKey).join(',') ?? '';
+  const urgentOpen = issues.filter((issue) => isOpenIssue(issue) && issue.severity === 'critical');
+  useEffect(() => {
+    setProjection(null);
+    if (!best || best.open.length === 0 || !companyId) return;
+    let live = true;
+    // An urgent cap holds every single fix at +0, so the card shows what clearing the urgent ones does.
+    const ruleKeys = best.urgent ? [...new Set([...best.open, ...urgentOpen].map((issue) => issue.ruleKey))] : best.open.map((issue) => issue.ruleKey);
+    api.results.projection({ params: { companyId }, query: { scope: 'company' }, body: { ruleKeys } }).then(
+      (value) => live && setProjection(value),
+      () => undefined, // The card still offers the slot without the figure.
+    );
+    return () => {
+      live = false;
+    };
+  }, [companyId, bestKey, urgentOpen.length]);
 
   if (resource.loading && !vault) {
     return (
-      <main style={{ display: 'contents' }}>
+      <div style={{ display: 'contents' }}>
         <Loading what="Getting your documents" />
-      </main>
+      </div>
     );
   }
   if (resource.error) {
     return (
-      <main style={{ display: 'contents' }}>
+      <div style={{ display: 'contents' }}>
         <ErrorState error={resource.error} onRetry={resource.reload} />
-      </main>
+      </div>
     );
   }
   if (!vault) return null;
 
-  if (!vault.canUpload) {
-    return (
-      <main className="wrap mid docs">
-        <section className="sec stack g20" data-testid="documents-locked">
-          <h1 className="t-1">Your documents</h1>
-          <p className="lead">Adding documents, and the full list of what a company should have, are part of a paid plan.</p>
-          <p className="quiet">Your first read comes from public records and your answers, so you don&apos;t need any documents to see it.</p>
-          <div className="btns">
-            <TLink className="btn btn-ink" href="/plan">
-              See the plans
-            </TLink>
-            <TLink className="btn btn-line" href="/">
-              Back to home
-            </TLink>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  const waiting = vault.documents.filter((document) => document.status === 'needs_confirmation' || document.status === 'pending' || document.status === 'processing' || document.status === 'failed');
-  const percent = vault.totalCount === 0 ? 0 : (vault.filledCount / vault.totalCount) * 100;
-  const documentFor = (slot: VaultSlotView) => vault.documents.find((document) => document.id === slot.documentId);
-  const issueFor = (slot: VaultSlotView) => {
-    const related = issues.filter((issue) => slot.ruleKeys.includes(issue.ruleKey));
-    return related.find((issue) => issue.declaredMissing) ?? related.find((issue) => issue.canDeclareMissing) ?? related[0];
-  };
-  const rowsOf = (slots: VaultSlotView[]) => (
-    <div className="rows">
-      {slots.map((slot) => (
-        <SlotRow key={slot.key} slot={slot} document={documentFor(slot)} issue={issueFor(slot)} companyId={companyId} onChanged={resource.reload} />
-      ))}
-    </div>
-  );
+  const canAct = vault.canUpload && !following;
+  // Facts are sorted with the slots that need something first, so the shelf shows those.
+  const shelf = facts.slice(0, 8);
+  const shown = facts.filter((item) => tab === 'all' || item.kind === tab);
+  const lastRead = vault.documents.map((document) => document.uploadedAt).sort().at(-1);
+  const waiting = vault.documents.filter((document) => document.status === 'failed' || ((document.status === 'pending' || document.status === 'processing' || document.status === 'needs_confirmation') && !vault.slots.some((slot) => slot.documentId === document.id)));
+  const name = (company ?? session.root)?.legalName ?? 'this company';
+  const moves = projection !== null && projection.projected > projection.current;
 
   return (
-    <main className="wrap mid docs">
-      <section className="sec stack g48">
-        <div className="stack g20">
-          <div className="stack g12">
-            <h1 className="t-1" data-testid="documents-count">
-              <span className="num">{vault.filledCount}</span> of {vault.totalCount} documents in place
+    <div className="pg-documents" style={{ display: 'contents' }}>
+      <Hero>
+        <div className="pagehead">
+          <div>
+            <div className="mono kick">
+              <Scramble text="Your documents" /> · <b><Scramble text="Shared / Read / Checked" delay={160} /></b>
+            </div>
+            <h1 className="disp">
+              <Words text="Documents" />
             </h1>
-            <p className="lead">You don&apos;t need to know what a company should have. This is the list. An empty slot doesn&apos;t count against you unless you tell us you don&apos;t have it.</p>
+            <div className="meta">
+              <span>{name}</span>
+              <span data-testid="documents-count">
+                {vault.filledCount} of {plural(vault.totalCount, 'document', 'documents')} in place
+              </span>
+              {lastRead ? <span>Last shared {['Today', 'Yesterday'].includes(whenWords(lastRead)) ? whenWords(lastRead).toLowerCase() : whenWords(lastRead)}</span> : null}
+            </div>
           </div>
-          <div className="meter grow" style={{ height: 8, borderRadius: 4 }} role="progressbar" aria-valuenow={vault.filledCount} aria-valuemin={0} aria-valuemax={vault.totalCount} aria-label={`${vault.filledCount} of ${vault.totalCount} documents in place`}>
-            <i style={{ width: `${percent}%` }} />
-          </div>
+          {canAct ? (
+            <div className="acts">
+              <TLink className="btn btn-g" href={addHref(companyId)}>
+                <Icon name="upload" />
+                Upload
+              </TLink>
+            </div>
+          ) : null}
         </div>
-
         {companies.length > 1 ? (
-          <div className="filters" role="group" aria-label="Choose a company">
-            {companies.map((company) => (
-              <TLink key={company.id} className={`fbtn${company.id === companyId ? ' on' : ''}`} style={{ display: 'inline-flex', alignItems: 'center' }} href={`/documents?company=${company.id}`} aria-current={company.id === companyId ? 'true' : undefined}>
-                {company.legalName}
+          <div className="seg" role="group" aria-label="Choose a company">
+            {companies.map((item) => (
+              <TLink key={item.id} className={item.id === companyId ? 'on' : undefined} href={`/documents?company=${item.id}`} aria-current={item.id === companyId ? 'true' : undefined}>
+                {item.legalName}
               </TLink>
             ))}
           </div>
         ) : null}
 
-        <div className="stack g16">
-          <DocumentFlow key={companyId} companyId={companyId} slots={vault.slots} compact onChanged={resource.reload} />
-          <div className="btns">
-            <TLink className="btn btn-ink" href={addHref(companyId)}>
-              Add a document
-            </TLink>
+        <section className="r1">
+          <div className="mod health file2">
+            <div className="l">
+              <div className="mh" style={{ padding: 0 }}>
+                <h2>Company file</h2>
+              </div>
+              <p>
+                The {plural(vault.totalCount, 'document', 'documents')} Vero reads or expects for {name.replace(/\.$/, '')}.
+              </p>
+              <div className="cnt">
+                <div>
+                  <CountUp className="pixel" value={counts.ok} />
+                  <span>in order</span>
+                </div>
+                <div>
+                  <CountUp className="pixel pr" value={counts.problem} />
+                  <span>with a problem</span>
+                </div>
+                <div>
+                  <CountUp className="pixel mi" value={counts.missing} />
+                  <span>missing</span>
+                </div>
+                {counts.reading > 0 ? (
+                  <div>
+                    <CountUp className="pixel rd" value={counts.reading} />
+                    <span>being read</span>
+                  </div>
+                ) : null}
+              </div>
+              <div className="fnote">Empty slots never lower the score. Filling them can raise it.</div>
+            </div>
+            <div className="shelfw">
+              <div className="shelf" role="group" aria-label={`The company file, drawn as ${plural(shelf.length, 'paper', 'papers')}`}>
+                {shelf.map((item, index) => {
+                  const words = item.slot.state === 'missing' && item.urgent ? 'Not found' : item.slot.stateWord;
+                  const tone = item.slot.state === 'missing' && item.urgent ? 's-ur' : SHELF_WORD[item.kind];
+                  const body = (
+                    <>
+                      <PaperArt kind={item.kind} gain={item.kind === 'missing' ? item.points : null} />
+                      <b>{item.slot.label}</b>
+                      <small className={tone}>{words}</small>
+                    </>
+                  );
+                  const style = { '--k': index } as CSSProperties;
+                  return canAct && item.kind !== 'ok' && item.kind !== 'reading' ? (
+                    <TLink key={item.slot.key} className="pap" style={style} href={item.slot.state === 'needs_confirmation' && item.slot.documentId ? `/documents/add?company=${companyId}&document=${item.slot.documentId}` : item.slot.state === 'not_accepted' && item.slot.documentId ? `/documents/${item.slot.documentId}/rejected` : addHref(companyId, item.slot.key)}>
+                      {body}
+                    </TLink>
+                  ) : (
+                    <div key={item.slot.key} className="pap" style={style}>
+                      {body}
+                    </div>
+                  );
+                })}
+              </div>
+              {facts.length > shelf.length ? <div className="more">and {plural(facts.length - shelf.length, 'more', 'more')}, listed below</div> : null}
+            </div>
           </div>
-        </div>
 
+          {!vault.canUpload ? (
+            <div className="mod next" data-testid="documents-locked">
+              <div className="k">Add documents</div>
+              <h3>Adding documents is part of a paid plan</h3>
+              <p>The first read comes from public records and your answers, so you don&apos;t need any documents to see it. Adding them lets Vero check what registries can&apos;t.</p>
+              <TLink className="btn" href="/plan">
+                See the plans
+              </TLink>
+            </div>
+          ) : following ? (
+            <div className="mod next">
+              <div className="k">Followed company</div>
+              <h3>Only its own team can add documents</h3>
+              <p>You can see what Vero has read for {name}, not change it.</p>
+              <TLink className="btn" href="/issues">
+                See the findings
+              </TLink>
+            </div>
+          ) : best ? (
+            <div className="mod next">
+              <svg className="art" viewBox="0 0 110 110" aria-hidden="true">
+                <g transform="rotate(7 55 55)">
+                  <rect className="a1" x="34" y="10" width="58" height="76" rx="8" />
+                  <rect className="a2" x="22" y="20" width="58" height="76" rx="8" strokeWidth="2" strokeDasharray="6 5" />
+                  <path className="a3" d="M51 46v24M39 58h24" strokeWidth="2.6" strokeLinecap="round" />
+                </g>
+              </svg>
+              <div className="k">Fill an empty slot</div>
+              <h3>Add the {midSentence(best.slot.label)}</h3>
+              <p>{best.slot.reason}</p>
+              {moves && projection ? (
+                <div className="imp">
+                  <CountUp className="pixel from" value={projection.current} />
+                  <Icon name="chev" />
+                  <CountUp className="pixel to" value={projection.projected} ms={1600} />
+                  <span className="lab">{best.urgent ? (urgentOpen.length > 1 ? 'with every urgent finding cleared, lifting the cap' : 'lifts the urgent cap') : `adds ${plural(projection.gain, 'point', 'points')}`}</span>
+                </div>
+              ) : null}
+              <TLink className="btn" href={addHref(companyId, best.slot.key)}>
+                Add a document
+              </TLink>
+            </div>
+          ) : (
+            <div className="mod next">
+              <div className="k">Company file</div>
+              <h3>Everything Vero expects is on file</h3>
+              <p>Vero reads each one again on every scan. Add anything new and it is matched to the checks it can clear.</p>
+              <TLink className="btn" href={addHref(companyId)}>
+                Add a document
+              </TLink>
+            </div>
+          )}
+        </section>
+      </Hero>
+
+      <After>
         {waiting.length > 0 ? (
-          <div className="stack g16" data-testid="documents-waiting">
-            <h2 className="t-2">Waiting for you</h2>
-            <div className="rows">
+          <Reveal as="section" className="mod wait" data-testid="documents-waiting">
+            <div className="mh">
+              <h2>Waiting for you</h2>
+            </div>
+            <div className="wl">
               {waiting.map((document) => (
-                <div className="row r-act" key={document.id}>
-                  <span className="stack g4">
-                    <span className="row-t">{document.fileName ?? 'A document'}</span>
-                    <span className="row-s">{document.status === 'failed' ? (document.rejectionReason ?? "We couldn't read this file.") : document.status === 'needs_confirmation' ? "We've read this. It doesn't count until you confirm where it belongs." : "We're reading this now."}</span>
-                  </span>
-                  {document.status === 'needs_confirmation' ? (
-                    <TLink className="link small" href={`/documents/add?company=${companyId}&document=${document.id}`}>
+                <div className="wi" key={document.id}>
+                  <div>
+                    <b>{document.fileName ?? 'A document'}</b>
+                    <small>{document.status === 'failed' ? (document.rejectionReason ?? "Vero couldn't read this file.") : document.status === 'needs_confirmation' ? 'Vero has read it. It counts once you confirm where it belongs.' : 'Vero is reading it now.'}</small>
+                  </div>
+                  {document.status === 'needs_confirmation' && canAct ? (
+                    <TLink className="lnk" href={`/documents/add?company=${companyId}&document=${document.id}`}>
                       Confirm
                     </TLink>
                   ) : document.status === 'failed' ? (
-                    <TLink className="link small" href={`/documents/${document.id}/rejected`}>
+                    <TLink className="lnk" href={`/documents/${document.id}/rejected`}>
                       See why
                     </TLink>
                   ) : (
-                    <span className="st none">{document.stateWord}</span>
+                    <span className="st2" style={{ color: 'var(--sky-2)' }}>
+                      {document.stateWord}
+                    </span>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         ) : null}
 
-        <div className="stack g32">
-          <div className="filters" role="group" aria-label="Filter documents">
+        <Reveal as="section" className="mod" i={1}>
+          <div className="mh">
+            <h2>All documents</h2>
+            <span className="sub">{company?.countryCoverage ? company.countryCoverage.sentence : 'Shared by you, read by Vero'}</span>
+          </div>
+          <div className="tabs" role="tablist" aria-label="Filter documents">
             {(
               [
-                ['all', 'All'],
-                ['todo', 'To do'],
-                ['in_place', 'In place'],
+                ['all', 'All', facts.length],
+                ['ok', 'In order', counts.ok],
+                ['problem', 'Problem', counts.problem],
+                ['missing', 'Missing', counts.missing],
               ] as const
-            ).map(([id, label]) => (
-              <button key={id} className={`fbtn${filter === id ? ' on' : ''}`} type="button" aria-pressed={filter === id} onClick={() => softly(() => setFilter(id))}>
-                {label}
+            ).map(([id, label, count]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                className={`tab${tab === id ? ' on' : ''}`}
+                onClick={() =>
+                  softly(() => {
+                    setTab(id);
+                    setLimit(PAGE);
+                  })
+                }
+              >
+                {label} <span className="n2">{count}</span>
               </button>
             ))}
           </div>
-
-          {vault.totalCount === 0 ? (
-            <Empty title="Nothing to add yet">We&apos;ll list what this company should have once we know more about it.</Empty>
-          ) : groups.length === 0 ? (
-            <Empty title={filter === 'todo' ? 'Nothing left to do' : 'Nothing in place yet'}>{filter === 'todo' ? 'Everything on the list has a document.' : "Documents show here once you've added and confirmed them."}</Empty>
-          ) : (
-            <div className="stack g48">
-              {groups.slice(0, 2).map((group) => (
-                <div className="stack g16" key={group.layer} data-testid="slot-group">
-                  <h2 className="t-2">{group.name}</h2>
-                  {rowsOf(group.slots)}
-                </div>
-              ))}
-              {groups.length > 2 ? (
-                <div className="rows">
-                  {groups.slice(2).map((group) => (
-                    <details className="more" key={group.layer} data-testid="slot-group-more">
-                      <summary className="row r-sum">
-                        <span className="row-t">{group.name}</span>
-                        <span className="quiet num">
-                          {group.inPlace} of {group.slots.length}
+          <table className="docs">
+            <thead>
+              <tr>
+                <th style={{ width: '27%' }}>Document</th>
+                <th className="hs">Where it came from</th>
+                <th className="hs">Shared</th>
+                <th className="hm" style={{ width: '30%' }}>
+                  What Vero found
+                </th>
+                <th className="hm">Status</th>
+                <th aria-label="Action" />
+              </tr>
+            </thead>
+            <tbody className="rows-in">
+              {shown.slice(0, limit).map((item, index) => {
+                const { slot, document } = item;
+                const open = openRow === slot.key;
+                const toggle = () => setOpenRow(open ? null : slot.key);
+                const bodyId = `slot-${slot.key}`;
+                return (
+                  <Fragment key={slot.key}>
+                    <tr
+                      className={`f${open ? ' open' : ''}`}
+                      style={{ '--r': Math.min(index, 12) } as CSSProperties}
+                      data-testid="slot-row"
+                      data-slot={slot.key}
+                      onClick={(event) => {
+                        if (!(event.target as HTMLElement).closest('a,button')) toggle();
+                      }}
+                    >
+                      <td>
+                        <div className="ft2">
+                          <b>{slot.label}</b>
+                          <small>
+                            {slot.layerName} · {slot.jurisdiction}
+                          </small>
+                          <span className="st2 mst" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
+                            {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="src2 hs">{document ? 'Shared by you' : 'Expected from you'}</td>
+                      <td className="muted hs">{document ? shortDate(document.uploadedAt) : '-'}</td>
+                      <td className="fd hm">{found(item)}</td>
+                      <td className="hm">
+                        <span className="st2" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
+                          {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
                         </span>
-                        <Chevron />
-                      </summary>
-                      <div className="more-body">{rowsOf(group.slots)}</div>
-                    </details>
-                  ))}
-                </div>
+                      </td>
+                      <td className="act">
+                        {!canAct ? null : slot.state === 'missing' || slot.state === 'declared_missing' ? (
+                          <TLink className={`btn ${item.urgent ? 'btn-p' : 'btn-g'} bsm`} href={addHref(companyId, slot.key)}>
+                            Upload
+                          </TLink>
+                        ) : slot.state === 'needs_confirmation' && slot.documentId ? (
+                          <TLink className="lnk" href={`/documents/add?company=${companyId}&document=${slot.documentId}`}>
+                            Confirm
+                          </TLink>
+                        ) : slot.state === 'not_accepted' && slot.documentId ? (
+                          <TLink className="lnk" href={`/documents/${slot.documentId}/rejected`}>
+                            See why
+                          </TLink>
+                        ) : isInPlace(slot.state) && slot.documentId ? (
+                          <DownloadButton documentId={slot.documentId} />
+                        ) : null}
+                        <button className="lnk" type="button" aria-expanded={open} aria-controls={bodyId} aria-label={`More about ${slot.label}`} data-testid="slot-toggle" onClick={toggle} style={{ marginLeft: 12, verticalAlign: 'middle', color: 'var(--ink-4)' }}>
+                          <Icon name="chev" />
+                        </button>
+                      </td>
+                    </tr>
+                    {open ? (
+                      <tr className="xr" id={bodyId}>
+                        <td colSpan={6}>
+                          <div className="xb">
+                            <p>{slot.reason}</p>
+                            {document?.fileName ? (
+                              <p>
+                                {document.fileName}
+                                {document.pages ? `, ${plural(document.pages, 'page', 'pages')}` : ''}. Shared {longDate(document.uploadedAt)}.{document.signatureHintWords ? ` ${document.signatureHintWords}` : ''}
+                              </p>
+                            ) : null}
+                            {canAct && item.issue && (item.issue.canDeclareMissing || item.issue.declaredMissing) ? <DeclareMissing key={`${item.issue.ruleKey}-${String(item.issue.declaredMissing)}`} item={item.issue} onChanged={resource.reload} /> : null}
+                            <div className="xl">
+                              {item.open[0] ? (
+                                <TLink className="lnk" href={issuePath(item.open[0])}>
+                                  See the finding
+                                </TLink>
+                              ) : null}
+                              {canAct && slot.documentId && document ? <RemoveDocument documentId={slot.documentId} filed={document.status === 'filed'} onRemoved={resource.reload} /> : null}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+              {shown.length === 0 ? (
+                <tr className="emptyrow" data-testid="empty-state">
+                  <td colSpan={6}>{facts.length === 0 ? "Nothing to add yet. Vero lists what this company should have once it knows more about it." : tab === 'problem' ? 'Nothing with a problem.' : tab === 'missing' ? 'Nothing missing. Every slot has a document.' : 'Nothing in order yet. Documents show here once you add and confirm them.'}</td>
+                </tr>
               ) : null}
+            </tbody>
+          </table>
+          {shown.length > limit ? (
+            <div className="moreb">
+              <button className="btn btn-g btn-sm" type="button" onClick={() => setLimit((value) => value + PAGE)}>
+                Show {Math.min(PAGE, shown.length - limit)} more of {shown.length}
+              </button>
             </div>
-          )}
-        </div>
-      </section>
-    </main>
+          ) : null}
+          <div className="foot2">
+            <Icon name="lock" />
+            Documents you share are read by Vero only. People you share a report with see findings, never your files.
+            {!vault.canUpload ? (
+              <>
+                {' '}
+                <PlanLink />
+              </>
+            ) : null}
+          </div>
+        </Reveal>
+      </After>
+    </div>
   );
 }
 

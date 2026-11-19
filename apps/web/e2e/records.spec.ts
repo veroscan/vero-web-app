@@ -41,6 +41,11 @@ function factRow(page: Page, key: string) {
   return page.locator(`[data-testid="fact-row"][data-key="${key}"]`);
 }
 
+/** What a fact says, without its source line. */
+function factValue(page: Page, key: string) {
+  return factRow(page, key).locator('dd > span').first();
+}
+
 async function checkScreen(page: Page): Promise<void> {
   await expectAccessible(page);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -63,16 +68,18 @@ test('deadlines: overdue first, real dates, grouped by month, and a timeline tha
   await page.goto('/deadlines');
   await expect(page.getByRole('heading', { level: 1, name: 'Deadlines' })).toBeVisible();
   await expect(page.getByTestId('sample-note')).toBeVisible();
-  await expect(page.getByTestId('deadline-group').first().getByRole('heading')).toHaveText('Overdue');
+  await expect(page.getByTestId('deadline-group').first().getByRole('row').first()).toHaveText('Overdue');
   await expect(page.getByTestId('deadline-row')).toHaveCount(list.deadlines.length);
 
   const overdue = page.locator(`#d-${first?.id ?? ''}`);
   await expect(overdue).toHaveAttribute('data-state', 'overdue');
   const fix = overdue.getByRole('link', { name: 'Fix this' });
   await expect(fix).toHaveAttribute('href', new RegExp(`/issues/${companyId}/`));
-  await page.locator(`.tl a[href="#d-${first?.id ?? ''}"]`).focus();
-  await expect(page.locator(`.tl a[href="#d-${first?.id ?? ''}"]`)).toHaveAttribute('aria-label', /overdue/);
-  await page.locator(`.tl a[href="#d-${first?.id ?? ''}"]`).click();
+  const dot = page.getByTestId('deadline-timeline').locator(`a[href="#d-${first?.id ?? ''}"]`);
+  await dot.focus();
+  await expect(dot).toHaveAccessibleName(/overdue/);
+  // The dot itself: the link's own box is empty, its dot and label sit around it.
+  await dot.locator('i').click();
   await expect(page).toHaveURL(new RegExp(`#d-${first?.id ?? ''}$`));
 
   // Every Fix this goes to a real issue, on this plan or to its upgrade path, and never to nothing.
@@ -115,9 +122,9 @@ test("deadlines: one with no real date stays undated, and a person's done is the
   if (list.undated.length > 0) {
     const undated = page.getByTestId('undated-row');
     await expect(undated).toHaveCount(list.undated.length);
-    await expect(undated.first().locator('.st')).toHaveText('No date');
+    await expect(undated.first()).toContainText('No date');
     await expect(undated.first()).toContainText(list.undated[0]?.waitingOn ?? '');
-    await expect(page.getByTestId('deadlines-undated')).toContainText("we won't guess a date");
+    await expect(page.getByTestId('deadlines-undated')).toContainText("won't guess a date");
   }
 
   // A date we read from a source can't be ticked off here.
@@ -127,7 +134,7 @@ test("deadlines: one with no real date stays undated, and a person's done is the
   await row.getByRole('button', { name: 'Mark as done' }).click();
   const doneRow = page.getByTestId('done-row');
   await expect(doneRow).toContainText(reminder?.title ?? '');
-  await expect(doneRow).toContainText('You told us this is done.');
+  await expect(page.getByTestId('deadlines-done')).toContainText('Dates you told Vero are done.');
   await expect(page.locator(`#d-${reminder?.id ?? ''}`)).toHaveCount(0);
 
   // A mistake is one click to take back.
@@ -154,7 +161,7 @@ test('deadlines: undated rows from the API are never given a date', async ({ pag
   const row = page.getByTestId('undated-row');
   await expect(row).toContainText('A date we cannot know');
   await expect(row).toContainText('We need the date it happened');
-  await expect(row.locator('.st')).toHaveText('No date');
+  await expect(row).toContainText('No date');
   await expect(row).not.toContainText(/\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
 });
 
@@ -169,7 +176,7 @@ test('deadlines: loading, nothing known yet, and an error with a retry', async (
   const empty = page.getByTestId('deadlines-empty');
   await expect(empty).toContainText("We don't have any dates yet");
   await expect(empty).toContainText("That doesn't mean nothing is due");
-  await empty.getByRole('link', { name: 'See your company records' }).click();
+  await empty.getByRole('link', { name: 'See your registry records' }).click();
   await page.waitForURL('**/company');
   await expect(page.getByTestId('company-records')).toBeVisible();
   await page.unroute('**/v1/deadlines');
@@ -197,7 +204,6 @@ test('deadlines: a group filters by company, and a link can ask for one', async 
 
   await page.goto('/deadlines');
   await expect(page.getByRole('group', { name: 'Filter by company' }).getByRole('button')).toHaveCount(3);
-  await expect(page.getByText(/your two companies/)).toBeVisible();
   await page.getByRole('group', { name: 'Filter by company' }).getByRole('button', { name: 'Kestrel Pay UK Ltd' }).click();
   await expect(page.getByTestId('deadline-row').first()).toContainText('Kestrel Pay UK Ltd');
   for (const row of await page.getByTestId('deadline-row').all()) await expect(row).toContainText('Kestrel Pay UK Ltd');
@@ -215,11 +221,12 @@ test('deadlines: a date with its year stays in its own column on a phone', async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/deadlines');
   const row = page.locator(`#d-${list.deadlines[0]?.id ?? ''}`);
-  await expect(row.locator('.st')).toContainText(String(new Date().getUTCFullYear() + 1));
-  const date = await row.locator('.st').boundingBox();
-  const words = await row.locator('.stack').boundingBox();
+  const dateCell = row.getByRole('cell').nth(0);
+  await expect(dateCell).toContainText(String(new Date().getUTCFullYear() + 1));
+  const date = await dateCell.boundingBox();
+  const words = await row.getByRole('cell').nth(1).boundingBox();
   expect((date?.x ?? 0) + (date?.width ?? 0)).toBeLessThanOrEqual(words?.x ?? 0);
-  const fits = await row.locator('.st').evaluate((node) => node.scrollWidth <= node.clientWidth);
+  const fits = await dateCell.evaluate((node) => node.scrollWidth <= node.clientWidth);
   expect(fits, 'the date fits its column').toBe(true);
 });
 
@@ -231,12 +238,14 @@ test('records UK: facts with their source and date, and "Not found" is never pro
   const { companyId } = await seedCompany(page, 'Kestrel Pay UK Ltd', 'GB', { plan: 'growth' });
 
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Company' }).click();
+  const nav = page.getByRole('complementary', { name: 'Main' }).getByRole('navigation');
+  await nav.getByRole('link', { name: 'Registry records' }).click();
   await page.waitForURL('**/company');
   const screen = page.getByTestId('company-records');
   await expect(screen).toHaveAttribute('data-country', 'GB');
-  await expect(screen.getByRole('heading', { level: 1 })).toHaveText('Kestrel Pay UK Ltd');
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Company' })).toHaveClass(/on/);
+  await expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName('Registry records');
+  await expect(screen.getByRole('link', { name: /Kestrel Pay UK Ltd/ })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.getByRole('link', { name: 'Registry records' })).toHaveClass(/on/);
   await expect(page.getByTestId('sample-note')).toBeVisible();
   await expect(page.getByTestId('records-checked')).toContainText(/Checked today at \d\d:\d\d\./);
 
@@ -254,20 +263,19 @@ test('records UK: facts with their source and date, and "Not found" is never pro
 
   const ico = factRow(page, 'registry.uk.ico.listed');
   await expect(ico).toContainText('Data protection fee');
-  await expect(ico.locator('.b')).toHaveText('Not found');
+  await expect(factValue(page, 'registry.uk.ico.listed')).toHaveText('Not found');
   await expect(ico.getByTestId('fact-source')).toContainText('Checked the ICO register today');
   await expect(ico).not.toContainText('Found on the');
-  if (!(await ico.evaluate((node: HTMLDetailsElement) => node.open))) await ico.locator('summary').click();
   await expect(ico).toContainText("That isn't proof it isn't there");
   await expect(ico.getByRole('link', { name: 'Upload your receipt' })).toHaveAttribute('href', `/documents/add?company=${companyId}&slot=gb_ico_receipt`);
-  await expect(factRow(page, 'registry.sanctions.match').locator('.b')).toHaveText('No matches');
+  await expect(factValue(page, 'registry.sanctions.match')).toHaveText('No matches');
   await expect(screen.getByText(/^(No|Yes)$/)).toHaveCount(0);
 
   // An overdue date explains itself, and its links lead somewhere real.
   const list = await apiJson<{ deadlines: { state: string; ruleKey: string | null }[] }>(page, 'get', '/v1/deadlines');
   const confirmation = factRow(page, 'registry.uk.companies_house.confirmation_next_due');
   if (list.deadlines.some((item) => item.ruleKey === 'GB.CORP.CONFIRMATION_STATEMENT' && item.state === 'overdue')) {
-    await expect(confirmation.locator('.b')).toContainText('Overdue since');
+    await expect(factValue(page, 'registry.uk.companies_house.confirmation_next_due')).toContainText('Overdue since');
     await expect(confirmation).toContainText('File it on the Companies House website');
     await expect(page.getByTestId('records-checked')).toContainText(/\d+ things? needs? you\./);
     await expect(confirmation.getByRole('link', { name: 'See it in your deadlines' })).toHaveAttribute('href', `/deadlines?company=${companyId}`);
@@ -311,8 +319,7 @@ test('records Delaware: never a live status, only "Certified {date}" from a cert
   await expect(screen).toHaveAttribute('data-country', 'US-DE');
   await expect(screen).not.toContainText('Good standing, live');
   await expect(screen).not.toContainText('Active');
-  const standing = factRow(page, 'good_standing');
-  await expect(standing.locator('.b')).toHaveText('No certificate on file');
+  await expect(factValue(page, 'good_standing')).toHaveText('No certificate on file');
   const note = page.getByTestId('records-delaware-note');
   await expect(note).toContainText("Delaware doesn't allow automatic status checks");
   await expect(note).toContainText('We go by your Certificate of Good Standing');
@@ -325,7 +332,7 @@ test('records Delaware: never a live status, only "Certified {date}" from a cert
   await putFact(companyId, 'vault.de_good_standing.validated', 'true', 'Your Certificate of Good Standing', 'document', false);
   await putFact(companyId, 'vault.de_good_standing.dated', '"2026-10-12"', 'Your Certificate of Good Standing', 'document', false);
   await page.reload();
-  await expect(factRow(page, 'good_standing').locator('.b')).toHaveText('Certified 12 Oct 2026');
+  await expect(factValue(page, 'good_standing')).toHaveText('Certified 12 Oct 2026');
   await expect(factRow(page, 'good_standing').getByTestId('fact-source')).toContainText('You uploaded this and we read it');
   await expect(page.getByTestId('records-delaware-note').getByRole('link', { name: 'Upload a new certificate' })).toBeVisible();
 });
@@ -338,7 +345,7 @@ test('records Nigeria: "Active" is explained, and a status report is the way to 
   await page.goto(`/company/${companyId}`);
   const screen = page.getByTestId('company-records');
   await expect(screen).toHaveAttribute('data-country', 'NG');
-  await expect(factRow(page, 'registry.ng.cac.status').locator('.b')).toHaveText('Active');
+  await expect(factValue(page, 'registry.ng.cac.status')).toHaveText('Active');
   await expect(factRow(page, 'registry.ng.cac.status').getByTestId('fact-source')).toContainText('CAC, through our licensed data provider. Retrieved today');
   await expect(factRow(page, 'registry.ng.cac.rc_number')).toContainText('1849302');
   await expect(factRow(page, 'registry.ng.cac.directors_count')).toContainText('2 on record');
@@ -348,8 +355,7 @@ test('records Nigeria: "Active" is explained, and a status report is the way to 
   await expect(note.getByRole('link', { name: 'Upload a status report' })).toHaveAttribute('href', `/documents/add?company=${companyId}&slot=ng_cac_status_report`);
 
   const ndpc = factRow(page, 'registry.ng.ndpc.listed');
-  await expect(ndpc.locator('.b')).toHaveText('Not found');
-  if (!(await ndpc.evaluate((node: HTMLDetailsElement) => node.open))) await ndpc.locator('summary').click();
+  await expect(factValue(page, 'registry.ng.ndpc.listed')).toHaveText('Not found');
   await expect(ndpc).toContainText("That isn't proof it isn't there");
   await expect(ndpc.getByTestId('fact-source')).toContainText('Checked the NDPC list today');
 });
@@ -367,7 +373,7 @@ test('records: a source that is down says so, and a company nobody found is neve
   await expect(down).toContainText('HMRC');
   await expect(down).toContainText("won't count for or against your score");
   const source = factRow(page, 'source:uk.hmrc_vat');
-  await expect(source.locator('.b')).toHaveText('Retrying');
+  await expect(factValue(page, 'source:uk.hmrc_vat')).toHaveText('Retrying');
   await expect(source).toContainText("We couldn't reach this source just now");
   await expect(factRow(page, 'registry.uk.companies_house.status')).toContainText('Active');
 
@@ -384,13 +390,13 @@ test('records: a company the registers could not find, and one they could not re
 
   await page.goto(`/company/${ghost.companyId}`);
   const house = factRow(page, 'source:uk.companies_house');
-  await expect(house.locator('.b')).toHaveText('Not found');
+  await expect(factValue(page, 'source:uk.companies_house')).toHaveText('Not found');
   await expect(house).toContainText("That isn't proof there isn't one");
   await expect(page.getByTestId('company-records')).not.toContainText(/doesn't exist|does not exist|no such company/i);
 
   await page.goto(`/company/${broken.companyId}`);
   await expect(page.getByTestId('sources-down')).toContainText(/sources? (is|are) down/);
-  await expect(factRow(page, 'source:uk.companies_house').locator('.b')).toHaveText('Retrying');
+  await expect(factValue(page, 'source:uk.companies_house')).toHaveText('Retrying');
   await expect(page.getByTestId('company-records')).not.toContainText('Not found');
 });
 
@@ -403,14 +409,13 @@ test('records: tabs between companies, and old links reach the right company', a
 
   await page.goto('/company');
   const tabs = page.getByRole('navigation', { name: 'Companies' });
-  await expect(tabs.getByRole('link')).toHaveText(['Delaware', 'United Kingdom', 'Nigeria']);
-  await expect(tabs.getByRole('link', { name: 'Delaware' })).toHaveAttribute('aria-current', 'page');
-  await tabs.getByRole('link', { name: 'United Kingdom' }).click();
+  await expect(tabs.getByRole('link')).toHaveText([/^Kestrel Pay Inc\.\s*Delaware/, /^Kestrel Pay UK Ltd\s*United Kingdom/, /^Kestrel Pay Nigeria Ltd\s*Nigeria/]);
+  await expect(tabs.getByRole('link', { name: /Delaware/ })).toHaveAttribute('aria-current', 'page');
+  await tabs.getByRole('link', { name: /United Kingdom/ }).click();
   await page.waitForURL(`**/company/${uk.companyId}`);
   await expect(page.getByTestId('company-records')).toHaveAttribute('data-country', 'GB');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kestrel Pay UK Ltd');
-  await expect(tabs.getByRole('link', { name: 'United Kingdom' })).toHaveAttribute('aria-current', 'page');
-  await tabs.getByRole('link', { name: 'Nigeria' }).click();
+  await expect(tabs.getByRole('link', { name: /United Kingdom/ })).toHaveAttribute('aria-current', 'page');
+  await tabs.getByRole('link', { name: /Nigeria/ }).click();
   await page.waitForURL(`**/company/${ng.companyId}`);
   await expect(page.getByTestId('company-records')).toHaveAttribute('data-country', 'NG');
 
@@ -429,7 +434,7 @@ test('records: Free sees the facts, with uploading behind the plan; loading and 
   const { companyId } = await seedCompany(page, 'Kestrel Pay Inc.', 'US-DE');
 
   await page.goto('/company');
-  await expect(factRow(page, 'good_standing').locator('.b')).toHaveText('No certificate on file');
+  await expect(factValue(page, 'good_standing')).toHaveText('No certificate on file');
   const locked = page.getByTestId('records-upload-locked');
   await expect(locked).toContainText('part of a paid plan');
   await expect(locked.getByRole('link', { name: 'See the plans' })).toHaveAttribute('href', '/plan');

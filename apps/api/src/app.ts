@@ -20,6 +20,7 @@ import { registerNotificationRoutes } from './modules/notifications/routes';
 import { registerQuestionnaireRoutes } from './modules/questionnaire/routes';
 import { registerRecordRoutes } from './modules/records/routes';
 import { registerReportRoutes } from './modules/reports/routes';
+import { registerWaitlistRoutes, WAITLIST_PATH } from './modules/waitlist/routes';
 import { registerReviewRoutes } from './modules/review/routes';
 import { registerScanRoutes } from './modules/scans/routes';
 import { registerSearchRoutes } from './modules/search/routes';
@@ -160,9 +161,13 @@ export async function buildApp(deps: AppDeps, options: BuildAppOptions = {}): Pr
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cookie);
   await app.register(cors, {
-    origin: config.allowedOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    // The website may post its waitlist form, and nothing else: it gets no credentials.
+    delegator: (request, done) => {
+      const origin = request.headers.origin;
+      if (origin && config.allowedOrigins.includes(origin)) return done(null, { origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] });
+      if (origin && config.websiteOrigins.includes(origin) && (request.url ?? '').startsWith(WAITLIST_PATH)) return done(null, { origin: true, credentials: false, methods: ['POST'] });
+      return done(null, { origin: false });
+    },
   });
   // Per-instance safety net for every route. Sign-in limits are stricter and live in Postgres.
   await app.register(rateLimit, {
@@ -223,6 +228,7 @@ export async function buildApp(deps: AppDeps, options: BuildAppOptions = {}): Pr
   registerQuestionnaireRoutes(app, deps);
   registerScanRoutes(app, deps);
   registerReportRoutes(app, deps);
+  registerWaitlistRoutes(app, deps);
   registerBillingRoutes(app, deps);
   registerVaultRoutes(app, deps);
   registerGithubRoutes(app, deps);

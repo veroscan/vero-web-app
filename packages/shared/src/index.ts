@@ -16,4 +16,5 @@ export * from './permissions';
 export * from './plans';
 export * from './product';
 export * from './vault';
+export * from './waitlist';
 export * from './watchlist';

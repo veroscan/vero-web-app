@@ -1,0 +1,97 @@
+/* Adding a document (board: AddDocument.dc.html and its states: reading, matched, wrong, blurry).
+   Used by components/DocumentFlow.tsx on Add a document, the rejected page and a finding's page. */
+
+.pg-docflow{flex:1;display:flex;min-width:0}
+.pg-docflow>.st-v{flex:1;display:flex;align-items:center;animation:up .45s var(--ease) both;min-width:0}
+.pg-docflow>.st-v.idle{align-items:stretch}
+
+/* idle: the drop zone with a page settling into a tray */
+.pg-docflow .drop{flex:1;width:100%;border:1.5px dashed #C3CBDD;border-radius:16px;background:linear-gradient(180deg,#FBFCFF,#F6F8FD);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px;transition:background .25s,border-color .25s;cursor:pointer;color:var(--ink);font:inherit}
+.pg-docflow .drop:hover,.pg-docflow .drop.over{border-color:var(--sky-2);background:#F0F7FF}
+.pg-docflow .drop:focus-visible{outline:2px solid var(--sky-2);outline-offset:3px}
+.pg-docflow .drop svg.tray{width:180px;height:140px;overflow:visible}
+.pg-docflow .drop .pg{animation:dfdrop 1.4s var(--ease) .2s both}
+.pg-docflow .drop.over .pg{animation:dfhover 1s var(--ease) both}
+@keyframes dfdrop{from{transform:translateY(-22px);opacity:0}to{transform:translateY(6px);opacity:1}}
+@keyframes dfhover{from{transform:translateY(6px)}to{transform:translateY(16px)}}
+.pg-docflow .tray .t1{fill:#fff;stroke:#0182FA}.pg-docflow .tray .t2{fill:#DDF0FC;stroke:#0182FA}
+.pg-docflow .tray .t3{fill:#0182FA}.pg-docflow .tray .t4{fill:#C9E4F7}.pg-docflow .tray .t5{fill:#E3F4FD}.pg-docflow .tray .t6{fill:none;stroke:#0182FA}
+.pg-docflow .drop .dt1{display:block;font-size:20px;font-weight:700;letter-spacing:-.015em;margin-top:18px}
+.pg-docflow .drop .dt2{display:block;color:var(--ink-3);font-weight:600;margin-top:6px;font-size:14px}
+.pg-docflow .drop .btn{margin-top:20px;pointer-events:none}
+.pg-docflow .drop .as{display:block;margin-top:22px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.pg-docflow .drop .as b{color:var(--navy)}
+
+/* the shared result layout: a picture of the paper, then what happened */
+.pg-docflow .res{flex:1;display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:start;padding:14px 8px 4px 4px;min-width:0}
+.pg-docflow .res>div{min-width:0}
+.pg-docflow .pic{position:relative;display:grid;place-items:center;height:250px;background:radial-gradient(closest-side,#E6F3FE,rgba(230,243,254,0))}
+.pg-docflow .pic svg{width:136px;height:170px;overflow:visible}
+.pg-docflow .pic .sheetbox{position:relative;width:96px;height:124px;overflow:hidden;border-radius:6px}
+.pg-docflow .pic .sheetbox svg{width:96px;height:124px}
+.pg-docflow .pic .sheetbox .scanline{animation-duration:2.2s}
+.pg-docflow .pic .cap{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.pg-docflow .pp .p1{fill:#E3F4FD}.pg-docflow .pp .p2{fill:#fff;stroke:#D6E4F2}.pg-docflow .pp .p3{fill:#0182FA}.pg-docflow .pp .p4{fill:#C9E4F7}
+.pg-docflow .pp .p5{fill:none;stroke:#9DDAF7}.pg-docflow .pp .p6{fill:none;stroke:#000066}.pg-docflow .pp .p7{fill:#B4B9CB}
+.pg-docflow .pp .ok{fill:#0E9F78;stroke:#fff}.pg-docflow .pp .wn{fill:#E89B16;stroke:#fff}.pg-docflow .pp .mk{stroke:#fff;fill:none}
+.pg-docflow .pp .hl{fill:#FFE1E2}.pg-docflow .pp .hr{fill:#E5484D}.pg-docflow .pp .blur{fill:#9FC6E6}
+.pg-docflow h3{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.25;margin-top:14px}
+.pg-docflow .lead{color:var(--ink-2);font-size:14.5px;line-height:1.6;margin-top:8px;max-width:520px}
+.pg-docflow .fn{display:flex;align-items:baseline;gap:10px;font-weight:700;font-size:14.5px;flex-wrap:wrap;min-width:0}
+.pg-docflow .fn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pg-docflow .fn small{font-size:12.5px;color:var(--ink-3);font-weight:600}
+.pg-docflow .fn .st2{margin-left:auto}
+.pg-docflow .lbl2{font-size:13px;font-weight:700;color:var(--ink-3);margin-top:24px}
+.pg-docflow .bar2{height:8px;border-radius:4px;background:var(--line);margin-top:16px;overflow:hidden}
+.pg-docflow .bar2 i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#0182FA,#000066);transition:width 6s cubic-bezier(.1,.6,.2,1)}
+.pg-docflow .prog{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink-3)}
+.pg-docflow .prog b{color:var(--ink)}
+.pg-docflow .steps{margin-top:18px;border-top:1px solid var(--line-2)}
+.pg-docflow .steps div{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2);font-weight:600;font-size:14px}
+.pg-docflow .steps div span:last-child{font-size:13px;font-weight:700;transition:color .3s}
+.pg-docflow .chk{margin-top:12px;border-top:1px solid var(--line-2)}
+.pg-docflow .chk .c{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line-2)}
+.pg-docflow .chk .c b{display:block;font-weight:700;font-size:14px}.pg-docflow .chk .c small{font-size:12.5px;color:var(--ink-3);font-weight:600}
+.pg-docflow .sc{display:flex;align-items:center;gap:14px;margin-top:22px;padding:16px 18px;border-radius:16px;background:var(--soft)}
+.pg-docflow .sc .pixel{font-size:46px;line-height:1}
+.pg-docflow .sc .from{color:var(--ink-4)}.pg-docflow .sc .to{color:var(--good)}
+.pg-docflow .sc .i{color:var(--ink-4)}
+.pg-docflow .sc .t{font-size:13px;font-weight:600;color:var(--ink-2);line-height:1.45;margin-left:6px}
+.pg-docflow .sc .t b{color:var(--ink)}
+.pg-docflow .acts2{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.pg-docflow .why{margin-top:12px;font-size:14px;line-height:1.6;color:var(--ink-2);font-weight:500}
+.pg-docflow .inst{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.pg-docflow .inst div{display:flex;gap:12px;padding:13px 14px;border-radius:12px;background:var(--bg);font-weight:600;font-size:13.5px;line-height:1.5}
+.pg-docflow .inst span{width:24px;height:24px;border-radius:8px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.pg-docflow .kept{margin-top:16px;font-size:13px;font-weight:600;color:var(--ink-3)}
+/* confirming where it belongs */
+.pg-docflow .ask{margin-top:18px;display:flex;flex-direction:column;gap:14px}
+.pg-docflow .ask .field{margin:0}
+.pg-docflow .ask .checkline{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.pg-docflow .hint{margin-top:10px;font-size:13px;font-weight:600;color:var(--ink-3)}
+
+/* compact, inside a finding's "What clears it" panel */
+.pg-docflow.compact .drop{flex-direction:row;text-align:left;justify-content:flex-start;gap:16px;padding:22px}
+.pg-docflow.compact .drop svg.tray{display:none}
+.pg-docflow.compact .drop .ic{width:44px;height:44px;border-radius:12px;background:#EAF4FF;color:var(--sky-2);display:grid;place-items:center;flex:none}
+.pg-docflow.compact .drop .ic .i{width:22px;height:22px}
+.pg-docflow.compact .drop .tx{flex:1;min-width:0}
+.pg-docflow.compact .drop .dt1{font-size:14.5px;margin:0;letter-spacing:0}
+.pg-docflow.compact .drop .dt2{font-size:13px;margin-top:2px}
+.pg-docflow.compact .drop .btn{margin:0}
+.pg-docflow.compact .drop .as{display:none}
+.pg-docflow.compact .res{grid-template-columns:120px 1fr;gap:20px;padding:6px 0 0}
+.pg-docflow.compact .pic{height:160px}
+.pg-docflow.compact .pic svg{width:96px;height:120px}
+.pg-docflow.compact h3{font-size:18px}
+
+@media (max-width:640px){
+  .pg-docflow .res,.pg-docflow.compact .res{grid-template-columns:1fr;gap:6px}
+  .pg-docflow .pic,.pg-docflow.compact .pic{height:150px}
+  .pg-docflow .pic svg{width:100px;height:126px}
+  .pg-docflow .drop{padding:28px 18px}
+  .pg-docflow.compact .drop{flex-wrap:wrap;padding:18px}
+  .pg-docflow.compact .drop .tx{flex:1 1 calc(100% - 60px)}
+  .pg-docflow.compact .drop .btn{margin-left:60px}
+  .pg-docflow .fn .st2{margin-left:0}
+}

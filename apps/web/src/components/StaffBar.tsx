@@ -2,8 +2,10 @@
 
 import type { ApiError } from '@vero/shared';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import '@/app/styles/pages/staff.css';
 import { api } from '@/lib/api';
+import { PublicMessage } from './PublicBar';
 import { ThemeToggle } from './Theme';
 import { NavigationDone, TLink } from './TLink';
 
@@ -24,17 +26,16 @@ export function StaffBar() {
     );
   };
   return (
-    <header className="bar deskbar">
+    <header className="deskbar">
       <NavigationDone />
-      <div className="btns" style={{ gap: 16 }}>
+      <div className="brand">
         <TLink href="/review/work" aria-label="Vero staff desk">
-          <img src="/vero-lockup.svg" alt="Vero Scan" />
+          <img className="light-only" src="/brand/wordmark-dark.svg" alt="Vero" />
+          <img className="dark-only" src="/brand/wordmark-light.svg" alt="Vero" />
         </TLink>
-        <span className="b" style={{ fontSize: 15.5 }}>
-          Review desk
-        </span>
+        <span>Review desk</span>
       </div>
-      <nav className="tabs" aria-label="Review desk">
+      <nav aria-label="Review desk">
         {TABS.map((tab) => (
           <TLink key={tab.href} className={tab.on(pathname) ? 'on' : undefined} href={tab.href} aria-current={tab.on(pathname) ? 'page' : undefined}>
             {tab.label}
@@ -42,13 +43,13 @@ export function StaffBar() {
         ))}
       </nav>
       <div className="tools">
-        <button className="btn btn-line btn-sm" type="button" onClick={signOut}>
+        <button className="btn btn-g btn-sm" type="button" onClick={signOut}>
           Sign out
         </button>
         <ThemeToggle />
       </div>
       {failed ? (
-        <p className="formerror" role="alert" style={{ flexBasis: '100%' }}>
+        <p className="formerror" role="alert">
           We couldn&apos;t sign you out. Check your connection and try again.
         </p>
       ) : null}
@@ -59,18 +60,29 @@ export function StaffBar() {
 /** Someone without staff access sees this and nothing else. The API has already refused them. */
 export function StaffRefused({ adminOnly = false }: { adminOnly?: boolean }) {
   return (
-    <div className="vs">
-      <main className="state" data-testid="staff-refused">
-        <h1 className="t-2">You don&apos;t have access to this</h1>
-        <p className="quiet">{adminOnly ? "This part of Vero Scan is for Code & Clause's admins." : "This part of Vero Scan is for Code & Clause's review desk."} Your account isn&apos;t on it, and we&apos;ve noted the attempt.</p>
-        <TLink className="btn btn-line btn-sm" href="/">
+    <PublicMessage kicker="Staff only" title="You don't have access to this" testId="staff-refused">
+      <p>
+        {adminOnly ? "This part of Vero is for Vero's admins." : "This part of Vero is for Vero's review desk."} Your account isn&apos;t on it, and we&apos;ve noted the attempt.
+      </p>
+      <div className="btns">
+        <TLink className="btn btn-w btn-lg" href="/">
           Go to your home page
         </TLink>
-      </main>
-    </div>
+      </div>
+    </PublicMessage>
   );
 }
 
 export function isRefused(error: ApiError | null | undefined): boolean {
   return error?.status === 403;
+}
+
+/** The desk's frame: the bar, then the page. */
+export function StaffPage({ children }: { children: ReactNode }) {
+  return (
+    <div className="pg-staff">
+      <StaffBar />
+      <main className="content">{children}</main>
+    </div>
+  );
 }

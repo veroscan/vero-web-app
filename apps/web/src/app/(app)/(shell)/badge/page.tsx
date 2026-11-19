@@ -1,30 +1,111 @@
 'use client';
 
-import type { BadgeStatusResponse, ShareLink } from '@vero/shared';
+import '@/app/styles/pages/share.css';
+import type { BadgeStatusResponse, OverviewResponse, ShareLink } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading, PlanLink } from '@/components/Bits';
 import { CopyLink } from '@/components/CopyLink';
+import { Icon } from '@/components/Icon';
+import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { After, Hero, Plain } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
-import { V_PATH, VSeal } from '@/components/V3D';
 import { api, asApiError } from '@/lib/api';
 import { entitlementsOf, roleCan } from '@/lib/entitlements';
-import { longDate } from '@/lib/format';
+import { coverageWords, longDate, scoreWords, shortDate } from '@/lib/format';
 import { badgeRows, earnedBadge, shareUrl, verifiedUrl } from '@/lib/trust';
 import { useResource } from '@/lib/useResource';
 
 const LINK_DAYS = [7, 30, 90] as const;
+const TONE_COLOUR: Readonly<Record<string, string>> = { good: 'var(--good)', watch: 'var(--warn)', risk: 'var(--urgent)', none: 'var(--ink-3)' };
 
-function ShareLinks({ companyId }: { companyId: string }) {
-  const toast = useToast();
-  const resource = useResource(() => api.shares.list({ params: { companyId } }), [companyId]);
+function daysLeft(iso: string): number {
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+}
+
+/** What a viewer of the public page gets. Fixed by the API: a summary and counts, never documents. */
+const SECTIONS = [
+  { title: 'Score and coverage', note: 'The score, and how many checks it rests on', shared: true },
+  { title: 'Open issues, as counts', note: 'How many are urgent, important or worth doing', shared: true },
+  { title: 'Areas', note: 'A score for each area that has one', shared: true },
+  { title: 'What was checked', note: 'Which countries and registers, and how we know', shared: true },
+  { title: 'Issue details and your documents', note: 'Viewers never see what an issue says, or open a file', shared: false },
+];
+
+function Preview({ companyName, overview, expires }: { companyName: string; overview: OverviewResponse | null; expires: string }) {
+  const score = overview?.score;
+  const value = score?.kind === 'exact' ? score.value : null;
+  const coverage = overview?.coverage ? coverageWords(overview.coverage) : null;
+  const areas = (overview?.areas ?? []).filter((area) => area.score !== null).slice(0, 5);
+  return (
+    <div className="pvw">
+      <div className="ph">Preview of the public page</div>
+      <div className="pg" aria-hidden="true">
+        <div className="top">
+          <span className="bg" />
+          <div className="tb">
+            <span className="wm">Vero</span>
+            <span>Expires {expires}</span>
+          </div>
+          <div className="co">{companyName}</div>
+          {score && score.kind !== 'none' ? (
+            <div className="sc">
+              <span className="pixel">{value ?? scoreWords(score)}</span>
+              <div>
+                {overview?.statusWord ?? 'Scored'}
+                <br />
+                {coverage ?? ''}
+              </div>
+            </div>
+          ) : (
+            <div className="sc">
+              <div>Not scored yet</div>
+            </div>
+          )}
+        </div>
+        <div className="bd">
+          {areas.length > 0 ? (
+            <div className="card">
+              <h6>Areas</h6>
+              {areas.map((area) => (
+                <div className="ab" key={area.layer}>
+                  <span>{area.name}</span>
+                  <i>
+                    <b style={{ width: `${area.score ?? 0}%`, background: (area.score ?? 0) < 50 ? 'var(--urgent)' : undefined }} />
+                  </i>
+                  <span>{area.score}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className="card">
+            <h6>Open issues</h6>
+            <div className="ln">
+              <span>Counted by how serious they are</span>
+              <em>Counts only</em>
+            </div>
+          </div>
+          <div className="card">
+            <h6>What was checked</h6>
+            <div className="ln">
+              <span>Registers and how we know</span>
+              <em style={{ color: 'var(--good)' }}>Dated</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: boolean; onMade: () => void }) {
   const [days, setDays] = useState<number>(30);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
-  const [asking, setAsking] = useState<string | null>(null);
+  const until = shortDate(new Date(Date.now() + days * 86_400_000).toISOString());
 
   const create = async () => {
     setBusy(true);
@@ -32,12 +113,57 @@ function ShareLinks({ companyId }: { companyId: string }) {
     try {
       const made = await api.shares.create({ params: { companyId }, body: { expiresInDays: days } });
       setFresh(shareUrl(made.token, window.location.origin));
-      resource.reload();
+      onMade();
     } catch (error) {
       setProblem(asApiError(error).message);
     }
     setBusy(false);
   };
+
+  return (
+    <div className="mod next mk">
+      <div className="k">New link</div>
+      <h3>Make a link to your public page</h3>
+      <div className="lbl3">Who can view</div>
+      <p className="who2">Anyone with the link. It can&apos;t be limited to named people yet.</p>
+      <div className="lbl3">
+        Stays open for<span>Until {until}</span>
+      </div>
+      <div className="seg" role="group" aria-label="How long it stays open">
+        {LINK_DAYS.map((value) => (
+          <button key={value} type="button" className={days === value ? 'on' : undefined} aria-pressed={days === value} onClick={() => setDays(value)}>
+            {value} days
+          </button>
+        ))}
+      </div>
+      {fresh ? <CopyLink testId="share-fresh" url={fresh} note="Copy it now. We only show a link once, because we keep just a scrambled copy of it." /> : null}
+      {problem ? (
+        <p className="probl" role="alert">
+          {problem}
+        </p>
+      ) : null}
+      <div className="sum">Viewers can read the summary. They can&apos;t open your documents or see what an issue says.</div>
+      {canMake ? (
+        <button className="btn" type="button" disabled={busy} onClick={() => void create()}>
+          <Icon name="link" />
+          {busy ? 'Making the link' : 'Make a public link'}
+        </button>
+      ) : (
+        <p className="sum" data-testid="share-no-permission">
+          Only an owner or admin can make a public link.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Links({ links, loading, error, canManage, onChanged }: { links: ShareLink[]; loading: boolean; error: string | null; canManage: boolean; onChanged: () => void }) {
+  const toast = useToast();
+  const [asking, setAsking] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const live = links.filter((link) => link.active);
+  const ended = links.filter((link) => !link.active).slice(0, 5);
 
   const revoke = async (link: ShareLink) => {
     setBusy(true);
@@ -46,83 +172,113 @@ function ShareLinks({ companyId }: { companyId: string }) {
       await api.shares.revoke({ params: { shareId: link.id } });
       toast('Link withdrawn. It no longer opens.');
       setAsking(null);
-      setFresh(null);
-      resource.reload();
-    } catch (error) {
-      setProblem(asApiError(error).message);
+      onChanged();
+    } catch (failure) {
+      setProblem(asApiError(failure).message);
     }
     setBusy(false);
   };
 
-  const live = (resource.data?.links ?? []).filter((link) => link.active);
-
   return (
-    <section className="sec stack g16" data-testid="share-links">
-      <div className="stack g4">
-        <h2 className="t-2">Your public page</h2>
-        <p className="quiet">A link you can send to anyone. It shows a snapshot of your score and what&apos;s been checked today, and never your documents or the details of an issue.</p>
+    <Reveal as="section" className="mod" data-testid="share-links">
+      <div className="mh">
+        <h2>Links</h2>
+        <span className="sub">Withdraw a link and it stops opening straight away</span>
       </div>
-      {resource.error ? (
-        <p className="formerror" role="alert">
-          {resource.error.message}
+      {error ? (
+        <p className="probl pad" role="alert">
+          {error}
         </p>
       ) : null}
-      {fresh ? <CopyLink testId="share-fresh" url={fresh} note="Copy it now. We only show a link once, because we keep just a scrambled copy of it." /> : null}
-      {live.length > 0 ? (
-        <div className="rows">
-          {live.map((link) => (
-            <div className="row r-act" key={link.id} data-testid="share-row">
-              <span className="stack g4">
-                <span className="row-t">Made {longDate(link.createdAt)}</span>
-                <span className="row-s">Open until {longDate(link.expiresAt)}</span>
-              </span>
-              {asking === link.id ? (
-                <span className="btns">
-                  <button className="btn btn-sm btn-ink" type="button" disabled={busy} onClick={() => void revoke(link)}>
-                    Yes, withdraw it
-                  </button>
-                  <button className="btn btn-sm btn-line" type="button" onClick={() => setAsking(null)}>
-                    Keep it
-                  </button>
-                </span>
-              ) : (
-                <button className="btn btn-sm btn-line" type="button" onClick={() => setAsking(link.id)}>
-                  Withdraw
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : resource.loading ? null : (
-        <p className="quiet" data-testid="share-none">
-          No links are open.
-        </p>
-      )}
       {problem ? (
-        <p className="formerror" role="alert">
+        <p className="probl pad" role="alert">
           {problem}
         </p>
       ) : null}
-      <div className="sharemake">
-        <div className="field">
-          <label htmlFor="share-days">How long it stays open</label>
-          <select className="input" id="share-days" value={days} onChange={(event) => setDays(Number(event.target.value))}>
-            {LINK_DAYS.map((value) => (
-              <option key={value} value={value}>
-                {value} days
-              </option>
+      {live.length === 0 && ended.length === 0 ? (
+        loading ? null : (
+          <p className="none2" data-testid="share-none">
+            No links are open.
+          </p>
+        )
+      ) : (
+        <table className="lt">
+          <thead>
+            <tr>
+              <th>Link</th>
+              <th>Who can view</th>
+              <th>Made</th>
+              <th>Open until</th>
+              <th>
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="rows-in">
+            {[...live, ...ended].map((link, index) => (
+              <tr key={link.id} className={link.active ? undefined : 'exp'} data-testid={link.active ? 'share-row' : 'share-ended'} style={{ '--r': index } as CSSProperties}>
+                <td className="nm">
+                  <b>Public page</b>
+                  <small>Shown once when it was made</small>
+                </td>
+                <td className="who">Anyone with the link</td>
+                <td className="muted">{longDate(link.createdAt)}</td>
+                <td>
+                  {link.active ? (
+                    <>
+                      <span className="st2" style={{ color: 'var(--ink)' }}>
+                        {shortDate(link.expiresAt)}
+                      </span>
+                      <small className="muted in">in {daysLeft(link.expiresAt)} days</small>
+                    </>
+                  ) : (
+                    <span className="st2" style={{ color: 'var(--ink-3)' }}>
+                      {link.revokedAt ? `Withdrawn ${shortDate(link.revokedAt)}` : `Ended ${shortDate(link.expiresAt)}`}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {link.active && canManage ? (
+                    <div className="ac">
+                      {asking === link.id ? (
+                        <>
+                          <button className="rv" type="button" disabled={busy} onClick={() => void revoke(link)}>
+                            Yes, withdraw it
+                          </button>
+                          <button type="button" onClick={() => setAsking(null)}>
+                            Keep it
+                          </button>
+                        </>
+                      ) : (
+                        <button className="rv" type="button" onClick={() => setAsking(link.id)}>
+                          Withdraw
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
+                </td>
+              </tr>
             ))}
-          </select>
-        </div>
-        <button className="btn btn-ink" type="button" disabled={busy} onClick={() => void create()}>
-          Make a public link
-        </button>
-      </div>
-    </section>
+          </tbody>
+        </table>
+      )}
+      <p className="foot3">Vero doesn&apos;t count views of a link yet, and keeps no record of who opened it.</p>
+    </Reveal>
   );
 }
 
-function BadgeHero({ status, companyName, companyId, canManage, publicSharing, onChanged }: { status: BadgeStatusResponse; companyName: string; companyId: string; canManage: boolean; publicSharing: boolean; onChanged: () => void }) {
+function Seal({ earned }: { earned: boolean }) {
+  return (
+    <svg className={`seal2${earned ? ' on' : ''}`} viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="54" fill={earned ? '#00004A' : '#F4F6FB'} stroke={earned ? '#0182FA' : '#E3E8F2'} strokeWidth="3" />
+      <circle className="ring" cx="60" cy="60" r="44" fill="none" stroke={earned ? '#6CC6FF' : '#D5DBE8'} strokeWidth="2" strokeDasharray="4 5" />
+      <path d="M38 44l22 38 22-38" fill="none" stroke={earned ? '#fff' : '#B7C0D4'} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      {earned ? <path className="tick" d="M78 84l6 6 12-13" fill="none" stroke="#5EEAD4" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /> : null}
+    </svg>
+  );
+}
+
+function BadgePanel({ status, companyName, companyId, canManage, publicSharing, onChanged }: { status: BadgeStatusResponse; companyName: string; companyId: string; canManage: boolean; publicSharing: boolean; onChanged: () => void }) {
   const toast = useToast();
   const session = useSession();
   const [busy, setBusy] = useState(false);
@@ -131,6 +287,7 @@ function BadgeHero({ status, companyName, companyId, canManage, publicSharing, o
   const [asking, setAsking] = useState(false);
   const earned = earnedBadge(status);
   const rows = badgeRows(status);
+  const met = rows.filter((row) => row.tone === 'good').length;
 
   const issue = async () => {
     setBusy(true);
@@ -162,78 +319,62 @@ function BadgeHero({ status, companyName, companyId, canManage, publicSharing, o
   };
 
   return (
-    <section className="stage bd-hero" aria-label="Your badge and what it takes" data-testid="badge-hero" data-earned={earned ? 'yes' : 'no'}>
-      <div className="wrap bd-grid">
-        <figure className="bd-fig">
-          <div className="bd-seal-box">
-            <VSeal earned={earned !== null} label={earned ? `Verified seal for ${companyName}` : `The verified seal, not earned yet by ${companyName}`}>
-              <div className="bd-flat">
-                <svg viewBox="0 0 132 100" aria-hidden="true">
-                  <path d={V_PATH} />
-                </svg>
-                {earned ? (
-                  <>
-                    <p className="bd-big">Legal health verified</p>
-                    <p className="small" style={{ color: 'inherit' }}>
-                      Checked by Vero
-                    </p>
-                  </>
-                ) : null}
-                <p className="small" style={{ color: 'inherit', fontWeight: 600 }}>
-                  {companyName}
-                </p>
-              </div>
-            </VSeal>
-          </div>
-          <figcaption className="stack g4 bd-cap" data-testid="badge-state">
+    <Reveal as="section" className="mod badge2" i={1} data-testid="badge-hero" data-earned={earned ? 'yes' : 'no'} aria-label="Your badge and what it takes">
+      <div className="mh">
+        <h2>Verified badge</h2>
+        <span className="sub">A public sign of what Vero checked. It has to be earned, and paying doesn&apos;t earn it.</span>
+      </div>
+      <div className="bgrid">
+        <figure className="bfig">
+          <Seal earned={earned !== null} />
+          <figcaption data-testid="badge-state">
             {earned ? (
               <>
-                <span className="st" style={{ color: 'var(--rose-deep)' }}>
-                  Legal health verified
-                </span>
-                <span className="small">Checked by Vero · {companyName}</span>
+                <b style={{ color: 'var(--good)' }}>Verified</b>
+                <small>
+                  {companyName}, until {longDate(earned.expiresAt)}
+                </small>
               </>
             ) : (
               <>
-                <span className="st none" style={{ color: 'var(--ink-2)' }}>
-                  Not earned yet
-                </span>
-                <span className="small">{companyName}</span>
+                <b>Not earned yet</b>
+                <small>{companyName}</small>
               </>
             )}
           </figcaption>
-        </figure>
-
-        <div className="stack g24 bd-copy">
-          <div className="stack g12">
-            <h1 className="t-1">Verified badge</h1>
-            <p className="lead" style={{ maxWidth: '32em' }}>
-              {earned
-                ? `A public sign of what Vero checked about your company. Yours runs until ${longDate(earned.expiresAt)}.`
-                : status.eligible
-                  ? "You've met everything it takes. It isn't live until it's issued."
-                  : "A public sign of what Vero checked about your company. You haven't earned it yet."}
-            </p>
+          <div className="met">
+            <CountUp className="pixel" value={met} />
+            <span>of {rows.length} met</span>
           </div>
-
-          <div className="stack g12">
-            <h2 className="t-3">You need all four</h2>
-            <div className="rows">
-              {rows.map((row) => (
-                <div className="row r-act" key={row.key} data-testid="badge-requirement" data-key={row.key}>
-                  <span className="row-t">{row.label}</span>
-                  <span className={`st num ${row.tone}`}>{row.status}</span>
-                </div>
-              ))}
-            </div>
+        </figure>
+        <div className="bcopy">
+          <p className="lead3">
+            {earned
+              ? `Live for ${companyName}. It runs until ${longDate(earned.expiresAt)}.`
+              : status.eligible
+                ? "You've met everything it takes. It isn't live until it's issued."
+                : `You need all ${rows.length === 4 ? 'four' : rows.length}. Fix what's left and it can be issued.`}
+          </p>
+          <div className="req rows-in">
+            {rows.map((row, index) => (
+              <div key={row.key} data-testid="badge-requirement" data-key={row.key} style={{ '--r': index } as CSSProperties}>
+                <span className="mk2" style={{ background: TONE_COLOUR[row.tone] ?? 'var(--ink-4)' }} aria-hidden="true">
+                  {row.tone === 'good' ? <Icon name="check" /> : null}
+                </span>
+                <span className="lb">{row.label}</span>
+                <span className="stw" style={{ color: TONE_COLOUR[row.tone] }}>
+                  {row.status}
+                </span>
+              </div>
+            ))}
           </div>
 
           {status.blockers.length > 0 ? (
-            <div className="stack g8" data-testid="badge-blockers">
-              <h2 className="t-3">What&apos;s in the way</h2>
-              <ul className="stack g4 bd-blockers">
+            <div className="blk2" data-testid="badge-blockers">
+              <b>What&apos;s in the way</b>
+              <ul>
                 {status.blockers.map((blocker) => (
-                  <li key={blocker} className="quiet" data-testid="badge-blocker">
+                  <li key={blocker} data-testid="badge-blocker">
                     {blocker}
                   </li>
                 ))}
@@ -242,143 +383,195 @@ function BadgeHero({ status, companyName, companyId, canManage, publicSharing, o
           ) : null}
 
           {status.badge && !earned ? (
-            <p className="quiet" data-testid="badge-ended">
+            <p className="quiet2" data-testid="badge-ended">
               Your last badge ended. It isn&apos;t showing to anyone now.
             </p>
           ) : null}
-
           {link ? <CopyLink testId="badge-link" url={link} note="Copy it now. We only show this link once, because we keep just a scrambled copy of it." /> : null}
           {earned && !link ? (
-            <p className="quiet" data-testid="badge-link-gone">
+            <p className="quiet2" data-testid="badge-link-gone">
               Its link was shown once, when it was issued. To get a new one, issue the badge again.
             </p>
           ) : null}
           {problem ? (
-            <p className="formerror" role="alert">
+            <p className="probl" role="alert">
               {problem}
             </p>
           ) : null}
 
-          <div className="btns">
+          <div className="btns2">
             {status.eligible && canManage ? (
-              <button className={`btn ${earned ? 'btn-line' : 'btn-ink'}`} type="button" disabled={busy} data-testid="badge-issue" onClick={() => void issue()}>
+              <button className={`btn ${earned ? 'btn-g' : 'btn-p'}`} type="button" disabled={busy} data-testid="badge-issue" onClick={() => void issue()}>
                 {earned ? 'Issue it again, with a new link' : 'Issue your badge'}
               </button>
             ) : null}
             {!status.eligible && !earned && publicSharing ? (
-              <TLink className="btn btn-ink" href="/issues">
+              <TLink className="btn btn-p" href="/issues">
                 See what to fix
               </TLink>
             ) : null}
             {!publicSharing ? (
-              <TLink className="btn btn-ink" href="/plan" data-testid="badge-plan">
+              <TLink className="btn btn-p" href="/plan" data-testid="badge-plan">
                 See the plans
               </TLink>
             ) : null}
             {earned && canManage ? (
               asking ? (
                 <>
-                  <button className="btn btn-line" type="button" disabled={busy} data-testid="badge-revoke-yes" onClick={() => void revoke()}>
+                  <button className="btn btn-g danger" type="button" disabled={busy} data-testid="badge-revoke-yes" onClick={() => void revoke()}>
                     Yes, withdraw it
                   </button>
-                  <button className="btn btn-line" type="button" onClick={() => setAsking(false)}>
+                  <button className="btn btn-g" type="button" onClick={() => setAsking(false)}>
                     Keep it
                   </button>
                 </>
               ) : (
-                <button className="btn btn-line" type="button" data-testid="badge-revoke" onClick={() => setAsking(true)}>
+                <button className="btn btn-g" type="button" data-testid="badge-revoke" onClick={() => setAsking(true)}>
                   Withdraw the badge
                 </button>
               )
             ) : null}
           </div>
           {status.eligible && !canManage ? (
-            <p className="small" data-testid="badge-no-permission">
+            <p className="quiet2" data-testid="badge-no-permission">
               Only an owner or admin can issue the badge.
             </p>
           ) : null}
         </div>
       </div>
-    </section>
+    </Reveal>
   );
 }
 
 function BadgeBody() {
   const session = useSession();
   const search = useSearchParams();
-  const companies = session.companies;
+  const companies = session.companies.filter((company) => company.relationship !== 'follow');
   const asked = search.get('company');
   const companyId = asked && companies.some((company) => company.id === asked) ? asked : (session.root?.id ?? '');
   const company = companies.find((item) => item.id === companyId);
   const entitlements = entitlementsOf(session.overview?.plan);
   const canManage = roleCan(session.me, 'sharing.manage');
   const resource = useResource(() => api.badge.get({ params: { companyId } }), [companyId]);
+  const shares = useResource(() => (entitlements.publicSharing && canManage ? api.shares.list({ params: { companyId } }) : Promise.resolve({ links: [] as ShareLink[] })), [companyId, entitlements.publicSharing, canManage]);
+  // The public page is one company's own summary, so the preview reads that company alone.
+  const preview = useResource(() => api.results.overview({ params: { companyId }, query: { scope: 'company' } }).catch(() => null), [companyId]);
   const status = resource.data;
 
   if (resource.error && (!status || status.companyId !== companyId)) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <ErrorState error={resource.error} onRetry={resource.reload} />
-      </main>
+      </Plain>
     );
   }
   if (!status || status.companyId !== companyId) {
     return (
-      <main style={{ display: 'contents' }}>
+      <Plain>
         <Loading what="Getting your badge" />
-      </main>
+      </Plain>
     );
   }
 
+  const companyName = company?.legalName ?? '';
+  const links = shares.data?.links ?? [];
+  const live = links.filter((link) => link.active).length;
+  const overview = preview.data && preview.data.companyId === companyId ? preview.data : null;
+  const earned = earnedBadge(status);
+
   return (
-    <div style={{ display: 'contents' }}>
-      {companies.length > 1 ? (
-        <div className="wrap bd-companies">
-          <div className="filters" role="group" aria-label="Choose a company">
+    <div className="pg-share">
+      <Hero>
+        <div className="pagehead">
+          <div>
+            <div className="mono kick">
+              <Scramble text="Share" /> · <b><Scramble text="Report → Link → Reader" delay={120} /></b>
+            </div>
+            <h1 className="disp">
+              <Words text={companyName ? `Share ${companyName}` : 'Share and verify'} />
+            </h1>
+            <div className="meta">
+              <span>Read-only for viewers</span>
+              <span>Your documents are never shared</span>
+              {entitlements.publicSharing ? <span>{live === 1 ? '1 open link' : `${live} open links`}</span> : null}
+              <span>{earned ? 'Badge live' : 'Badge not earned yet'}</span>
+            </div>
+          </div>
+          <div className="acts">
+            <TLink className="btn btn-g" href="/report">
+              <Icon name="download" />
+              Printable report
+            </TLink>
+          </div>
+        </div>
+
+        {companies.length > 1 ? (
+          <div className="cotabs2" role="group" aria-label="Choose a company">
             {companies.map((item) => (
-              <TLink key={item.id} className={`fbtn${item.id === companyId ? ' on' : ''}`} style={{ display: 'inline-flex', alignItems: 'center' }} href={`/badge?company=${item.id}`} aria-current={item.id === companyId ? 'true' : undefined}>
+              <TLink key={item.id} className={item.id === companyId ? 'on' : undefined} href={`/badge?company=${item.id}`} aria-current={item.id === companyId ? 'true' : undefined}>
                 {item.legalName}
               </TLink>
             ))}
           </div>
-        </div>
-      ) : null}
-      <main style={{ display: 'contents' }}>
-        <BadgeHero status={status} companyName={company?.legalName ?? ''} companyId={companyId} canManage={canManage} publicSharing={entitlements.publicSharing} onChanged={resource.reload} />
-        <div className="wrap">
-          {entitlements.publicSharing && canManage ? <ShareLinks key={companyId} companyId={companyId} /> : null}
-          {entitlements.publicSharing && !canManage ? (
-            <section className="sec" data-testid="share-no-permission">
-              <p className="quiet">Only an owner or admin can make a public link.</p>
-            </section>
-          ) : null}
-          <section className="sec stack g16">
-            <h2 className="t-2">What you get once you&apos;ve earned it</h2>
-            <div className="rows">
-              <div className="row">
-                <span className="row-t">A link to your badge</span>
-                <span className="row-s">Anyone who opens it sees who reviewed you, and until when.</span>
-              </div>
-              <div className="row">
-                <span className="row-t">Investors can check it</span>
-                <span className="row-s">They open the page and see it for themselves. Nobody has to take your word for it.</span>
+        ) : null}
+
+        <section className="r1">
+          <div className="mod gl inc">
+            <div className="l">
+              <h2>What viewers see</h2>
+              <div className="lead">The public page is the same for every link: a dated summary, never the detail.</div>
+              <div className="tg">
+                {SECTIONS.map((section) => (
+                  <div className="row" key={section.title}>
+                    <div>
+                      <b>{section.title}</b>
+                      <small>{section.note}</small>
+                    </div>
+                    <span className={`lk${section.shared ? ' on' : ''}`}>
+                      <Icon name={section.shared ? 'eye' : 'lock'} />
+                      {section.shared ? 'Shown' : 'Never shared'}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-            {!entitlements.publicSharing ? (
-              <p className="small" data-testid="badge-paid-note">
-                Public links and the badge are part of a paid plan. <PlanLink />
+            <Preview companyName={companyName} overview={overview} expires={shortDate(new Date(Date.now() + 30 * 86_400_000).toISOString())} />
+          </div>
+
+          {entitlements.publicSharing ? (
+            <NewLink companyId={companyId} canMake={canManage} onMade={shares.reload} />
+          ) : (
+            <div className="mod next mk">
+              <div className="k">New link</div>
+              <h3>Public links are part of a paid plan</h3>
+              <p data-testid="badge-paid-note">
+                A paid plan lets you send a link to anyone, and earn the verified badge. <PlanLink />
               </p>
-            ) : null}
-          </section>
-        </div>
-      </main>
+              <TLink className="btn" href="/plan">
+                See the plans
+              </TLink>
+            </div>
+          )}
+        </section>
+      </Hero>
+
+      <After>
+        {entitlements.publicSharing && canManage ? <Links links={links} loading={shares.loading} error={shares.error?.message ?? null} canManage={canManage} onChanged={shares.reload} /> : null}
+        <BadgePanel status={status} companyName={companyName} companyId={companyId} canManage={canManage} publicSharing={entitlements.publicSharing} onChanged={resource.reload} />
+      </After>
     </div>
   );
 }
 
 export default function BadgePage() {
   return (
-    <Suspense fallback={<Loading what="Getting your badge" />}>
+    <Suspense
+      fallback={
+        <Plain>
+          <Loading what="Getting your badge" />
+        </Plain>
+      }
+    >
       <BadgeBody />
     </Suspense>
   );

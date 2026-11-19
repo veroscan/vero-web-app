@@ -2,11 +2,15 @@ import type { RegistrySearchResponse } from '@vero/shared';
 
 type Candidate = RegistrySearchResponse['candidates'][number];
 
-/** Carried in the address from search to confirm: public register details, nothing private. */
-/** `adding`: the team already has a company and is adding another; it carries through every step. */
-export function confirmHref(country: string, candidate: Candidate, search: Pick<RegistrySearchResponse, 'sourceName' | 'sampleData'>, adding = false): string {
+/**
+ * Carried in the address from search to confirm: public register details, nothing private.
+ * `adding`: the team already has a company and is adding another; it carries through every step.
+ * `follow`: the company goes on the watchlist (public data, read-only) instead of being owned.
+ */
+export function confirmHref(country: string, candidate: Candidate, search: Pick<RegistrySearchResponse, 'sourceName' | 'sampleData'>, adding = false, follow = false): string {
   const params = new URLSearchParams({ country, name: candidate.name, source: search.sourceName });
   if (adding) params.set('add', '1');
+  if (follow) params.set('follow', '1');
   if (candidate.registrationNumber) params.set('number', candidate.registrationNumber);
   if (candidate.registeredAgent) params.set('agent', candidate.registeredAgent);
   if (candidate.entityType) params.set('type', candidate.entityType);
@@ -16,13 +20,14 @@ export function confirmHref(country: string, candidate: Candidate, search: Pick<
 }
 
 /** For when the register can't answer: the person types the details instead. */
-export function manualHref(country: string, name: string, adding = false): string {
-  return `/onboarding/confirm?${new URLSearchParams({ country, name, manual: '1', ...(adding ? { add: '1' } : {}) }).toString()}`;
+export function manualHref(country: string, name: string, adding = false, follow = false): string {
+  return `/onboarding/confirm?${new URLSearchParams({ country, name, manual: '1', ...(adding ? { add: '1' } : {}), ...(follow ? { follow: '1' } : {}) }).toString()}`;
 }
 
-export function notFoundHref(country: string, query: string, sourceName?: string, adding = false): string {
+export function notFoundHref(country: string, query: string, sourceName?: string, adding = false, follow = false): string {
   const params = new URLSearchParams({ country, q: query });
   if (adding) params.set('add', '1');
+  if (follow) params.set('follow', '1');
   if (sourceName) params.set('source', sourceName);
   return `/onboarding/not-found?${params.toString()}`;
 }

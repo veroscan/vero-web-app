@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { Loading } from '@/components/Bits';
-import { PublicBar } from '@/components/PublicBar';
+import { PublicHero } from '@/components/PublicBar';
 import { api, asApiError } from '@/lib/api';
 import { rememberNext } from '@/lib/next-path';
 
@@ -37,43 +37,47 @@ function Accept() {
   };
 
   return (
-    <main className="state" data-testid="invitation">
-      <h1 className="t-2">You&apos;ve been invited to join a team on Vero Scan</h1>
-      {token ? (
-        <>
-          <p className="quiet">You&apos;ll see their companies, documents and scores, as far as your role allows.</p>
-          {problem ? (
-            <p className="formerror" role="alert" data-testid="invitation-problem">
-              {problem.message}
-            </p>
-          ) : null}
-          <div className="btns">
-            <button className="btn btn-ink" type="button" disabled={busy} onClick={() => void join()}>
-              {busy ? 'Joining' : 'Join the team'}
-            </button>
-            {problem?.wrongEmail ? (
-              <button className="btn btn-line" type="button" onClick={() => void useAnotherEmail()}>
-                Sign in with another email
-              </button>
+    <main className="msg" data-testid="invitation">
+      <div className="glass invite">
+        <span className="mono">Invitation</span>
+        <h1>You&apos;ve been invited to join a team on Vero</h1>
+        {token ? (
+          <>
+            <p>You&apos;ll see their companies, documents and scores, as far as your role allows.</p>
+            {problem ? (
+              <p className="formerror" role="alert" data-testid="invitation-problem">
+                {problem.message}
+              </p>
             ) : null}
-          </div>
-        </>
-      ) : (
-        <p className="formerror" role="alert" data-testid="invitation-problem">
-          This invitation link isn&apos;t complete. Ask for a new one.
-        </p>
-      )}
+            <div className="btns">
+              <button className="btn btn-w btn-lg" type="button" disabled={busy} onClick={() => void join()}>
+                {busy ? 'Joining' : 'Join the team'}
+              </button>
+              {problem?.wrongEmail ? (
+                <button className="btn btn-g btn-lg" type="button" onClick={() => void useAnotherEmail()}>
+                  Sign in with another email
+                </button>
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <p className="formerror" role="alert" data-testid="invitation-problem">
+            This invitation link isn&apos;t complete. Ask for a new one.
+          </p>
+        )}
+      </div>
     </main>
   );
 }
 
 export default function InvitationPage() {
   return (
-    <div className="vs">
-      <PublicBar />
-      <Suspense fallback={<Loading what="Getting your invitation" />}>
-        <Accept />
-      </Suspense>
+    <div className="pg-pub">
+      <PublicHero size="tall">
+        <Suspense fallback={<Loading what="Getting your invitation" />}>
+          <Accept />
+        </Suspense>
+      </PublicHero>
     </div>
   );
 }

@@ -55,6 +55,9 @@ function allowedWithoutResult(pathname: string): boolean {
     pathname === '/' ||
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/first-result') ||
+    // Following another company needs no result of your own (investors, buyers, anyone checking a supplier).
+    pathname === '/scan' ||
+    pathname.startsWith('/watchlist') ||
     pathname.startsWith('/notifications') ||
     pathname.startsWith('/settings') ||
     pathname.startsWith('/plan')

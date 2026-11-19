@@ -45,6 +45,8 @@ const envSchema = z.object({
   API_BASE_URL: z.url(),
   WEB_BASE_URL: z.url(),
   ALLOWED_ORIGINS: z.string().min(1),
+  // The marketing website's address(es). Only its waitlist form may call the API from there.
+  WEBSITE_ORIGINS: z.string().default(''),
   TRUST_PROXY: flag(false),
   COOKIE_SECURE: flag(true),
   DATABASE_URL: z.string().min(1),
@@ -162,6 +164,8 @@ export interface Config {
   apiBaseUrl: string;
   webBaseUrl: string;
   allowedOrigins: string[];
+  /** May call public form routes (the waitlist) across origins. Never sent cookies' powers. */
+  websiteOrigins: string[];
   trustProxy: boolean;
   cookieSecure: boolean;
   databaseUrl: string;
@@ -340,7 +344,7 @@ function assertProductionSafe(env: z.output<typeof envSchema>, spaces: SpacesCon
   if (Buffer.from(env.APP_ENCRYPTION_KEY, 'base64').toString('latin1').includes('dev-only')) {
     problems.push('APP_ENCRYPTION_KEY is the development key');
   }
-  for (const origin of [...env.ALLOWED_ORIGINS.split(','), env.WEB_BASE_URL, env.API_BASE_URL]) {
+  for (const origin of [...env.ALLOWED_ORIGINS.split(','), ...env.WEBSITE_ORIGINS.split(',').filter((o) => o.trim()), env.WEB_BASE_URL, env.API_BASE_URL]) {
     if (!origin.trim().startsWith('https://')) problems.push(`${origin.trim()} must use https`);
   }
   if (problems.length > 0) {
@@ -373,6 +377,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     apiBaseUrl: env.API_BASE_URL.replace(/\/$/, ''),
     webBaseUrl: env.WEB_BASE_URL.replace(/\/$/, ''),
     allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean),
+    websiteOrigins: env.WEBSITE_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean),
     trustProxy: env.TRUST_PROXY,
     cookieSecure: env.COOKIE_SECURE,
     databaseUrl: env.DATABASE_URL,

@@ -1,0 +1,69 @@
+/* One area: ported from the Area board, scoped to .pg-area. */
+.pg-area .crumb a{color:rgba(255,255,255,.62)}
+.pg-area .crumb a:hover{color:#fff}
+.pg-area .crumb .i{width:14px;height:14px;opacity:.6}
+.pg-area .ap{display:grid;grid-template-columns:250px 1fr;min-height:330px}
+.pg-area .ap .l{padding:22px 24px;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.12)}
+.pg-area .ap .big{display:flex;align-items:flex-end;gap:8px;margin-top:22px}
+.pg-area .ap .big .pixel{font-size:112px;color:#fff;text-shadow:0 0 40px rgba(157,218,247,.45)}
+.pg-area .ap .big small{font-size:15px;color:rgba(255,255,255,.6);font-weight:600;padding-bottom:12px}
+.pg-area .ap .verdict{font-size:16px;font-weight:700;line-height:1.4;margin-top:16px;letter-spacing:-.01em;color:#fff}
+.pg-area .ap .l .cmp{margin-top:auto;padding-top:16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.6);line-height:1.5}
+.pg-area .ap .l .cmp b{color:#fff}
+.pg-area .ap .l .cmp .link{color:#9DDAF7}
+.pg-area .ap .r{padding:22px 26px 24px;display:flex;flex-direction:column;min-width:0}
+.pg-area .ap .r h2{font-size:15px;font-weight:700;color:#fff}
+.pg-area .ap .r p{margin-top:10px;font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.75);max-width:470px}
+.pg-area .ap .r p.ar-capped{font-size:13.5px;color:#FFB3B5}
+.pg-area .ar-locked{margin-top:4px}
+.pg-area .ar-note{color:rgba(255,255,255,.75)}
+.pg-area .ar-note .link{color:#9DDAF7}
+/* one slot per kind of check */
+.pg-area .slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:auto;padding-top:22px}
+.pg-area .slot{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pg-area .slot .pg{height:58px;border-radius:10px;position:relative;overflow:hidden;animation:up .6s var(--ease) both;animation-delay:calc(var(--k,0) * 60ms + 200ms)}
+.pg-area .slot .pg::before{content:"";position:absolute;left:12px;right:30%;top:14px;height:4px;border-radius:2px;background:currentColor;opacity:.35;box-shadow:0 9px 0 currentColor,0 18px 0 currentColor}
+.pg-area .slot.ok .pg{background:rgba(255,255,255,.92);color:#8FA6D6}
+.pg-area .slot.urg .pg{background:rgba(255,107,112,.18);border:1.5px solid #FF8A8E;color:#FF8A8E}
+.pg-area .slot.fix .pg{background:rgba(252,211,77,.14);border:1.5px solid #FCD34D;color:#FCD34D}
+.pg-area .slot.emp .pg{border:1.5px dashed rgba(255,255,255,.35);color:transparent}
+.pg-area .slot.emp .pg::before{display:none}
+.pg-area .slot b{display:block;font-size:12.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.pg-area .slot small{display:block;font-size:12px;font-weight:600;margin-top:2px}
+.pg-area .slot.ok small{color:#5EEAD4}
+.pg-area .slot.urg small{color:#FF8A8E}
+.pg-area .slot.fix small{color:#FCD34D}
+.pg-area .slot.emp small{color:rgba(255,255,255,.55)}
+/* checks table */
+.pg-area .ar-t{margin-top:12px}
+.pg-area .ar-t .ft2 small{display:block;margin-top:2px;max-width:480px;line-height:1.45}
+.pg-area tr.f.dim .ft2 b{font-weight:600}
+.pg-area .ar-toggle{border:0;background:none;padding:0;font:inherit;text-align:left;cursor:pointer}
+.pg-area .ar-up{transform:rotate(180deg)}
+.pg-area tr.ar-more td{padding:4px 22px 20px;background:var(--soft)}
+.pg-area tr.ar-more p{font-size:13.5px;line-height:1.55;color:var(--ink-2);font-weight:500;max-width:62em;margin:10px 0 12px}
+.pg-area tr.ar-more .link{display:inline-block;margin-top:12px;color:var(--sky-2);font-weight:700;font-size:13.5px}
+.pg-area .vmore .link{background:none;border:0;cursor:pointer;font:inherit;color:var(--sky-2);font-weight:700;font-size:13.5px}
+/* lower row */
+.pg-area .how{padding:10px 22px 20px}
+.pg-area .how .rw{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:14px 0}
+.pg-area .how .rw+.rw{border-top:1px solid var(--line-2)}
+.pg-area .how b{font-size:13.5px;font-weight:700}
+.pg-area .how p{font-size:13.5px;line-height:1.55;color:var(--ink-2);font-weight:500}
+.pg-area .reads{padding:10px 22px 14px}
+.pg-area .reads .rw{display:flex;align-items:center;gap:12px;padding:13px 0}
+.pg-area .reads .rw+.rw{border-top:1px solid var(--line-2)}
+.pg-area .reads b{display:block;font-size:13.5px;font-weight:700}
+.pg-area .reads small{font-size:12.5px;color:var(--ink-3);font-weight:600;display:block;max-width:420px;line-height:1.45}
+.pg-area .reads .s{margin-left:auto;font-size:13px;font-weight:700;white-space:nowrap}
+/* the amber slot isn't on the board: keep its border amber in dark too */
+[data-theme="dark"] .pg-area .slot.fix .pg{border-color:#FCD34D}
+@media (max-width:960px){
+  .pg-area .ap{grid-template-columns:1fr}
+  .pg-area .ap .l{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}
+  .pg-area .slots{grid-template-columns:repeat(3,1fr)}
+  .pg-area .how .rw{grid-template-columns:1fr;gap:4px}
+}
+@media (prefers-reduced-motion:reduce){
+  .pg-area .slot .pg{animation:none}
+}

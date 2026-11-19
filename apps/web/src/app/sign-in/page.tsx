@@ -2,7 +2,8 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { CheckEmail, EmailForm } from '@/components/EmailForm';
+import { CheckEmail, EmailForm, LegalLine } from '@/components/EmailForm';
+import { Words } from '@/components/Motion';
 import { SignInFrame } from '@/components/SignInFrame';
 import { TLink } from '@/components/TLink';
 import { rememberNext } from '@/lib/next-path';
@@ -18,27 +19,24 @@ function SignIn() {
   }, [next]);
 
   return (
-    <SignInFrame>
+    <SignInFrame
+      top={
+        <>
+          New to Vero?
+          <TLink href={next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up'}>Create an account</TLink>
+        </>
+      }
+    >
       {sentTo ? (
         <CheckEmail email={sentTo} onReset={() => setSentTo(null)} />
       ) : (
         <>
-          <div className="stack g8 si-in" style={{ '--n': 0 } as React.CSSProperties}>
-            <h1 className="t-1">Get your legal health score</h1>
-            <p className="quiet">It takes a few minutes. No documents needed to start.</p>
-          </div>
+          <h1>
+            <Words text="Sign in to Vero" />
+          </h1>
+          <p className="lead">Use the email you signed up with. We&apos;ll send you a link that signs you in.</p>
           <EmailForm onSent={setSentTo} />
-          <p className="small si-in" style={{ '--n': 3 } as React.CSSProperties}>
-            We&apos;ll email you a sign-in link, so there&apos;s no password to remember. By continuing you accept our{' '}
-            <TLink className="link" href="/legal/terms">
-              terms
-            </TLink>{' '}
-            and{' '}
-            <TLink className="link" href="/legal/privacy">
-              privacy policy
-            </TLink>
-            .
-          </p>
+          <LegalLine lead="No password to remember. The link signs you in once and expires after 15 minutes." />
         </>
       )}
     </SignInFrame>

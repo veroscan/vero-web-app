@@ -5,7 +5,7 @@ const SESSION_COOKIE = 'vero_session';
 
 /** Pages anyone can open. Everything else needs a session. */
 function isPublic(pathname: string): boolean {
-  return pathname === '/sign-in' || pathname.startsWith('/sign-in/') || pathname.startsWith('/legal/') || pathname.startsWith('/r/') || pathname.startsWith('/verified/');
+  return pathname === '/sign-in' || pathname.startsWith('/sign-in/') || pathname === '/sign-up' || pathname.startsWith('/legal/') || pathname.startsWith('/r/') || pathname.startsWith('/verified/');
 }
 
 /**
@@ -23,7 +23,7 @@ export function proxy(request: NextRequest): NextResponse {
     target.search = pathname === '/' ? '' : `?next=${encodeURIComponent(`${pathname}${search}`)}`;
     return NextResponse.redirect(target);
   }
-  if (hasSession && pathname === '/sign-in') {
+  if (hasSession && (pathname === '/sign-in' || pathname === '/sign-up')) {
     // Already signed in. A stale cookie is cleared by the API's first 401, so this can't loop.
     const next = safeNext(request.nextUrl.searchParams.get('next'));
     return NextResponse.redirect(new URL(next ?? '/', request.nextUrl.origin));
@@ -32,5 +32,5 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/((?!_next/|v1/|vero-3d\\.js|vero-lockup|favicon).*)'],
+  matcher: ['/((?!_next/|v1/|brand/|fonts/|vero-lockup|favicon).*)'],
 };

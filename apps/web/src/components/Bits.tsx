@@ -5,7 +5,6 @@ import type { Coverage } from '@vero/shared';
 import type { ApiError } from '@/lib/api';
 import { coverageWords, HELD_WORDS } from '@/lib/format';
 import { TLink } from './TLink';
-import { VMark } from './V3D';
 
 export function Arrow() {
   return (
@@ -41,11 +40,14 @@ export function BlurIn({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
+/** The V reading a page: a scan line runs over the brand mark. */
 export function Loading({ what = 'Loading' }: { what?: string }) {
   return (
     <div className="state state-load" role="status" data-testid="loading">
-      <VMark className="state-mark" />
-      <p className="small">{what}</p>
+      <span className="state-mark">
+        <img src="/brand/app-icon.svg" alt="" />
+      </span>
+      <p className="muted">{what}</p>
     </div>
   );
 }
@@ -54,10 +56,10 @@ export function Loading({ what = 'Loading' }: { what?: string }) {
 export function ErrorState({ error, onRetry, title = "We couldn't load this" }: { error: ApiError; onRetry?: () => void; title?: string }) {
   return (
     <div className="state" role="alert" data-testid="error-state">
-      <h1 className="t-2">{title}</h1>
-      <p className="quiet">{error.message}</p>
+      <h1>{title}</h1>
+      <p>{error.message}</p>
       {onRetry ? (
-        <button className="btn btn-ink btn-sm" type="button" onClick={onRetry}>
+        <button className="btn btn-p" type="button" onClick={onRetry}>
           Try again
         </button>
       ) : null}
@@ -67,9 +69,9 @@ export function ErrorState({ error, onRetry, title = "We couldn't load this" }: 
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="stack g8 empty" data-testid="empty-state">
-      <p className="t-3">{title}</p>
-      {children ? <p className="quiet">{children}</p> : null}
+    <div className="empty" data-testid="empty-state">
+      <b>{title}</b>
+      {children ? <p>{children}</p> : null}
     </div>
   );
 }
@@ -149,7 +151,7 @@ export function Redline({ original, fixLabel, fix }: { original?: string | null;
         </p>
       ) : null}
       <div className="fix" style={original ? undefined : { marginTop: 0 }}>
-        <p className="small b" style={{ marginBottom: 6, color: 'var(--rose-deep)' }}>
+        <p className="b" style={{ marginBottom: 6, color: 'var(--good)', fontWeight: 700, fontSize: 13 }}>
           {fixLabel}
         </p>
         <p>{fix}</p>

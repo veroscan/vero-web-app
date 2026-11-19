@@ -1,0 +1,72 @@
+/* Vero motion. Motion explains (things arriving, a scan reading, a number counting); it never loops for show.
+   Everything here stops under prefers-reduced-motion. Used by components/Motion.tsx. */
+
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(18px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes wordup{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes shimmer{to{background-position:-300% 0}}
+@keyframes scanbar{0%{top:-4%;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:104%;opacity:0}}
+@keyframes draw{from{stroke-dashoffset:var(--len,1400)}to{stroke-dashoffset:0}}
+@keyframes flowdrift{to{stroke-dashoffset:-240}}
+@keyframes sweep{from{transform:translateX(-120%)}to{transform:translateX(220%)}}
+@keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes rowin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes barin{from{transform:scaleX(0)}to{transform:none}}
+@keyframes ringin{from{stroke-dashoffset:var(--c,300)}}
+
+/* panels arrive one after another (the kit's own .mod animation, extended to any .rv) */
+.rv{opacity:0}
+.rv.in{animation:rise .8s var(--ease) both;animation-delay:calc(var(--i,0) * 70ms)}
+.rows-in>*{animation:rowin .55s var(--ease) both;animation-delay:calc(var(--r,0) * 45ms + 120ms)}
+
+/* headline: words slide up out of a mask, like the website */
+.words{display:inline}
+.words .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em;margin-bottom:-.08em}
+.words .w>span{display:inline-block;animation:wordup .9s var(--ease) both;animation-delay:calc(var(--d,0ms) + var(--k,0) * 55ms)}
+
+/* mono kicker that decodes into place */
+.scr{display:inline-block;white-space:pre}
+
+/* flowing line art behind the hero, drawn in then drifting */
+svg.flow path{stroke-dasharray:var(--len,1400);animation:draw 2.6s var(--ease) both;animation-delay:calc(var(--k,0) * 120ms + 200ms)}
+svg.flow.drift path{stroke-dasharray:6 10;animation:flowdrift 18s linear infinite}
+
+/* the atmosphere follows the pointer a little */
+.atmos{transform:translate3d(calc(var(--mx,0) * 10px),calc(var(--my,0) * 8px),0) scale(1.04);transition:transform 1.2s var(--ease)}
+
+/* hover life */
+.mod{transition:box-shadow .35s var(--ease),transform .35s var(--ease),border-color .35s}
+a.mod:hover,.mod.lift:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(11,14,58,.04),0 30px 60px -30px rgba(11,14,58,.3)}
+.btn{position:relative;overflow:hidden}
+.btn-p::after,.btn-w::after,.next .btn::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:translateX(-120%);pointer-events:none}
+.btn-p:hover::after,.btn-w:hover::after,.next .btn:hover::after{animation:sweep .9s var(--ease)}
+tr.f td:first-child{transition:padding-left .3s var(--ease)}
+tr.f:hover td:first-child{padding-left:26px}
+.side.v3 .nv a .i{transition:transform .3s var(--ease),color .2s}
+.side.v3 .nv a:hover .i{transform:translateX(2px)}
+
+/* scan line used by Scanning, Add a document and the loading mark */
+.scanline{position:absolute;left:0;right:0;height:2px;top:0;background:linear-gradient(90deg,transparent,#03B1FA 30%,#9DDAF7 50%,#03B1FA 70%,transparent);box-shadow:0 0 18px 2px rgba(3,177,250,.55);animation:scanbar 2.4s var(--ease) infinite;pointer-events:none}
+
+/* bars that grow from the left (area scores, coverage) */
+.grow{transform-origin:left center;animation:barin 1.1s var(--ease) both;animation-delay:calc(var(--i,0) * 80ms + 250ms)}
+
+/* route progress line at the top of the window */
+.routebar{position:fixed;left:0;top:0;height:2px;z-index:90;background:linear-gradient(90deg,#0182FA,#03B1FA,#9DDAF7);box-shadow:0 0 12px rgba(3,177,250,.7);transform-origin:left;transition:transform .5s var(--ease),opacity .4s;pointer-events:none}
+
+/* page transitions (view transitions): the old page softens away, the new one rises in */
+::view-transition-old(root){animation:.28s var(--ease) both vt-out}
+::view-transition-new(root){animation:.5s var(--ease) both vt-in}
+@keyframes vt-out{to{opacity:0;filter:blur(4px)}}
+@keyframes vt-in{from{opacity:0;transform:translateY(10px)}}
+.side.v3{view-transition-name:side}
+::view-transition-old(side),::view-transition-new(side){animation:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1}
+  .atmos{transform:none}
+}

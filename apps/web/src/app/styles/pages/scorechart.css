@@ -1,0 +1,12 @@
+/* The score-over-time chart (components/overview/ScoreChart.tsx). Its colours are SVG attributes,
+   because it sits on the navy atmosphere in both themes; this file holds only layout and motion. */
+.vchart svg{height:auto;overflow:visible}
+.vchart .area{animation:vchartfade 1.2s var(--ease) .35s both}
+.vchart .proj{animation:vchartfade .6s var(--ease) 1.5s both}
+.vchart .ring{opacity:0;transform-box:fill-box;transform-origin:center;animation:vchartring 1.4s var(--ease) 1.3s 1 both}
+.vchart .hit{fill:transparent;cursor:crosshair}
+@keyframes vchartfade{from{opacity:0}to{opacity:1}}
+@keyframes vchartring{0%{opacity:.45;transform:scale(.4)}100%{opacity:0;transform:scale(1.4)}}
+@media (prefers-reduced-motion:reduce){
+  .vchart .area,.vchart .proj,.vchart .ring{animation:none}
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Empty, ErrorState, Loading } from '@/components/Bits';
-import { isRefused, StaffBar, StaffRefused } from '@/components/StaffBar';
+import { isRefused, StaffPage, StaffRefused } from '@/components/StaffBar';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { WORK_KIND_WORDS, WORK_STATUSES } from '@/lib/desk';
@@ -34,14 +34,14 @@ function WorkRow({ item, onChanged }: { item: { id: string; kind: string; title:
     setBusy(false);
   };
   return (
-    <div className="row workrow" data-testid="work-row" data-work={item.id}>
-      <span className="stack g4">
-        <span className="small">
+    <div className="workrow" data-testid="work-row" data-work={item.id}>
+      <div>
+        <span className="meta">
           {WORK_KIND_WORDS[item.kind] ?? item.kind} · {longDate(item.createdAt)}
         </span>
-        <span className="row-t">{item.title}</span>
-        {item.body ? <span className="row-s">{item.body}</span> : null}
-      </span>
+        <b style={{ marginTop: 4 }}>{item.title}</b>
+        {item.body ? <small>{item.body}</small> : null}
+      </div>
       <span className={`st ${item.read ? 'none' : 'watch'}`}>{item.read ? 'Updated before' : 'New'}</span>
       <div className="workform">
         <div className="field">
@@ -59,12 +59,12 @@ function WorkRow({ item, onChanged }: { item: { id: string; kind: string; title:
           <label htmlFor={`worknote-${item.id}`}>Note for the record (optional)</label>
           <input className="input" id={`worknote-${item.id}`} type="text" maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />
         </div>
-        <button className="btn btn-sm btn-line" type="button" disabled={busy || !status} onClick={() => void update()}>
+        <button className="btn btn-p" type="button" disabled={busy || !status} onClick={() => void update()}>
           {busy ? 'Saving' : 'Update'}
         </button>
       </div>
       {problem ? (
-        <p className="formerror" role="alert">
+        <p className="formerror" role="alert" style={{ gridColumn: '1 / -1' }}>
           {problem}
         </p>
       ) : null}
@@ -79,49 +79,51 @@ export default function StaffWorkPage() {
   if (isRefused(resource.error)) return <StaffRefused />;
   if (resource.error && !items) {
     return (
-      <div className="vs">
-        <main style={{ display: 'contents' }}>
-          <ErrorState error={resource.error} onRetry={resource.reload} />
-        </main>
+      <div className="pg-staff">
+        <ErrorState error={resource.error} onRetry={resource.reload} />
       </div>
     );
   }
   if (!items) {
     return (
-      <div className="vs">
-        <main style={{ display: 'contents' }}>
-          <Loading what="Getting company look-ups" />
-        </main>
+      <div className="pg-staff">
+        <Loading what="Getting company look-ups" />
       </div>
     );
   }
 
+  const fresh = items.filter((item) => !item.read).length;
   return (
-    <div className="vs">
-      <StaffBar />
-      <main className="wrap mid">
-        <section className="sec stack g32" data-testid="staff-work">
-          <div className="stack g12">
-            <h1 className="t-1">Company look-ups</h1>
-            <p className="lead">Companies people asked us to look up by hand. The newest 100 come first.</p>
+    <StaffPage>
+      <section className="stack" data-testid="staff-work">
+        <div className="pagehead">
+          <div>
+            <h1>Company look-ups</h1>
+            <p>Companies people asked Vero to look up by hand, because their register couldn&apos;t be searched. The newest 100 come first.</p>
           </div>
-          <p className="note" data-testid="audit-note">
-            <span className="b">Updates are audited.</span>
-            <span>Each one goes in that client&apos;s audit log under your account, and they get a notification.</span>
-          </p>
+        </div>
+        <p className="note" data-testid="audit-note">
+          <span className="b">Updates are audited.</span>
+          <span>Each one goes in that client&apos;s audit log under your account, and they get a notification.</span>
+        </p>
+        <div className="mod">
+          <div className="mh">
+            <h2>Asked for</h2>
+            <span className="sub">{items.length === 0 ? 'None yet' : `${items.length} in all, ${fresh} new`}</span>
+          </div>
           {items.length === 0 ? (
             <div data-testid="work-empty">
               <Empty title="Nothing has been asked for yet">Company look-ups come here.</Empty>
             </div>
           ) : (
-            <div className="rows">
+            <div className="list">
               {items.map((item) => (
                 <WorkRow key={item.id} item={item} onChanged={resource.reload} />
               ))}
             </div>
           )}
-        </section>
-      </main>
-    </div>
+        </div>
+      </section>
+    </StaffPage>
   );
 }

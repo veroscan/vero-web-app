@@ -120,3 +120,208 @@ export function buildTimeline(deadlines: readonly Deadline[], now: Date = new Da
     dots,
   };
 }
+
+// ---- v2 board: twelve months in lanes, one lane per company ----
+
+export type LaneTone = 'late' | 'soon' | 'ok';
+
+export interface LaneEvent {
+  key: string;
+  ids: string[];
+  left: number;
+  tone: LaneTone;
+  title: string;
+  sub: string;
+  /** Label above or below the line. */
+  place: 'up' | 'down';
+  /** Label centred on the dot, or starting at it (l), or ending at it (r), so it never leaves the track. */
+  align: 'c' | 'l' | 'r';
+  label: string;
+}
+
+export interface Lane {
+  companyId: string;
+  companyName: string;
+  events: LaneEvent[];
+}
+
+export interface Lanes {
+  label: string;
+  months: { key: string; word: string; year: boolean }[];
+  /** Where today sits on the track, in percent. */
+  today: number;
+  lanes: Lane[];
+}
+
+const LANE_MONTHS = 12;
+const DAY_MS = 86_400_000;
+const TONE_RANK: Readonly<Record<LaneTone, number>> = { late: 0, soon: 1, ok: 2 };
+
+function toneOf(item: Pick<Deadline, 'state'>): LaneTone {
+  return item.state === 'overdue' ? 'late' : item.state === 'due_soon' ? 'soon' : 'ok';
+}
+
+function laneWords(items: readonly Deadline[]): { title: string; sub: string } {
+  const only = items.length === 1 ? items[0] : undefined;
+  if (only) {
+    const late = -only.daysUntil;
+    const sub = only.state === 'overdue' ? `${late} ${late === 1 ? 'day' : 'days'} late` : `${shortDate(only.dueOn)}${only.state === 'due_soon' ? ', due soon' : ''}`;
+    return { title: only.title, sub };
+  }
+  const sorted = [...items].sort((a, b) => a.dueOn.localeCompare(b.dueOn));
+  const late = sorted.filter((item) => item.state === 'overdue').length;
+  const first = sorted[0]?.dueOn ?? '';
+  const last = sorted[sorted.length - 1]?.dueOn ?? '';
+  const sub = late === sorted.length ? 'All overdue' : late > 0 ? `${late} overdue, ${sorted.length - late} by ${shortDate(last)}` : first === last ? shortDate(first) : `${shortDate(first)} to ${shortDate(last)}`;
+  return { title: `${sorted.length} dates`, sub };
+}
+
+/**
+ * Twelve months from the start of this one, a lane for each company with a date in them. Overdue
+ * dates sit on today, since that's when they matter. Dates that would crowd each other are joined
+ * into one dot that says how many, so no label ever covers another.
+ */
+export function buildLanes(deadlines: readonly Deadline[], now: Date = new Date(), trackPx = 860): Lanes {
+  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + LANE_MONTHS, 1);
+  const at = (ms: number) => Math.round(((ms - start) / (end - start)) * 10000) / 100;
+  const today = at(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const months = Array.from({ length: LANE_MONTHS }, (_, offset) => {
+    const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
+    const year = month.getUTCMonth() === 0;
+    return { key: month.toISOString().slice(0, 7), word: year ? `${MONTH_SHORT.format(month)} ${month.getUTCFullYear()}` : MONTH_SHORT.format(month), year };
+  });
+
+  const order: string[] = [];
+  const byCompany = new Map<string, Deadline[]>();
+  for (const item of deadlines) {
+    if (item.state === 'done') continue;
+    const due = asDate(item.dueOn).getTime();
+    if (item.state !== 'overdue' && (due < start || due >= end)) continue;
+    if (!byCompany.has(item.companyId)) {
+      byCompany.set(item.companyId, []);
+      order.push(item.companyId);
+    }
+    byCompany.get(item.companyId)?.push(item);
+  }
+
+  const layout = (items: readonly Deadline[], left: number) => {
+    const { title, sub } = laneWords(items);
+    const width = ((Math.max(title.length * 6.9, sub.length * 6.2) + 18) / trackPx) * 100;
+    const align: LaneEvent['align'] = left - width / 2 < 0 ? 'l' : left + width / 2 > 100 ? 'r' : 'c';
+    const from = align === 'l' ? left : align === 'r' ? left - width : left - width / 2;
+    return { title, sub, align, from, to: from + width };
+  };
+
+  const lanes: Lane[] = order.map((companyId) => {
+    const placed = (byCompany.get(companyId) ?? [])
+      .map((item) => ({ item, left: item.state === 'overdue' ? today : at(asDate(item.dueOn).getTime()) }))
+      .sort((a, b) => a.left - b.left || TONE_RANK[toneOf(a.item)] - TONE_RANK[toneOf(b.item)]);
+
+    // Dots closer than a dot's width become one.
+    const groups: { left: number; items: Deadline[] }[] = [];
+    for (const entry of placed) {
+      const last = groups[groups.length - 1];
+      if (last && entry.left - last.left < 3.2) last.items.push(entry.item);
+      else groups.push({ left: entry.left, items: [entry.item] });
+    }
+
+    // Each label takes the first free row; one that finds none folds into the dot before it.
+    const ends = { up: -Infinity, down: -Infinity };
+    const built: { left: number; items: Deadline[]; place: 'up' | 'down'; title: string; sub: string; align: LaneEvent['align'] }[] = [];
+    for (const group of groups) {
+      const shape = layout(group.items, group.left);
+      const place = ends.up < shape.from - 0.8 ? 'up' : ends.down < shape.from - 0.8 ? 'down' : null;
+      const previous = built[built.length - 1];
+      if (place || !previous) {
+        const row = place ?? 'up';
+        ends[row] = shape.to;
+        built.push({ left: group.left, items: [...group.items], place: row, title: shape.title, sub: shape.sub, align: shape.align });
+        continue;
+      }
+      previous.items.push(...group.items);
+      const again = layout(previous.items, previous.left);
+      Object.assign(previous, { title: again.title, sub: again.sub, align: again.align });
+      ends[previous.place] = again.to;
+    }
+
+    const events: LaneEvent[] = built.map((event) => {
+      const ids = event.items.map((item) => item.id);
+      return {
+        key: ids.join(':'),
+        ids,
+        left: event.left,
+        tone: event.items.map(toneOf).sort((a, b) => TONE_RANK[a] - TONE_RANK[b])[0] ?? 'ok',
+        title: event.title,
+        sub: event.sub,
+        place: event.place,
+        align: event.align,
+        label: event.items.map((item) => `${longDate(item.dueOn)}${item.state === 'overdue' ? ', overdue' : ''}: ${item.title}`).join('. '),
+      };
+    });
+    return { companyId, companyName: placed[0]?.item.companyName ?? '', events };
+  });
+
+  return {
+    label: `The next twelve months, ${MONTH_LONG.format(new Date(start))} to ${MONTH_LONG.format(new Date(end - DAY_MS))}`,
+    months,
+    today,
+    lanes,
+  };
+}
+
+/** The soonest date still to come, overdue ones aside. */
+export function nextDue(deadlines: readonly Deadline[]): Deadline | null {
+  return [...deadlines].filter((item) => item.state === 'due_soon' || item.state === 'upcoming').sort((a, b) => a.dueOn.localeCompare(b.dueOn))[0] ?? null;
+}
+
+/** The overdue date to lead with: one the register itself shows, else the most recent. */
+export function leadOverdue(deadlines: readonly Deadline[]): Deadline | null {
+  const late = deadlines.filter((item) => item.state === 'overdue').sort((a, b) => b.dueOn.localeCompare(a.dueOn));
+  return late.find((item) => item.monitoring === 'auto') ?? late[0] ?? null;
+}
+
+/** Days from today to a date, never below zero. */
+export function daysTo(dueOn: string, now: Date = new Date()): number {
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.max(0, Math.round((asDate(dueOn).getTime() - today) / DAY_MS));
+}
+
+/** The twelve months up to a date, and how many have gone. For the bar under the countdown. */
+export function monthsBefore(dueOn: string, now: Date = new Date()): { words: string[]; gone: number } {
+  const due = asDate(dueOn);
+  const thisMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  const words: string[] = [];
+  let gone = 0;
+  for (let back = 11; back >= 0; back -= 1) {
+    const month = new Date(Date.UTC(due.getUTCFullYear(), due.getUTCMonth() - back, 1));
+    words.push(MONTH_SHORT.format(month));
+    if (month.getTime() < thisMonth) gone += 1;
+  }
+  return { words, gone };
+}
+
+function icsText(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
+/** A calendar file of the real dates on screen, one all-day event each. Nothing is guessed. */
+export function calendarFile(deadlines: readonly Deadline[], now: Date = new Date()): string {
+  const stamp = `${now.toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`;
+  const events = deadlines
+    .filter((item) => item.state !== 'done')
+    .map((item) => {
+      const next = new Date(asDate(item.dueOn).getTime() + DAY_MS).toISOString().slice(0, 10);
+      return [
+        'BEGIN:VEVENT',
+        `UID:${item.id}@vero`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${item.dueOn.replace(/-/g, '')}`,
+        `DTEND;VALUE=DATE:${next.replace(/-/g, '')}`,
+        `SUMMARY:${icsText(`${item.title}, ${item.companyName}`)}`,
+        `DESCRIPTION:${icsText(`${item.howWeTrack}. From Vero.`)}`,
+        'END:VEVENT',
+      ].join('\r\n');
+    });
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vero//Deadlines//EN', 'CALSCALE:GREGORIAN', ...events, 'END:VCALENDAR', ''].join('\r\n');
+}

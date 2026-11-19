@@ -1,9 +1,9 @@
-import { calm, expect, seedAnswered, signIn, sql, test } from './support/helpers';
+import { calm, chooseCountry, expect, seedAnswered, signIn, sql, test } from './support/helpers';
 
 test('when every source is down, the scan says so and the person can enter details themselves', async ({ page }) => {
   await calm(page);
   await signIn(page);
-  await page.getByRole('radio', { name: /United Kingdom/ }).click();
+  await chooseCountry(page, 'United Kingdom');
   // In fixture mode, a name with "broken" in it makes every source fail.
   await page.getByLabel('Company name').fill('Broken Widgets Ltd');
   await expect(page.getByTestId('search-source-down')).toBeVisible();
@@ -17,9 +17,9 @@ test('when every source is down, the scan says so and the person can enter detai
   await page.goto('/onboarding/scanning');
   const partial = page.getByTestId('scan-partial');
   await expect(partial).toBeVisible();
-  await expect(partial.getByRole('heading', { level: 1 })).toContainText(/^0 of \d+ checks are done$/);
-  await expect(partial).toContainText("won't count for or against your score");
-  await expect(partial.locator('.st').first()).toHaveText('Retrying');
+  await expect(partial.getByRole('heading', { level: 1 })).toHaveAccessibleName(/^0 of \d+ checks are done$/);
+  await expect(partial).toContainText("won't count for or against the score");
+  await expect(partial.getByRole('listitem').first()).toContainText('Retrying');
   await partial.getByRole('link', { name: 'See your result' }).click();
 
   await page.waitForURL('**/first-result');
@@ -38,9 +38,9 @@ test('when one source is down, the rest of the result still stands', async ({ pa
 
   await page.goto('/onboarding/scanning');
   const partial = page.getByTestId('scan-partial');
-  await expect(partial.getByRole('heading', { level: 1 })).toHaveText(/^\d+ of \d+ checks are done$/);
+  await expect(partial.getByRole('heading', { level: 1 })).toHaveAccessibleName(/^\d+ of \d+ checks are done$/);
   await expect(partial).toContainText('ICO register');
-  await expect(partial).toContainText("We'll email you when it updates.");
+  await expect(partial).toContainText("Vero keeps trying in the background. There's nothing you need to do.");
   await expect(partial).toContainText('Not responding');
   await expect(partial.getByRole('listitem')).toHaveCount(1);
 });
@@ -48,7 +48,7 @@ test('when one source is down, the rest of the result still stands', async ({ pa
 test('a company the register can\'t find is never called non-existent', async ({ page }) => {
   await calm(page);
   await signIn(page);
-  await page.getByRole('radio', { name: /United Kingdom/ }).click();
+  await chooseCountry(page, 'United Kingdom');
   await page.getByLabel('Company name').fill('Ghost Trading Ltd');
   await expect(page.getByTestId('search-not-found')).toContainText("doesn't prove it isn't registered");
   await page.getByTestId('search-not-found').getByRole('link', { name: 'Search another way' }).click();
@@ -59,7 +59,7 @@ test('a company the register can\'t find is never called non-existent', async ({
 
   // A number in the wrong shape gets the plain message before a search is spent.
   await page.getByLabel(/Try your company number/).fill('123');
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.getByText('UK company numbers have 8 characters')).toBeVisible();
   await expect(page.getByRole('link', { name: /It's registered in another country/ })).toBeVisible();
 
@@ -71,7 +71,7 @@ test('a company the register can\'t find is never called non-existent', async ({
 test('Delaware shows the registered agent the register gave', async ({ page }) => {
   await calm(page);
   await signIn(page);
-  await page.getByRole('radio', { name: /Delaware/ }).click();
+  await chooseCountry(page, 'Delaware, United States');
   await page.getByLabel('Company name').fill('Kestrel Pay Inc.');
   await page.getByRole('link', { name: /Kestrel Pay Inc\./ }).click();
   await page.waitForURL('**/onboarding/confirm**');
@@ -99,7 +99,7 @@ test('asking a person to look it up sends a real request', async ({ page }) => {
 test('several possible matches are all offered', async ({ page }) => {
   await calm(page);
   await signIn(page);
-  await page.getByRole('radio', { name: /United Kingdom/ }).click();
+  await chooseCountry(page, 'United Kingdom');
   await page.getByLabel('Company name').fill('Twin Traders');
   await expect(page.getByRole('group', { name: 'Matches' }).getByRole('link')).toHaveCount(2);
 });

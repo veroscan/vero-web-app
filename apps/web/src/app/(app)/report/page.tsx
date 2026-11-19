@@ -1,14 +1,15 @@
 'use client';
 
+import '@/app/styles/pages/report.css';
 import type { Company, CompanyRecordsResponse, IssueSummary, OverviewResponse, ProjectionResponse } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useId } from 'react';
+import { Suspense, type CSSProperties, type ReactNode } from 'react';
 import { ErrorState, Loading } from '@/components/Bits';
-import { FlowBar } from '@/components/FlowBar';
-import { Ruler, ScoreBox } from '@/components/Score';
+import { Icon } from '@/components/Icon';
+import { Atmos, CountUp, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { PublicBar } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
-import { V_PATH } from '@/components/V3D';
 import { api } from '@/lib/api';
 import { reportPackWords } from '@/lib/desk';
 import { entitlementsOf } from '@/lib/entitlements';
@@ -16,25 +17,10 @@ import { coverageWords, HELD_WORDS, longDate, scoreLevel, scoreWords, sentence }
 import { pointsLabel } from '@/lib/issues';
 import { countryLong, sourceWords } from '@/lib/records';
 import { useResource } from '@/lib/useResource';
-import { bandWords, scoreSentence, statusTone } from '@/lib/words';
+import { scoreSentence, statusTone } from '@/lib/words';
 
 const TOP_FIXES = 5;
-
-/** A plain V for paper. The 3D one is a canvas, which doesn't always print. */
-function PaperV({ level }: { level: number }) {
-  const id = useId();
-  return (
-    <svg className="rp-v" viewBox="0 0 132 100" aria-hidden="true">
-      <defs>
-        <clipPath id={id}>
-          <rect width="132" height="100" y={100 - level} />
-        </clipPath>
-      </defs>
-      <path d={V_PATH} style={{ fill: 'var(--line)' }} />
-      <path d={V_PATH} clipPath={`url(#${id})`} style={{ fill: 'var(--rose)' }} />
-    </svg>
-  );
-}
+const TONE_COLOUR: Readonly<Record<string, string>> = { good: 'var(--good)', watch: 'var(--warn)', risk: 'var(--urgent)', none: 'var(--ink-3)' };
 
 interface Loaded {
   overview: OverviewResponse;
@@ -58,9 +44,30 @@ function companyFact(company: Company, records: CompanyRecordsResponse | undefin
 }
 
 function subtitle(root: Company, related: Company[]): string {
-  if (related.length === 0) return 'Legal health report';
+  if (related.length === 0) return `Company health report, ${countryLong(root.incorporationCountry)}`;
   const places = [...new Set(related.map((company) => countryLong(company.incorporationCountry)))];
-  return `Legal health report, with its companies in ${places.length === 1 ? places[0] : `${places.slice(0, -1).join(', ')} and ${places[places.length - 1]}`}`;
+  return `Company health report, with its companies in ${places.length === 1 ? places[0] : `${places.slice(0, -1).join(', ')} and ${places[places.length - 1]}`}`;
+}
+
+/** The screen around the paper: the navy head with the print button, as on the other pages. */
+function Frame({ children, head }: { children: ReactNode; head?: ReactNode }) {
+  return (
+    <div className="pg-report">
+      <div className="rp-hero">
+        <Atmos />
+        <PublicBar
+          right={
+            <TLink className="btn btn-g" href="/badge">
+              <Icon name="back" />
+              Back to sharing
+            </TLink>
+          }
+        />
+        {head}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function ReportBody() {
@@ -85,68 +92,90 @@ function ReportBody() {
 
   if (!included) {
     return (
-      <div className="vs">
-        <FlowBar closeHref="/" />
-        <main className="state" data-testid="report-locked">
-          <h1 className="t-2">The full report is part of a paid plan</h1>
-          <p className="quiet">It covers all six areas, the order we&apos;d fix things in, and how we know each fact. On Free, your home page shows where you stand.</p>
-          <div className="btns">
-            <TLink className="btn btn-ink btn-sm" href="/plan">
-              See the plans
-            </TLink>
-          </div>
-        </main>
-      </div>
+      <Frame
+        head={
+          <main className="rp-head" data-testid="report-locked">
+            <div className="mono kick">
+              <Scramble text="Report" /> · <b>Paid plans</b>
+            </div>
+            <h1 className="disp">
+              <Words text="The full report is part of a paid plan" />
+            </h1>
+            <p className="lede">It covers all six areas, the order we&apos;d fix things in, and how we know each fact. On Free, your overview shows where you stand.</p>
+            <div className="acts2">
+              <TLink className="btn btn-w" href="/plan">
+                See the plans
+              </TLink>
+            </div>
+          </main>
+        }
+      >
+        {null}
+      </Frame>
     );
   }
   if (resource.error && !resource.data) {
     return (
-      <div className="vs">
-        <FlowBar closeHref="/" />
-        <main style={{ display: 'contents' }}>
+      <Frame>
+        <div className="rp-state">
           <ErrorState error={resource.error} onRetry={resource.reload} />
-        </main>
-      </div>
+        </div>
+      </Frame>
     );
   }
   if (!resource.data || !company) {
     return (
-      <div className="vs">
-        <FlowBar closeHref="/" />
-        <main style={{ display: 'contents' }}>
+      <Frame>
+        <div className="rp-state">
           <Loading what="Getting your report" />
-        </main>
-      </div>
+        </div>
+      </Frame>
     );
   }
 
   const { overview, issues, projection, records } = resource.data;
   const dated = overview.scannedAt ? longDate(overview.scannedAt) : null;
   const level = scoreLevel(overview.score);
+  const exact = overview.score.kind === 'exact' ? overview.score.value : null;
   const coverage = coverageWords(overview.coverage);
   const showSum = projection !== null && projection.projected > projection.current && !projection.heldByUrgent;
 
   return (
-    <div className="rp-screen">
-      <style>{'@page{size:A4;margin:0}'}</style>
-      <div className="rp-tools" data-testid="report-tools">
-        <FlowBar closeHref="/" closeRight />
-        <div className="rp-printline">
-          <button className="btn btn-ink btn-sm" type="button" data-testid="report-print" onClick={() => window.print()}>
-            Print or save as PDF
-          </button>
-          <p className="small">This opens your browser&apos;s print window. To keep a file, choose Save as PDF there.</p>
+    <Frame
+      head={
+        <div className="rp-head" data-testid="report-tools">
+          <div>
+            <div className="mono kick">
+              <Scramble text="Report" /> · <b><Scramble text="Dated → Printable" delay={120} /></b>
+            </div>
+            <h1 className="disp">
+              <Words text={company.legalName} />
+            </h1>
+            <div className="meta">
+              <span>{dated ? `Checked ${dated}` : 'Not scanned yet'}</span>
+              <span>Two pages</span>
+              <span>Evidence and documents are never included</span>
+            </div>
+          </div>
+          <div className="acts2">
+            <button className="btn btn-w" type="button" data-testid="report-print" onClick={() => window.print()}>
+              <Icon name="download" />
+              Print or save as PDF
+            </button>
+            <p>This opens your browser&apos;s print window. To keep a file, choose Save as PDF there.</p>
+          </div>
         </div>
-      </div>
-
+      }
+    >
+      <style>{'@page{size:A4;margin:0}'}</style>
       <main className="rp-sheets" data-testid="report">
         <article className="rp" data-theme="light" data-testid="report-page-1">
-          <header className="rp-top">
-            <img src="/vero-lockup.svg" alt="Vero Scan" />
+          <header className="rp-band">
+            <img src="/brand/wordmark-light.svg" alt="Vero" />
             <span data-testid="report-date">{dated ?? 'Not scanned yet'}</span>
           </header>
           <div className="rp-title">
-            <h1>{company.legalName}</h1>
+            <h2>{company.legalName}</h2>
             <p>{subtitle(company, related)}</p>
           </div>
           {overview.sampleData ? (
@@ -154,17 +183,21 @@ function ReportBody() {
               <b>Sample data.</b> This uses made-up records for testing, not a real register.
             </p>
           ) : null}
-          <ScoreBox value={level}>
-            <div className="rp-score">
-              <div className="rp-num">
-                <b data-testid="report-score">{scoreWords(overview.score)}</b>
-                <span>out of 100</span>
-              </div>
-              <PaperV level={level} />
+          <div className="rp-score">
+            <div className="num">
+              {exact !== null ? <CountUp className="pixel" value={exact} /> : <span className="pixel">{scoreWords(overview.score)}</span>}
+              <span>out of 100</span>
             </div>
-            <p className="rp-say">{scoreSentence(overview.statusWord)}</p>
-            <Ruler label={`A score of ${scoreWords(overview.score)} sits in ${bandWords(overview.statusWord)}.`} />
-          </ScoreBox>
+            <div className="say">
+              <b data-testid="report-score">{scoreWords(overview.score)}</b>
+              <p>{scoreSentence(overview.statusWord)}</p>
+              <div className="blk" aria-hidden="true">
+                {Array.from({ length: 20 }, (_, index) => (
+                  <i key={index} className={`grow${index < Math.round(level / 5) ? ' on' : ''}`} style={{ '--i': index } as CSSProperties} />
+                ))}
+              </div>
+            </div>
+          </div>
           {coverage ? (
             <p className="rp-basis" data-testid="report-coverage">
               {coverage}
@@ -172,7 +205,7 @@ function ReportBody() {
             </p>
           ) : null}
 
-          <h2 className="rp-h2">The six areas</h2>
+          <h3 className="rp-h">The six areas</h3>
           <table className="rp-t">
             <tbody>
               {overview.areas.map((area) => (
@@ -181,7 +214,9 @@ function ReportBody() {
                     <b>{area.name}</b>
                     <small>{area.description}</small>
                   </td>
-                  <td className={`w ${statusTone(area.statusWord)}`}>{area.statusWord ?? 'Not scored'}</td>
+                  <td className="w" style={{ color: TONE_COLOUR[statusTone(area.statusWord)] }}>
+                    {area.statusWord ?? 'Not scored'}
+                  </td>
                   <td className="n">{area.score ?? ''}</td>
                 </tr>
               ))}
@@ -192,6 +227,7 @@ function ReportBody() {
           </p>
           <footer className="rp-foot">
             <span>Vero</span>
+            <span>Page 1 of 2</span>
           </footer>
         </article>
 
@@ -202,7 +238,7 @@ function ReportBody() {
           </header>
 
           <section className="rp-sec">
-            <h2 className="rp-h2 big">{issues.length === 0 ? 'Nothing is open' : `The ${issues.length === 1 ? 'one thing' : `${issues.length} things`} to do first`}</h2>
+            <h3 className="rp-h big">{issues.length === 0 ? 'Nothing is open' : `The ${issues.length === 1 ? 'one thing' : `${issues.length} things`} to do first`}</h3>
             {issues.length > 0 ? (
               <ol className="rp-acts">
                 {issues.map((issue) => (
@@ -210,7 +246,7 @@ function ReportBody() {
                     <div>
                       <b>{issue.headline}</b>
                       <span>
-                        {scope === 'group' ? `${issue.companyName}. ` : ''}
+                        {scope === 'group' ? `${issue.companyName.replace(/\.$/, '')}. ` : ''}
                         {issue.severityWord}.{issue.dueOn ? ` Due ${longDate(issue.dueOn)}.` : ''}
                       </span>
                     </div>
@@ -227,7 +263,7 @@ function ReportBody() {
           </section>
 
           <section className="rp-sec">
-            <h2 className="rp-h2 big">How we know</h2>
+            <h3 className="rp-h big">How we know</h3>
             <p className="rp-lede">Where this report&apos;s facts and method came from.</p>
             <table className="rp-t how">
               <tbody>
@@ -240,7 +276,7 @@ function ReportBody() {
                 {overview.sourcesDown.length > 0 ? (
                   <tr data-testid="report-down">
                     <th scope="row">Sources that were down</th>
-                    <td>{overview.sourcesDown.map((source) => source.sourceName).join(', ')}. They don&apos;t count for or against the score.</td>
+                    <td>{[...new Set(overview.sourcesDown.map((source) => source.sourceName))].join(', ')}. They don&apos;t count for or against the score.</td>
                   </tr>
                 ) : null}
                 <tr>
@@ -261,10 +297,11 @@ function ReportBody() {
           </p>
           <footer className="rp-foot">
             <span>Vero</span>
+            <span>Page 2 of 2</span>
           </footer>
         </article>
       </main>
-    </div>
+    </Frame>
   );
 }
 

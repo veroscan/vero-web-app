@@ -62,7 +62,7 @@ test('signed out, the desk goes to sign-in; a lawyer gets the desk but not admin
   await lawyer.page.goto('/review/work');
   await expect(lawyer.page.getByTestId('staff-work')).toBeVisible();
   await lawyer.page.goto('/admin');
-  await expect(lawyer.page.getByTestId('staff-refused')).toContainText("Code & Clause's admins");
+  await expect(lawyer.page.getByTestId('staff-refused')).toContainText("Vero's admins");
   await expect(lawyer.page.getByTestId('admin')).toHaveCount(0);
   await lawyer.page.context().close();
 });
@@ -118,22 +118,22 @@ test('admin: a pack is never called approved unless the API says so, and approvi
     }
 
     const row = desk.locator(`[data-pack="US@${version}"]`);
-    await expect(row).toContainText('Not approved by Code & Clause.');
+    await expect(row).toContainText('Not approved by a lawyer yet.');
     await row.locator('summary').click();
     await row.getByRole('button', { name: 'Approve this pack' }).click();
     const form = row.getByTestId('approve-form');
-    await expect(form).toContainText("It's a professional sign-off by Code & Clause");
+    await expect(form).toContainText("It's a professional sign-off, under the name of the lawyer you enter here.");
     await expect(form).toContainText("can't be undone");
     const confirm = form.getByTestId('approve-confirm');
     await expect(confirm).toBeDisabled();
-    await form.getByLabel(/The name of the Code & Clause lawyer/).fill('Ada Eze');
+    await form.getByLabel('The name of the lawyer approving this').fill('Ada Eze');
     await expect(confirm).toBeDisabled();
     await form.getByRole('checkbox').check();
     await form.getByRole('button', { name: 'Cancel' }).click();
     expect((await sql<{ status: string }>(`SELECT status FROM rule_pack WHERE version = $1`, [version]))[0]?.status).toBe('draft');
 
     await row.getByRole('button', { name: 'Approve this pack' }).click();
-    await form.getByLabel(/The name of the Code & Clause lawyer/).fill('Ada Eze');
+    await form.getByLabel('The name of the lawyer approving this').fill('Ada Eze');
     await form.getByRole('checkbox').check();
     await confirm.click();
     await expect(row.getByTestId('pack-status')).toHaveText('Approved');
@@ -293,7 +293,6 @@ test('the report: real data, every required line, a truthful print button, and a
   await expect(page.getByTestId('report-area')).toHaveCount(overview.areas.length);
   await expect(page.getByTestId('report-fix')).not.toHaveCount(0);
   expect(await page.getByTestId('report-fix').count()).toBeLessThanOrEqual(5);
-  await expect(report).not.toContainText('Page 1 of 2');
 
   const button = page.getByTestId('report-print');
   await expect(button).toHaveText('Print or save as PDF');
@@ -329,7 +328,7 @@ test('the report: a group names its companies, and no date on it reads "today"',
   await expect.poll(async () => (await apiJson<{ status: string }>(page, 'get', `/v1/scans/${scan.id}`)).status, { timeout: 60_000 }).toMatch(/completed|partial/);
 
   await page.goto('/report');
-  await expect(page.getByTestId('report-page-1')).toContainText('Legal health report, with its companies in Nigeria');
+  await expect(page.getByTestId('report-page-1')).toContainText('health report, with its companies in Nigeria');
   const how = page.getByTestId('report-how');
   await expect(how).toHaveCount(2);
   await expect(how.nth(1)).toContainText('Kestrel Pay Nigeria Ltd');

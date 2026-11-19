@@ -9,8 +9,8 @@ async function scannedScreens(page: Page, companyId: string): Promise<{ name: st
     { name: 'first result', path: '/first-result', ready: () => expect(page.getByTestId('top-issue').first()).toBeVisible() },
     { name: 'home', path: '/', ready: () => expect(page.getByTestId('home-score')).toBeVisible() },
     { name: 'all issues', path: '/issues', ready: () => expect(page.getByTestId('issue-row').first()).toBeVisible() },
-    { name: 'one issue', path: `/issues/${companyId}/${encodeURIComponent(rule)}`, ready: () => expect(page.getByRole('heading', { name: 'How we know' })).toBeVisible() },
-    { name: 'one area', path: '/areas/1', ready: () => expect(page.getByRole('heading', { name: 'To fix' })).toBeVisible() },
+    { name: 'one issue', path: `/issues/${companyId}/${encodeURIComponent(rule)}`, ready: () => expect(page.getByRole('heading', { name: 'Where we looked' })).toBeVisible() },
+    { name: 'one area', path: '/areas/1', ready: () => expect(page.getByRole('heading', { name: 'Checks in this area' })).toBeVisible() },
     { name: 'notifications', path: '/notifications', ready: () => expect(page.getByTestId('notification').first()).toBeVisible() },
   ];
 }
@@ -18,7 +18,7 @@ async function scannedScreens(page: Page, companyId: string): Promise<{ name: st
 function onboardingScreens(page: Page): { name: string; path: string; ready: () => Promise<void> }[] {
   return [
     { name: 'home for a new user', path: '/', ready: () => expect(page.getByRole('link', { name: /Scan your company/ })).toBeVisible() },
-    { name: 'find company', path: '/onboarding/company', ready: () => expect(page.getByRole('radiogroup')).toBeVisible() },
+    { name: 'find company', path: '/onboarding/company', ready: () => expect(page.getByLabel('Country of registration')).toBeVisible() },
     { name: 'not found', path: '/onboarding/not-found?country=GB&q=Ghost', ready: () => expect(page.getByRole('heading', { level: 1 })).toContainText('Ghost') },
     { name: 'confirm', path: '/onboarding/confirm?country=GB&name=Kestrel%20Pay%20UK%20Ltd&number=14839221&type=ltd&formed=2023-04-12&sample=1', ready: () => expect(page.getByRole('button', { name: "Yes, that's us" })).toBeVisible() },
   ];
@@ -95,7 +95,8 @@ test('the theme follows the system first, then the saved choice, with no flash',
   expect(html.indexOf('vero-theme')).toBeGreaterThan(-1);
   expect(html.indexOf('vero-theme')).toBeLessThan(html.indexOf('<body'));
   const painted = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(painted).toBe('rgb(17, 16, 18)');
+  // The dark theme's own background (--bg in kit-dark.css), not the light one.
+  expect(painted).toBe('rgb(1, 1, 42)');
 });
 
 test('empty states: a new person sees the welcome, toasts and nothing invented', async ({ page }) => {
@@ -105,8 +106,11 @@ test('empty states: a new person sees the welcome, toasts and nothing invented',
   await expect(page.getByRole('heading', { name: "Let's see where your company stands." })).toBeVisible();
   await expect(page.locator('body')).not.toContainText('Kestrel');
   await expect(page.locator('body')).not.toContainText('Amara');
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Issues' }).click();
-  await expect(page.getByRole('status')).toContainText('Your issues will show here after your first scan.');
+  // Before the first scan the other screens are shut, and say when they open.
+  const findings = page.getByRole('complementary', { name: 'Main' }).getByRole('link', { name: 'Findings' });
+  await expect(findings).toHaveAttribute('aria-disabled', 'true');
+  await expect(findings).toHaveAttribute('title', 'After your first scan');
+  await expect(findings).toHaveAttribute('href', '/');
 
   await page.goto('/notifications');
   await expect(page.getByTestId('empty-state')).toContainText('Nothing here yet');
@@ -118,10 +122,11 @@ test('the Free plan limits come from the API', async ({ page }) => {
   await signIn(page);
   await seedScanned(page, { plan: 'free' });
   await page.goto('/issues');
-  await expect(page.getByTestId('issues-score')).toContainText('–');
+  // A range on Free: no exact score to project from, and the screen says why.
+  await expect(page.getByText('What clearing each finding is worth is part of a paid plan.')).toBeVisible();
+  await expect(page.getByTestId('issues-score')).toHaveCount(0);
   await expect(page.getByTestId('issue-row')).toHaveCount(3);
   await expect(page.getByTestId('locked-count')).toContainText('on a paid plan');
-  await expect(page.locator('.tick')).toHaveCount(0);
 
   await page.goto('/');
   await expect(page.getByTestId('area-row').first()).toContainText('Paid plan');

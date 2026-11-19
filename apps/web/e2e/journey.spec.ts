@@ -1,4 +1,4 @@
-import { answerQuestions, calm, expect, linkFromOutbox, requestLink, seedAnswered, seedScanned, signIn, sql, test, turnOffRelated, uniqueEmail } from './support/helpers';
+import { answerQuestions, calm, chooseCountry, expect, linkFromOutbox, requestLink, seedAnswered, seedScanned, signIn, sql, test, turnOffRelated, uniqueEmail } from './support/helpers';
 
 test('a new person goes from the magic link to Home, through a full fixture scan', async ({ page }) => {
   await calm(page);
@@ -10,15 +10,15 @@ test('a new person goes from the magic link to Home, through a full fixture scan
   await page.goto(await linkFromOutbox(email));
 
   await page.waitForURL('**/onboarding/company');
-  await expect(page.getByRole('heading', { name: 'Where is your company registered?' })).toBeVisible();
-  await page.getByRole('radio', { name: /United Kingdom/ }).click();
+  await expect(page.getByRole('heading', { name: 'Find your company' })).toBeVisible();
+  await chooseCountry(page, 'United Kingdom');
   await page.getByLabel('Company name').fill('Kestrel Pay UK Ltd');
   await expect(page.getByTestId('sample-note')).toBeVisible();
   await page.getByRole('link', { name: /Kestrel Pay UK Ltd/ }).click();
 
   await page.waitForURL('**/onboarding/confirm**');
-  await expect(page.getByRole('heading', { name: 'Is this your company?' })).toBeVisible();
-  await expect(page.getByText('14839221')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Is this the right company?' })).toBeVisible();
+  await expect(page.getByText('14839221').first()).toBeVisible();
   await turnOffRelated(page);
   await page.getByRole('button', { name: "Yes, that's us" }).click();
 
@@ -31,8 +31,8 @@ test('a new person goes from the magic link to Home, through a full fixture scan
 
   await page.waitForURL('**/onboarding/scanning');
   await expect(page.getByTestId('scan-row').first()).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Scan finished' })).toBeVisible();
-  await expect(page.getByTestId('scan-count')).toContainText(/\d+ of \d+ checks done/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/is scanned$/);
+  await expect(page.getByTestId('scan-count')).toHaveText(/^(\d+)\s*of\s*\1 sources? read$/);
   await expect(page.getByTestId('sample-note')).toBeVisible();
   // The email the scanning screen promised has really gone out.
   await expect.poll(async () => (await sql('SELECT 1 FROM outbox WHERE to_email = $1 AND template = $2', [email, 'scan-result'])).length).toBeGreaterThan(0);
@@ -41,11 +41,12 @@ test('a new person goes from the magic link to Home, through a full fixture scan
   await page.waitForURL('**/first-result');
   await expect(page.getByTestId('first-score')).toHaveAttribute('aria-label', /^\d+ to \d+ out of 100$/);
   await expect(page.getByTestId('top-issue')).toHaveCount(3);
-  await expect(page.getByRole('heading', { name: "Why it's a range" })).toBeVisible();
-  await page.getByRole('link', { name: 'Look around first' }).click();
+  // On Free the score is a range, and the screen says so.
+  await expect(page.getByText('A range on this plan.')).toBeVisible();
+  await page.getByRole('link', { name: 'Go to overview' }).click();
 
   await page.waitForURL((url) => url.pathname === '/');
-  await expect(page.getByTestId('home-score')).toContainText('–');
+  await expect(page.getByTestId('home-score')).toHaveAttribute('aria-label', /^\d+ to \d+$/);
   await expect(page.getByTestId('area-row')).toHaveCount(6);
   await expect(page.getByTestId('next-action')).toBeVisible();
 });
@@ -53,7 +54,7 @@ test('a new person goes from the magic link to Home, through a full fixture scan
 test('answering no hides the questions that depend on it', async ({ page }) => {
   await calm(page);
   await signIn(page);
-  await page.getByRole('radio', { name: /United Kingdom/ }).click();
+  await chooseCountry(page, 'United Kingdom');
   await page.getByLabel('Company name').fill('Kestrel Pay UK Ltd');
   await page.getByRole('link', { name: /Kestrel Pay UK Ltd/ }).click();
   await turnOffRelated(page);
@@ -73,7 +74,7 @@ test('a related company is only asked what it has not been told, and answers sti
   const child = (await made.json()) as { id: string };
 
   await page.goto(`/onboarding/questions?company=${child.id}`);
-  await expect(page.getByText('Kestrel Pay Nigeria Ltd')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('A few questions about Kestrel Pay Nigeria Ltd');
   const seen = await answerQuestions(page);
   // has_employees was answered for the main company, so it isn't asked again. Nigeria-only ones are.
   expect(seen).not.toContain('has_employees');
@@ -86,39 +87,43 @@ test('a related company is only asked what it has not been told, and answers sti
   expect(fields.find((field) => field.id === 'has_employees')?.value).toBe(true);
 });
 
-test('filters, ticks and the projected score use real numbers from the API', async ({ page }) => {
+test('the points on offer and the projected score use real numbers from the API', async ({ page }) => {
   await calm(page);
   await signIn(page);
   const { companyId } = await seedScanned(page, { plan: 'growth' });
+  // What the screen shows is what the API works out, not a sum of our own.
+  const projectionReply = page.waitForResponse((response) => response.url().includes(`/v1/companies/${companyId}/projection`) && response.request().method() === 'POST');
   await page.goto('/issues');
 
-  const row = page.getByTestId('issue-row').first();
-  await expect(row).toBeVisible();
-  const before = Number((await page.getByTestId('issues-score').innerText()).trim());
-  const points = Number(/\+(\d+)/.exec(await row.locator('.pts').innerText())?.[1]);
+  const overview = (await (await page.request.get(`/v1/companies/${companyId}/overview`)).json()) as { score: { value: number } };
+  const before = overview.score.value;
   expect(before).toBeGreaterThan(0);
-
-  const planbar = page.getByTestId('planbar');
-  await expect(planbar).not.toHaveClass(/\bon\b/);
-  await row.locator('.tick').check();
-  await expect(planbar).toHaveClass(/\bon\b/);
-  await expect(planbar).toContainText('1 fix');
-
-  // What the screen shows is what the API works out, not a sum of our own.
-  const ruleKey = decodeURIComponent((await row.locator('a').getAttribute('href'))?.split('/').pop() ?? '');
-  const reply = await page.request.post(`/v1/companies/${companyId}/projection`, { headers: { origin: new URL(page.url()).origin }, data: { ruleKeys: [ruleKey] } });
-  const { projected } = (await reply.json()) as { projected: number };
-  await expect(page.getByTestId('plan-score')).toHaveText(String(projected));
-  await expect(page.getByTestId('issues-score')).toHaveText(String(projected));
-  expect(Math.abs(projected - (before + points))).toBeLessThanOrEqual(1);
-
-  await row.locator('.tick').uncheck();
-  await expect(planbar).not.toHaveClass(/\bon\b/);
   await expect(page.getByTestId('issues-score')).toHaveText(String(before));
 
+  const { projected } = (await (await projectionReply).json()) as { projected: number };
+  expect(projected).toBeGreaterThanOrEqual(before);
+  await expect(page.getByText(`and the score goes from ${before} to ${projected}.`, { exact: false })).toBeVisible();
+
+  // One finding's points, in the drawer, are the API's points for it.
+  const row = page.getByTestId('issue-row').filter({ hasText: /\+\d+/ }).first();
+  await expect(row).toBeVisible();
+  const points = Number(/\+(\d+)/.exec(await row.innerText())?.[1]);
+  expect(points).toBeGreaterThan(0);
+  await row.click();
+  const drawer = page.getByTestId('finding-drawer');
+  await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+  await expect(drawer).toContainText('Clearing this adds');
+  await expect(drawer).toContainText(`+${points}`);
+  const href = (await drawer.getByRole('link', { name: 'Open full page' }).getAttribute('href')) ?? '';
+  const ruleKey = decodeURIComponent(href.split('/').pop() ?? '');
+  const single = await page.request.post(`/v1/companies/${companyId}/projection`, { headers: { origin: new URL(page.url()).origin }, data: { ruleKeys: [ruleKey] } });
+  const one = (await single.json()) as { projected: number };
+  expect(Math.abs(one.projected - (before + points))).toBeLessThanOrEqual(1);
+  await drawer.getByRole('button', { name: 'Close' }).click();
+  await expect(drawer).toHaveAttribute('aria-hidden', 'true');
 });
 
-test('the country filter narrows a group of companies', async ({ page }) => {
+test('the search narrows a group of companies to one of them', async ({ page }) => {
   await calm(page);
   await signIn(page);
   const { companyId, organisationId } = await seedScanned(page, { plan: 'growth' });
@@ -130,17 +135,26 @@ test('the country filter narrows a group of companies', async ({ page }) => {
   expect(organisationId).toBeTruthy();
 
   await page.goto('/issues');
-  const filters = page.getByRole('group', { name: 'Filter by country' });
-  await expect(filters).toBeVisible();
-  const allCount = await page.getByTestId('issue-row').count();
-  await filters.getByRole('button', { name: 'Nigeria' }).click();
-  await expect(filters.getByRole('button', { name: 'Nigeria' })).toHaveAttribute('aria-pressed', 'true');
+  // The list covers the whole group: find a tab with findings from both companies.
+  await expect(page.getByTestId('issue-row').first()).toBeVisible();
+  const rows = page.getByTestId('issue-row');
+  let allCount = 0;
+  for (const tab of await page.getByRole('tablist', { name: 'Filter findings' }).getByRole('tab').all()) {
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    allCount = await rows.count();
+    const fromNigeria = await rows.filter({ hasText: 'Kestrel Pay Nigeria' }).count();
+    if (fromNigeria > 0 && fromNigeria < allCount) break;
+    allCount = 0;
+  }
+  expect(allCount, 'a tab lists findings from both companies').toBeGreaterThan(0);
+  const search = page.getByRole('textbox', { name: 'Search findings' });
+  await search.fill('Kestrel Pay Nigeria');
+  await expect.poll(async () => page.getByTestId('issue-row').count()).toBeLessThan(allCount);
   const nigeria = await page.getByTestId('issue-row').count();
   expect(nigeria).toBeGreaterThan(0);
-  expect(nigeria).toBeLessThan(allCount);
-  for (const line of await page.getByTestId('issue-row').locator('.row-s').allInnerTexts()) expect(line).toContain('Nigeria');
-  await expect(page.getByTestId('issue-count')).toContainText(String(nigeria));
-  await filters.getByRole('button', { name: 'All' }).click();
+  for (const line of await page.getByTestId('issue-row').locator('small').allInnerTexts()) expect(line).toContain('Kestrel Pay Nigeria');
+  await search.fill('');
   await expect(page.getByTestId('issue-row')).toHaveCount(allCount);
 });
 
@@ -149,23 +163,28 @@ test('one issue reads in plain words, and verify items are honest', async ({ pag
   await signIn(page);
   const { companyId } = await seedScanned(page, { plan: 'growth' });
   await page.goto('/issues');
-  await page.getByTestId('issue-row').first().locator('a').click();
+  // A finding that moves the score, so its page can say by how much.
+  await page.getByTestId('issue-row').filter({ hasText: /\+\d+/ }).first().click();
+  await page.getByTestId('finding-drawer').getByRole('link', { name: 'Open full page' }).click();
   await page.waitForURL('**/issues/**');
-  await expect(page.getByRole('heading', { name: "What's missing" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What we found' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Why it matters' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'What happens if you leave it' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'How we know' })).toBeVisible();
-  await expect(page.getByTestId('fix-projection')).toContainText(/from \d+ to about \d+/);
+  await expect(page.getByText(/^If it's left: /)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Where we looked' })).toBeVisible();
+  await expect(page.getByTestId('fix-projection')).toContainText(/Adds \d+ points?|Lifts the urgent cap/);
   await expect(page.locator('body')).not.toContainText(/Tier \d/);
 
   await page.goto('/issues');
   const toCheck = page.getByTestId('group-to-check');
-  await expect(toCheck.getByRole('heading', { name: "We haven't seen this yet" })).toBeVisible();
-  await toCheck.locator('summary').first().click();
-  const check = toCheck.getByTestId('area-check').first();
-  await check.locator('summary').click();
-  await check.getByRole('link', { name: 'See the details' }).click();
-  await expect(page.getByTestId('not-seen')).toContainText("We haven't seen this yet.");
+  await expect(toCheck).toContainText('Not seen yet');
+  await toCheck.click();
+  await expect(toCheck).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('group-unseen')).toBeVisible();
+  await page.getByTestId('issue-row').first().click();
+  await expect(page.getByTestId('finding-drawer')).toContainText('Not seen yet');
+  await page.getByTestId('finding-drawer').getByRole('link', { name: 'Open full page' }).click();
+  await page.waitForURL('**/issues/**');
+  await expect(page.getByTestId('not-seen')).toContainText("Vero hasn't seen this yet.");
   expect(companyId).toBeTruthy();
 });
 
@@ -176,19 +195,19 @@ test('Home: score, one next action with calculated points, six areas, and the be
   await page.goto('/');
   const overview = (await (await page.request.get(`/v1/companies/${companyId}/overview`)).json()) as { score: { value: number }; nextAction: { points: number } };
   await expect(page.getByTestId('home-score')).toHaveText(String(overview.score.value));
-  await expect(page.getByTestId('next-points')).toContainText(String(overview.nextAction.points));
-  await expect(page.locator('[data-v3d="fill"]').first()).toHaveAttribute('data-value', String(overview.score.value));
-  await expect(page.locator('.v3d-fallback svg').first()).toBeVisible();
+  await expect(page.getByTestId('next-points')).toHaveText(`this one fix adds ${overview.nextAction.points} ${overview.nextAction.points === 1 ? 'point' : 'points'}`);
 
+  // Six areas, each one a row that opens that area.
   const rows = page.getByTestId('area-row');
   await expect(rows).toHaveCount(6);
-  await rows.first().locator('summary').click();
-  await expect(rows.first()).toHaveAttribute('open', '');
-  await expect(rows.first().getByRole('link', { name: 'See this whole area' })).toBeVisible();
-  await rows.nth(1).locator('summary').click();
-  await expect(rows.first()).not.toHaveAttribute('open', '');
+  await rows.first().click();
+  await page.waitForURL('**/areas/*');
+  await expect(page.getByTestId('area-score')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('home-score')).toBeVisible();
 
-  await expect(page.getByTestId('bell-count')).toHaveText(/^\d+$/);
+  await expect(page.getByTestId('bell-count')).toBeVisible();
+  await expect(page.getByTestId('bell')).toHaveAttribute('aria-label', /^What's new, \d+ unread$/);
   await page.getByTestId('bell').click();
   await page.waitForURL('**/notifications');
   await expect(page.getByTestId('notification').first()).toBeVisible();
@@ -202,23 +221,29 @@ test('one area shows what to fix, what passed and what is unchecked', async ({ p
   await signIn(page);
   await seedScanned(page, { plan: 'growth' });
   await page.goto('/');
-  const row = page.getByTestId('area-row').first();
-  await row.locator('summary').click();
-  await row.getByRole('link', { name: 'See this whole area' }).click();
+  await page.getByTestId('area-row').first().click();
   await page.waitForURL('**/areas/*');
-  await expect(page.getByRole('heading', { name: 'To fix' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'In good shape' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Checks in this area' })).toBeVisible();
   await expect(page.getByTestId('area-score')).toHaveText(/^\d+$/);
 
-  // A check that passed must not be named with the problem it didn't find.
+  // One table holds what to fix, what nobody has seen yet, and what passed.
   await page.goto('/areas/1');
-  const passed = page.getByTestId('area-check').filter({ hasText: 'Passed' });
+  await expect(page.getByTestId('area-fix').first()).toBeVisible();
+  const unseen = page.getByTestId('area-check').filter({ hasText: 'Not seen yet' }).first();
+  // A table row can't carry aria-expanded, so the row's own button says whether it is open.
+  await expect(unseen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+  await unseen.click();
+  await expect(unseen.getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('link', { name: 'See the details' })).toBeVisible();
+
+  // A check that passed must not be named with the problem it didn't find.
+  const passed = page.getByTestId('area-check').filter({ hasText: 'In good shape' });
   await expect(passed.first()).toBeVisible();
-  for (const name of await passed.locator('.row-t').allInnerTexts()) expect(name).not.toMatch(/overdue|can't find|has no |doesn't show|problem with|has an outstanding/i);
-  await passed.first().locator('summary').click();
-  await passed.first().getByRole('link', { name: 'See the details' }).click();
-  await expect(page.getByTestId('issue-chip')).toHaveText('In good shape');
-  await expect(page.getByRole('heading', { name: "What's missing" })).toHaveCount(0);
+  for (const name of await passed.locator('b').allInnerTexts()) expect(name).not.toMatch(/overdue|can't find|has no |doesn't show|problem with|has an outstanding/i);
+  await passed.first().click();
+  await page.waitForURL('**/issues/**');
+  await expect(page.getByTestId('issue-chip')).toContainText('Cleared');
+  await expect(page.getByRole('heading', { name: 'What we found' })).toHaveCount(0);
 });
 
 test('Ctrl+K searches for real, and a route that does not exist says so', async ({ page, watch }) => {

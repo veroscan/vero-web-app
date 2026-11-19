@@ -63,6 +63,8 @@ export function defineRoute<E extends Endpoint, A extends AuthMode>(
     staffRoles?: A extends 'staff' ? readonly StaffRole[] : never;
     /** Largest body this route accepts. Only for routes that take a file. */
     bodyLimit?: number;
+    /** A public form posted from the marketing website: no session, so no cross-site risk to check. */
+    skipOriginCheck?: boolean;
     /** Runs before the body is read, so someone who may not upload can't make us buffer a file. */
     beforeBody?: (session: SessionContext, org: OrgContext, request: FastifyRequest) => Promise<void>;
   },
@@ -72,6 +74,7 @@ export function defineRoute<E extends Endpoint, A extends AuthMode>(
     method: endpoint.method,
     url: endpoint.path,
     ...(options.bodyLimit ? { bodyLimit: options.bodyLimit } : {}),
+    ...(options.skipOriginCheck ? { config: { skipOriginCheck: true } } : {}),
     ...(options.beforeBody
       ? {
           onRequest: async (request: FastifyRequest, reply: FastifyReply) => {

@@ -1,0 +1,105 @@
+/* Getting in: sign in, sign up, the link check and the second step. Ported from the SignIn and SignUp boards.
+   Left: the navy atmosphere with the brand and a calm line. Right: the form. Bright colours only. */
+
+.pg-auth{display:grid;grid-template-columns:1.12fr 1fr;min-height:100vh;background:var(--panel)}
+
+/* left: the atmosphere */
+.pg-auth .left{position:relative;overflow:hidden;color:#fff;padding:44px 56px;display:flex;flex-direction:column;min-height:100vh}
+.pg-auth .left>*:not(.atmos){position:relative;z-index:1}
+.pg-auth .left .logo{height:30px;width:max-content}
+.pg-auth .left .kick{margin-top:auto}
+.pg-auth .left .display{font-size:58px;line-height:1.04;letter-spacing:-.04em;font-weight:300;margin-top:22px;max-width:560px}
+.pg-auth .left .lede{font-size:18px;color:rgba(255,255,255,.7);margin-top:18px;max-width:470px;line-height:1.55;animation:up .8s var(--ease) .12s both}
+.pg-auth .foot{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:40px;font-size:13px;color:rgba(255,255,255,.6);font-weight:600}
+
+/* the preview: what a scan reads, ticked off once and then still */
+.pg-auth .preview{margin-top:44px;width:min(520px,100%);padding:24px 26px;overflow:hidden;animation:up .8s var(--ease) .2s both}
+.pg-auth .preview .scanline{background:linear-gradient(90deg,transparent,#9DDAF7 30%,#FFFFFF 50%,#9DDAF7 70%,transparent);box-shadow:0 0 18px 3px rgba(157,218,247,.7)}
+.pg-auth .pv-top{display:flex;align-items:center;gap:12px}
+.pg-auth .pv-top b{display:block;font-size:15px}
+.pg-auth .pv-top small{font-size:12.5px;color:rgba(255,255,255,.6)}
+.pg-auth .pv-top .sc{margin-left:auto;display:flex;align-items:flex-end;gap:6px}
+.pg-auth .pv-top .sc .pixel{font-size:52px;color:#fff;text-shadow:0 0 40px rgba(157,218,247,.45)}
+.pg-auth .pv-top .sc small{padding-bottom:6px;white-space:nowrap}
+.pg-auth .checks{margin-top:18px;display:flex;flex-direction:column}
+.pg-auth .ck{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.12);opacity:.35;transition:opacity .5s var(--ease)}
+.pg-auth .ck.done{opacity:1}
+.pg-auth .ck b{display:block;font-size:13.5px;font-weight:700;line-height:1.3}
+.pg-auth .ck small{display:block;font-size:12px;color:rgba(255,255,255,.55);font-weight:600}
+.pg-auth .ck .s{margin-left:auto;font-size:12.5px;font-weight:700;white-space:nowrap;color:#6EE7C5;opacity:0;transform:translateX(-6px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.pg-auth .ck.done .s{opacity:1;transform:none}
+
+/* right: the form */
+.pg-auth .right{display:flex;flex-direction:column;padding:44px 64px;min-width:0;background:var(--panel)}
+.pg-auth .right .top{display:flex;align-items:center;justify-content:flex-end;gap:16px;font-size:14px;color:var(--ink-3);font-weight:600}
+.pg-auth .right .top a{color:var(--navy);font-weight:700;margin-left:6px}
+.pg-auth .right .top a:hover{text-decoration:underline;text-underline-offset:3px}
+.pg-auth .form{width:100%;max-width:440px;margin:auto;padding:32px 0}
+.pg-auth .form>*{animation:up .8s var(--ease) both}
+.pg-auth .form>*:nth-child(2){animation-delay:.06s}
+.pg-auth .form>*:nth-child(3){animation-delay:.12s}
+.pg-auth .form>*:nth-child(4){animation-delay:.18s}
+.pg-auth .form>*:nth-child(5){animation-delay:.24s}
+.pg-auth .form h1{font-size:34px;letter-spacing:-.03em;line-height:1.1;font-weight:700}
+.pg-auth .form .lead{color:var(--ink-2);margin-top:10px;font-size:15px;line-height:1.55}
+.pg-auth .form .lead b{color:var(--ink)}
+.pg-auth .form form{margin-top:30px}
+.pg-auth .field label{display:block;font-size:13.5px;font-weight:700;margin-bottom:1px;color:var(--ink)}
+.pg-auth .field input{height:54px;border-radius:14px;padding:0 16px;font-size:15px}
+.pg-auth .field input.code{font-size:22px;letter-spacing:.32em;font-variant-numeric:tabular-nums}
+.pg-auth .field input.rcode{letter-spacing:.12em;text-transform:lowercase}
+.pg-auth .field.bad input{border-color:#E5484D}
+.pg-auth .formerror{margin-top:10px}
+.pg-auth .cta{width:100%;height:56px;border-radius:14px;background:var(--navy);color:#FFFFFF;font-weight:700;font-size:16px;margin-top:22px;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,transform .15s}
+.pg-auth .cta:hover{background:#0B1180}
+.pg-auth .cta:active{transform:scale(.98)}
+.pg-auth .cta[disabled]{opacity:.6;pointer-events:none}
+.pg-auth .cta .arr{width:18px;height:18px;transition:transform .3s var(--ease)}
+.pg-auth .cta:hover .arr{transform:translateX(3px)}
+.pg-auth .legal{font-size:12.5px;color:var(--ink-3);margin-top:16px;line-height:1.55;font-weight:500}
+.pg-auth .legal a{color:var(--ink-2);text-decoration:underline;text-underline-offset:2px}
+.pg-auth .alt{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.pg-auth .alt button,.pg-auth .alt a{color:var(--navy);font-weight:700}
+.pg-auth .alt button:hover,.pg-auth .alt a:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* the link on its way: an envelope with the sign-in letter half out */
+.pg-auth .env{width:132px;height:108px;display:block}
+.pg-auth .env .e-back{fill:#C9EAFB}
+.pg-auth .env .e-paper{fill:#FFFFFF;stroke:#E3E7F0}
+.pg-auth .env .e-head{fill:#000066}
+.pg-auth .env .e-line{fill:#DCE4EF}
+.pg-auth .env .e-btn{fill:#0182FA}
+.pg-auth .env .e-front{fill:#9DDAF7}
+.pg-auth .env .e-fold{stroke:#E3F4FD}
+.pg-auth .env .letter{animation:letterup 1.1s var(--ease) .25s both}
+@keyframes letterup{from{transform:translateY(26px)}to{transform:none}}
+.pg-auth .sent h1{margin-top:22px}
+.pg-auth .sent .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.pg-auth .sent .row button{height:48px;padding:0 18px;border-radius:12px;font-weight:700;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);transition:background .2s}
+.pg-auth .sent .row button:hover{background:#F7F8FC}
+.pg-auth .sent .row button[disabled]{opacity:.6;pointer-events:none}
+.pg-auth .sent .devnote{margin-top:22px}
+
+/* the link being read: the mark with a scan line over it */
+.pg-auth .reading{display:flex;flex-direction:column;align-items:flex-start;gap:22px}
+.pg-auth .reading .state-mark{width:64px;height:64px;border-radius:16px}
+
+@media (max-width:1100px){
+  .pg-auth .left{padding:40px 40px}
+  .pg-auth .left .display{font-size:46px}
+  .pg-auth .right{padding:40px 40px}
+}
+@media (max-width:900px){
+  .pg-auth{grid-template-columns:1fr}
+  .pg-auth .left{min-height:0;padding:22px 16px 34px}
+  .pg-auth .left .logo{height:24px}
+  .pg-auth .left .kick{margin-top:34px}
+  .pg-auth .left .display{font-size:34px;margin-top:14px}
+  .pg-auth .left .lede{font-size:15px;margin-top:12px}
+  .pg-auth .preview,.pg-auth .foot{display:none}
+  .pg-auth .right{padding:18px 16px 40px}
+  .pg-auth .right .top{justify-content:space-between}
+  .pg-auth .form{margin:0;padding:22px 0 0;max-width:none}
+  .pg-auth .form h1{font-size:28px}
+}
+.pg-auth .left svg.flow{opacity:.4}
