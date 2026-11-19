@@ -1,0 +1,172 @@
+{
+  "pocetCelkem": 2,
+  "ekonomickeSubjekty": [
+    {
+      "ico": "87654326",
+      "obchodniJmeno": "Kestrel Pay, s.r.o.",
+      "sidlo": {
+        "kodStatu": "CZ",
+        "nazevStatu": "Česká republika",
+        "kodKraje": 116,
+        "nazevKraje": "Jihomoravský kraj",
+        "kodObce": 582786,
+        "nazevObce": "Brno",
+        "nazevUlice": "Fiktivní",
+        "cisloDomovni": 1,
+        "psc": 60200,
+        "textovaAdresa": "Fiktivní 1, 60200 Brno",
+        "standardizaceAdresy": true
+      },
+      "pravniForma": "112",
+      "pravniFormaRos": "112",
+      "financniUrad": "451",
+      "datumVzniku": "2023-04-03",
+      "datumAktualizace": "2026-11-01",
+      "dic": "CZ87654326",
+      "icoId": "87654326",
+      "adresaDorucovaci": {
+        "radekAdresy1": "Fiktivní 1",
+        "radekAdresy2": "60200 Brno"
+      },
+      "czNace": [
+        "62010",
+        "63110",
+        "62"
+      ],
+      "seznamRegistraci": {
+        "stavZdrojeRos": "AKTIVNI",
+        "stavZdrojeVr": "AKTIVNI",
+        "stavZdrojeRes": "AKTIVNI",
+        "stavZdrojeRzp": "AKTIVNI",
+        "stavZdrojeNrpzs": "NEEXISTUJICI",
+        "stavZdrojeRpsh": "NEEXISTUJICI",
+        "stavZdrojeRcns": "NEEXISTUJICI",
+        "stavZdrojeSzr": "NEEXISTUJICI",
+        "stavZdrojeDph": "AKTIVNI",
+        "stavZdrojeSkDph": "NEEXISTUJICI",
+        "stavZdrojeSd": "NEEXISTUJICI",
+        "stavZdrojeIr": "NEEXISTUJICI",
+        "stavZdrojeCeu": "NEEXISTUJICI",
+        "stavZdrojeRs": "NEEXISTUJICI",
+        "stavZdrojeRed": "NEEXISTUJICI",
+        "stavZdrojeMonitor": "NEEXISTUJICI"
+      },
+      "primarniZdroj": "ros",
+      "dalsiUdaje": [
+        {
+          "obchodniJmeno": [
+            {
+              "obchodniJmeno": "Kestrel Pay, s.r.o.",
+              "primarniZaznam": true
+            }
+          ],
+          "sidlo": [
+            {
+              "sidlo": {
+                "kodStatu": "CZ",
+                "nazevStatu": "Česká republika",
+                "kodKraje": 116,
+                "nazevKraje": "Jihomoravský kraj",
+                "kodObce": 582786,
+                "nazevObce": "Brno",
+                "nazevUlice": "Fiktivní",
+                "cisloDomovni": 1,
+                "psc": 60200,
+                "textovaAdresa": "Fiktivní 1, 60200 Brno",
+                "standardizaceAdresy": true
+              },
+              "primarniZaznam": true
+            }
+          ],
+          "pravniForma": "112",
+          "spisovaZnacka": "C 999999/KSBR",
+          "datovyZdroj": "vr"
+        }
+      ]
+    },
+    {
+      "ico": "87654334",
+      "obchodniJmeno": "KESTREL PAY s. r. o.",
+      "sidlo": {
+        "kodStatu": "CZ",
+        "nazevStatu": "Česká republika",
+        "kodKraje": 116,
+        "nazevKraje": "Jihomoravský kraj",
+        "kodObce": 582786,
+        "nazevObce": "Brno",
+        "nazevUlice": "Fiktivní",
+        "cisloDomovni": 1,
+        "psc": 60200,
+        "textovaAdresa": "Fiktivní 1, 60200 Brno",
+        "standardizaceAdresy": true
+      },
+      "pravniForma": "112",
+      "pravniFormaRos": "112",
+      "financniUrad": "451",
+      "datumVzniku": "2023-04-03",
+      "datumAktualizace": "2026-11-01",
+      "dic": "CZ87654334",
+      "icoId": "87654334",
+      "adresaDorucovaci": {
+        "radekAdresy1": "Fiktivní 1",
+        "radekAdresy2": "60200 Brno"
+      },
+      "czNace": [
+        "62010",
+        "63110",
+        "62"
+      ],
+      "seznamRegistraci": {
+        "stavZdrojeRos": "AKTIVNI",
+        "stavZdrojeVr": "AKTIVNI",
+        "stavZdrojeRes": "AKTIVNI",
+        "stavZdrojeRzp": "AKTIVNI",
+        "stavZdrojeNrpzs": "NEEXISTUJICI",
+        "stavZdrojeRpsh": "NEEXISTUJICI",
+        "stavZdrojeRcns": "NEEXISTUJICI",
+        "stavZdrojeSzr": "NEEXISTUJICI",
+        "stavZdrojeDph": "ZANIKLY",
+        "stavZdrojeSkDph": "NEEXISTUJICI",
+        "stavZdrojeSd": "NEEXISTUJICI",
+        "stavZdrojeIr": "AKTIVNI",
+        "stavZdrojeCeu": "NEEXISTUJICI",
+        "stavZdrojeRs": "NEEXISTUJICI",
+        "stavZdrojeRed": "NEEXISTUJICI",
+        "stavZdrojeMonitor": "NEEXISTUJICI"
+      },
+      "primarniZdroj": "ros",
+      "dalsiUdaje": [
+        {
+          "obchodniJmeno": [
+            {
+              "obchodniJmeno": "KESTREL PAY s. r. o.",
+              "primarniZaznam": true
+            }
+          ],
+          "sidlo": [
+            {
+              "sidlo": {
+                "kodStatu": "CZ",
+                "nazevStatu": "Česká republika",
+                "kodKraje": 116,
+                "nazevKraje": "Jihomoravský kraj",
+                "kodObce": 582786,
+                "nazevObce": "Brno",
+                "nazevUlice": "Fiktivní",
+                "cisloDomovni": 1,
+                "psc": 60200,
+                "textovaAdresa": "Fiktivní 1, 60200 Brno",
+                "standardizaceAdresy": true
+              },
+              "primarniZaznam": true
+            }
+          ],
+          "pravniForma": "112",
+          "spisovaZnacka": "C 999999/KSBR",
+          "datovyZdroj": "vr"
+        }
+      ],
+      "datumZaniku": "2025-06-30"
+    }
+  ]
+}

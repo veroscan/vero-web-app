@@ -1,0 +1,59 @@
+{
+  "results": [
+    {
+      "siren": "123456808",
+      "nom_complet": "KESTREL PAY",
+      "nom_raison_sociale": "KESTREL PAY",
+      "sigle": null,
+      "nombre_etablissements": 2,
+      "nombre_etablissements_ouverts": 1,
+      "siege": {
+        "siret": "12345680800010",
+        "adresse": "1 RUE IMAGINAIRE 75002 PARIS",
+        "code_postal": "75002",
+        "commune": "75102",
+        "libelle_commune": "PARIS",
+        "est_siege": true,
+        "etat_administratif": "A"
+      },
+      "activite_principale": "62.01Z",
+      "categorie_entreprise": "PME",
+      "annee_categorie_entreprise": "2025",
+      "date_creation": "2024-02-01",
+      "date_fermeture": null,
+      "date_mise_a_jour": "2026-10-01T00:00:00",
+      "dirigeants": [
+        {
+          "nom": "EXEMPLE",
+          "prenoms": "Camille Ondine",
+          "annee_de_naissance": "1988",
+          "date_de_naissance": "1988-03",
+          "qualite": "Président de SAS",
+          "nationalite": "Française",
+          "type_dirigeant": "personne physique"
+        },
+        {
+          "siren": "999999980",
+          "denomination": "KESTREL PAY HOLDINGS",
+          "qualite": "Directeur général",
+          "type_dirigeant": "personne morale"
+        }
+      ],
+      "etat_administratif": "A",
+      "nature_juridique": "5710",
+      "section_activite_principale": "J",
+      "statut_diffusion": "O",
+      "tranche_effectif_salarie": "11",
+      "annee_tranche_effectif_salarie": "2024",
+      "complements": {
+        "est_association": false,
+        "est_entrepreneur_individuel": false,
+        "est_ess": false
+      }
+    }
+  ],
+  "total_results": 1,
+  "page": 1,
+  "per_page": 10,
+  "total_pages": 1
+}

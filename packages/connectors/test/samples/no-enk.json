@@ -1,0 +1,23 @@
+{
+  "organisasjonsnummer": "812345680",
+  "navn": "KESTREL PAY KARI FIKTIV",
+  "organisasjonsform": {
+    "kode": "ENK",
+    "beskrivelse": "Enkeltpersonforetak"
+  },
+  "forretningsadresse": {
+    "adresse": [
+      "Hjemmeveien 9"
+    ],
+    "postnummer": "0151",
+    "poststed": "OSLO",
+    "kommune": "OSLO",
+    "kommunenummer": "0301"
+  },
+  "konkurs": false,
+  "underAvvikling": false,
+  "underTvangsavviklingEllerTvangsopplosning": false,
+  "registrertIForetaksregisteret": false,
+  "registrertIMvaregisteret": false,
+  "respons_klasse": "Enhet"
+}

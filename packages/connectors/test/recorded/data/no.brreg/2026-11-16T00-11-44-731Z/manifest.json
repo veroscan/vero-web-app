@@ -1,0 +1,45 @@
+{
+  "connector": "no.brreg",
+  "recordedAt": "2026-11-16T00:11:45.336Z",
+  "ref": {
+    "name": "Equinor ASA",
+    "jurisdiction": "NO",
+    "registry_number": "923609016"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.no.brreg.bankrupt",
+      "registry.no.brreg.employees_band",
+      "registry.no.brreg.founded_on",
+      "registry.no.brreg.identified",
+      "registry.no.brreg.in_business_register",
+      "registry.no.brreg.in_vat_register",
+      "registry.no.brreg.last_accounts_year",
+      "registry.no.brreg.municipality",
+      "registry.no.brreg.municipality_number",
+      "registry.no.brreg.nace_code",
+      "registry.no.brreg.org_number",
+      "registry.no.brreg.organisation_form_code",
+      "registry.no.brreg.part_of_group",
+      "registry.no.brreg.registered_name",
+      "registry.no.brreg.registered_on",
+      "registry.no.brreg.role_titles",
+      "registry.no.brreg.roles_count",
+      "registry.no.brreg.roles_entity_count",
+      "registry.no.brreg.share_capital",
+      "registry.no.brreg.share_capital_currency",
+      "registry.no.brreg.status",
+      "registry.no.brreg.under_compulsory_dissolution",
+      "registry.no.brreg.under_liquidation"
+    ]
+  }
+}

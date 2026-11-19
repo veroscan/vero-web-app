@@ -1,0 +1,246 @@
+{
+  "totalResults": 2,
+  "companies": [
+    {
+      "businessId": {
+        "value": "1234567-1",
+        "registrationDate": "2023-05-02",
+        "source": "3"
+      },
+      "euId": {
+        "value": "FIFPRO.1234567-1",
+        "source": "1"
+      },
+      "names": [
+        {
+          "name": "Kestrel Pay Oy",
+          "type": "1",
+          "registrationDate": "2023-05-02",
+          "version": 1,
+          "source": "1"
+        },
+        {
+          "name": "Kestrel Fintech Oy",
+          "type": "1",
+          "registrationDate": "2022-01-01",
+          "endDate": "2023-05-01",
+          "version": 2,
+          "source": "1"
+        }
+      ],
+      "mainBusinessLine": {
+        "type": "62010",
+        "descriptions": [
+          {
+            "languageCode": "1",
+            "description": "Ohjelmistojen suunnittelu ja valmistus"
+          },
+          {
+            "languageCode": "2",
+            "description": "Programvaruproduktion"
+          },
+          {
+            "languageCode": "3",
+            "description": "Computer programming activities"
+          }
+        ],
+        "typeCodeSet": "TOIMI4",
+        "registrationDate": "2023-05-02",
+        "source": "2"
+      },
+      "website": {
+        "url": "www.kestrelpay.example",
+        "registrationDate": "2023-05-02",
+        "source": "0"
+      },
+      "companyForms": [
+        {
+          "type": "16",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "Osakeyhtiö"
+            },
+            {
+              "languageCode": "2",
+              "description": "Aktiebolag"
+            },
+            {
+              "languageCode": "3",
+              "description": "Limited company"
+            }
+          ],
+          "registrationDate": "2023-05-02",
+          "version": 1,
+          "source": "1"
+        }
+      ],
+      "companySituations": [],
+      "registeredEntries": [
+        {
+          "type": "1",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "2",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "3",
+              "description": "Registered"
+            }
+          ],
+          "registrationDate": "2023-05-02",
+          "register": "1",
+          "authority": "1"
+        },
+        {
+          "type": "1",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "2",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "3",
+              "description": "Registered"
+            }
+          ],
+          "registrationDate": "2023-05-02",
+          "register": "4",
+          "authority": "1"
+        },
+        {
+          "type": "55",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "2",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "3",
+              "description": "Registered"
+            }
+          ],
+          "registrationDate": "2023-06-01",
+          "register": "5",
+          "authority": "1"
+        },
+        {
+          "type": "80",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "VAT-liable for business activity"
+            },
+            {
+              "languageCode": "2",
+              "description": "VAT-liable for business activity"
+            },
+            {
+              "languageCode": "3",
+              "description": "VAT-liable for business activity"
+            }
+          ],
+          "registrationDate": "2023-06-01",
+          "register": "6",
+          "authority": "1"
+        },
+        {
+          "type": "41",
+          "descriptions": [
+            {
+              "languageCode": "1",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "2",
+              "description": "Registered"
+            },
+            {
+              "languageCode": "3",
+              "description": "Registered"
+            }
+          ],
+          "registrationDate": "2024-01-01",
+          "endDate": "2025-12-31",
+          "register": "7",
+          "authority": "1"
+        }
+      ],
+      "addresses": [
+        {
+          "type": 1,
+          "street": "Fiktiivinen katu",
+          "postCode": "00100",
+          "postOffices": [
+            {
+              "city": "HELSINKI",
+              "languageCode": "1",
+              "municipalityCode": "091"
+            }
+          ],
+          "buildingNumber": "1",
+          "entrance": null,
+          "apartmentNumber": null,
+          "apartmentIdSuffix": null,
+          "co": null,
+          "registrationDate": "2023-05-02",
+          "source": "1"
+        }
+      ],
+      "tradeRegisterStatus": "1",
+      "status": "2",
+      "registrationDate": "2023-05-02",
+      "lastModified": "2026-11-01T10:00:00"
+    },
+    {
+      "businessId": {
+        "value": "9999998-4",
+        "registrationDate": "2020-01-01",
+        "source": "3"
+      },
+      "names": [
+        {
+          "name": "Kestrel Pay Matti Fiktiivinen",
+          "type": "1",
+          "version": 1,
+          "source": "1"
+        }
+      ],
+      "companyForms": [],
+      "companySituations": [],
+      "registeredEntries": [],
+      "addresses": [
+        {
+          "type": 1,
+          "street": "Kotitie",
+          "postCode": "00200",
+          "postOffices": [
+            {
+              "city": "HELSINKI",
+              "languageCode": "1"
+            }
+          ],
+          "buildingNumber": "5",
+          "source": "1"
+        }
+      ],
+      "tradeRegisterStatus": "1",
+      "status": "2",
+      "registrationDate": "2020-01-01",
+      "lastModified": "2026-01-01T00:00:00"
+    }
+  ]
+}

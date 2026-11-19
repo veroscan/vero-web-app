@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scan a company</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.nameinput{height:72px;padding:0 24px;font-size:24px;letter-spacing:-.012em}
+.namegrid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.namegrid .btn{min-height:72px;padding:0 32px}
+.countries{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.cpill{position:relative;width:auto;padding:12px 22px;min-height:48px;cursor:pointer}
+.cpill .tick{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;border:0;cursor:pointer}
+.cpill .tick::after{display:none}
+.cpill:has(input:checked){border-color:var(--rose-deep);box-shadow:inset 0 0 0 1px var(--rose-deep);background:var(--rose-tint)}
+.cpill:has(input:focus-visible){outline:2px solid var(--rose);outline-offset:3px}
+.scan .res{padding-top:clamp(32px,4vw,56px);border-top:1px solid var(--line)}
+.c-de,.c-uk,.c-ng{display:none}
+.scan:has(#c-de:checked) .c-de,.scan:has(#c-uk:checked) .c-uk,.scan:has(#c-ng:checked) .c-ng{display:flex}
+.scan:has(#company:placeholder-shown) .res{display:none}
+.startline{display:none}
+.scan:has(#company:placeholder-shown) .startline{display:block}
+.reslist{flex-direction:column;gap:32px}
+.who{flex-direction:column;gap:6px}
+.statusline{display:grid}
+.statusline>*{grid-area:1/1}
+.reading{display:flex;align-items:center;gap:12px;animation:readgo .25s 1s forwards}
+.reading .meter{width:120px;flex:none}
+.reading .meter i{width:100%;transform-origin:left;animation:readbar 1s var(--ease) both}
+@keyframes readbar{from{transform:scaleX(0)}}
+@keyframes readgo{to{opacity:0;visibility:hidden}}
+.readdone{opacity:0;animation:readshow .3s 1.05s forwards}
+@keyframes readshow{to{opacity:1}}
+.scoreline{display:flex;align-items:center;gap:clamp(16px,4vw,48px)}
+.scoreword{display:flex;flex-direction:column;gap:12px}
+.scan .gauge{width:clamp(130px,17vw,220px)}
+.verdictline{max-width:22em;opacity:0;animation:sayin .5s .9s var(--ease) forwards}
+@keyframes sayin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.arrive>.row{animation:arrive .5s var(--ease) both}
+.arrive>.row:nth-child(1){animation-delay:1.05s}.arrive>.row:nth-child(2){animation-delay:1.17s}.arrive>.row:nth-child(3){animation-delay:1.29s}.arrive>.row:nth-child(4){animation-delay:1.41s}.arrive>.row:nth-child(5){animation-delay:1.53s}.arrive>.row:nth-child(6){animation-delay:1.65s}
+@keyframes arrive{from{opacity:0;transform:translateX(-14px)}}
+.scanside{flex-basis:380px;position:sticky;top:24px}
+.scanside .btn{width:100%}
+@media (max-width:640px){.namegrid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <a href="InvestorScan.dc.html" aria-label="Vero Scan home" style="display:flex;align-items:center;min-height:44px"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+    <nav class="tabs" aria-label="Main">
+      <a class="on" href="InvestorScan.dc.html" aria-current="page" style="padding:11px 0">Scan a company</a>
+      <a href="InvestorPortfolio.dc.html" style="padding:11px 0">Portfolio</a>
+    </nav>
+    <button class="me" type="button" data-toast="Signed in as Northstar Capital.">Northstar Capital <i>NC</i></button>
+  <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </header>
+
+  <main class="wrap scan">
+    <section class="sec stack g32">
+      <div class="stack g12">
+        <h1 class="t-1">Check any company by name</h1>
+        <p class="lead">Type a name, choose a country, and get a first read of its legal health.</p>
+      </div>
+
+      <form class="stack g16" action="InvestorScan.dc.html">
+        <div class="field">
+          <label for="company">Company name</label>
+          <div class="namegrid">
+            <input class="input nameinput" id="company" name="company" type="search" required value="Lumen Labs" placeholder="Try a company name" autocomplete="off">
+            <button class="btn btn-line" type="submit">Check</button>
+          </div>
+        </div>
+        <div class="countries" role="radiogroup" aria-labelledby="country-label">
+          <span class="quiet" id="country-label" style="margin-right:6px">Registered in</span>
+          <label class="opt cpill"><input class="tick" id="c-de" type="radio" name="country" value="delaware" data-points="-3">Delaware</label>
+          <label class="opt cpill"><input class="tick" id="c-uk" type="radio" name="country" value="uk" data-points="0" checked>UK</label>
+          <label class="opt cpill"><input class="tick" id="c-ng" type="radio" name="country" value="nigeria" data-points="-5">Nigeria</label>
+        </div>
+      </form>
+      <p class="quiet startline">Type a company name and we'll read what's public.</p>
+    </section>
+
+    <section class="sec res" data-section>
+      <div class="lean" data-scorebox="64">
+        <div class="main stack g32">
+          <div class="stack g24">
+            <div class="who c-uk">
+              <h2 class="lead" style="font-weight:500;color:var(--ink)">Lumen Labs Ltd, United Kingdom</h2>
+              <div class="statusline small"><span class="reading"><span class="meter"><i></i></span>Reading Companies House</span><span class="readdone">Read just now from Companies House</span></div>
+            </div>
+            <div class="who c-de">
+              <h2 class="lead" style="font-weight:500;color:var(--ink)">Lumen Labs Inc., Delaware</h2>
+              <div class="statusline small"><span class="reading"><span class="meter"><i></i></span>Reading our licensed Delaware provider</span><span class="readdone">Read just now from our licensed Delaware provider</span></div>
+            </div>
+            <div class="who c-ng">
+              <h2 class="lead" style="font-weight:500;color:var(--ink)">Lumen Labs Nigeria Ltd, Nigeria</h2>
+              <div class="statusline small"><span class="reading"><span class="meter"><i></i></span>Reading the Nigerian register</span><span class="readdone">Read just now from the Nigerian register</span></div>
+            </div>
+
+            <div class="scoreline">
+              <div class="scoreword"><span class="score" data-count>64</span><span class="quiet">out of 100</span></div>
+              <div class="gauge" data-v3d="fill" data-value="64" aria-hidden="true"><div class="v3d-fallback"><svg viewBox="0 0 132 100" width="100%"><path fill="var(--rose)" d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg></div></div>
+            </div>
+
+            <p class="t-2 verdictline c-uk">Its UK filings are in order, but we can't find a data protection registration.</p>
+            <p class="t-2 verdictline c-de">Its registered details look fine, but nothing public shows who owns its code.</p>
+            <p class="t-2 verdictline c-ng">It shows as active, but it isn't on the data protection list.</p>
+            <p class="small">This first read uses public data only. It is not legal advice.</p>
+          </div>
+
+          <div class="reslist c-uk">
+            <div class="rows arrive">
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Compliance</span><span class="row-s">No data protection registration found</span></span><span class="st risk">At risk</span><span class="num b" style="text-align:right">47</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">AI and data</span><span class="row-s">Its privacy policy doesn't mention AI</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">58</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Fundraising</span><span class="row-s">Share filings are public, investor papers are not</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">62</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Intellectual property</span><span class="row-s">Brand is trademarked, code ownership can't be seen</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">66</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Contracts</span><span class="row-s">Only its website terms are public</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">70</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Company foundations</span><span class="row-s">Companies House filings are up to date</span></span><span class="st good">Healthy</span><span class="num b" style="text-align:right">82</span></div>
+            </div>
+          </div>
+
+          <div class="reslist c-de">
+            <div class="rows arrive">
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Intellectual property</span><span class="row-s">No US trademark filed, code ownership can't be seen</span></span><span class="st risk">At risk</span><span class="num b" style="text-align:right">46</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Fundraising</span><span class="row-s">Investor papers are not public</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">55</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">AI and data</span><span class="row-s">Its privacy policy doesn't mention AI</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">58</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Contracts</span><span class="row-s">Only its website terms are public</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">62</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Compliance</span><span class="row-s">Its privacy policy covers the basics</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">66</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Company foundations</span><span class="row-s">Registered details look in order. Delaware doesn't allow automatic status checks.</span></span><span class="st good">Healthy</span><span class="num b" style="text-align:right">79</span></div>
+            </div>
+          </div>
+
+          <div class="reslist c-ng">
+            <div class="rows arrive">
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Compliance</span><span class="row-s">Not on the Nigeria Data Protection Commission's list</span></span><span class="st risk">At risk</span><span class="num b" style="text-align:right">42</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">AI and data</span><span class="row-s">Its privacy policy doesn't mention AI</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">52</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Contracts</span><span class="row-s">Only its website terms are public</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">60</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Intellectual property</span><span class="row-s">Brand isn't trademarked, code ownership can't be seen</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">63</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Fundraising</span><span class="row-s">Shareholders are on the register, investor papers are not</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">65</span></div>
+              <div class="row r-area"><span class="stack g4"><span class="row-t">Company foundations</span><span class="row-s">Shown as active, which doesn't prove its returns are filed</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">70</span></div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="side next scanside stick" aria-label="Your next step">
+          <h2 class="t-2">Need an answer you can rely on?</h2>
+          <p class="quiet">A Code &amp; Clause lawyer checks this first read and tells you what it really means.</p>
+          <div class="stack g8">
+            <button class="btn btn-ink" type="button" data-toast="Report ordered. Target: within 48 hours.">Get the lawyer-verified report</button>
+            <p class="small" style="text-align:center">Target: within 48 hours</p>
+          </div>
+          <button class="btn btn-line" type="button" data-toast="We've asked the company for access.">Ask the company for access</button>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1630}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "connector": "pl.krs",
+  "recordedAt": "2026-11-16T00:19:30.804Z",
+  "ref": {
+    "name": "ORLEN S.A.",
+    "jurisdiction": "PL",
+    "registry_number": "0000028860"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.pl.krs.identified",
+      "registry.pl.krs.insolvency_marker",
+      "registry.pl.krs.krs_number",
+      "registry.pl.krs.last_entry_on",
+      "registry.pl.krs.legal_form",
+      "registry.pl.krs.main_activity_code",
+      "registry.pl.krs.management_bodies",
+      "registry.pl.krs.management_members_count",
+      "registry.pl.krs.nip",
+      "registry.pl.krs.nip_present",
+      "registry.pl.krs.proxies_count",
+      "registry.pl.krs.register",
+      "registry.pl.krs.registered_name",
+      "registry.pl.krs.registered_on",
+      "registry.pl.krs.regon",
+      "registry.pl.krs.regon_present",
+      "registry.pl.krs.seat_town",
+      "registry.pl.krs.seat_voivodeship",
+      "registry.pl.krs.share_capital",
+      "registry.pl.krs.share_capital_currency",
+      "registry.pl.krs.status",
+      "registry.pl.krs.supervisory_bodies",
+      "registry.pl.krs.supervisory_members_count",
+      "registry.pl.krs.under_liquidation"
+    ]
+  }
+}

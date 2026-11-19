@@ -1,0 +1,9 @@
+{
+  "_embedded": {
+    "directors": [
+      { "uuid": "00000000-0000-0000-0000-000000000001", "firstName": "Ondine", "middleName": "Camille", "lastName": "Fictivus", "serviceAddress": { "line1": "9 Home Lane", "city": "Toronto", "subdivisionCode": "ON", "postalCode": "M5V 0A1", "countryCode": "CA" } },
+      { "uuid": "00000000-0000-0000-0000-000000000002", "firstName": "Ignatius", "middleName": null, "lastName": "Exempel", "serviceAddress": { "line1": "1 Fictive Street", "city": "Ottawa", "subdivisionCode": "ON", "postalCode": "K1A 0A1", "countryCode": "CA" } }
+    ]
+  },
+  "_links": { "self": { "href": "https://apigateway-passerelledapi.ised-isde.canada.ca/corporations/api/v2/corporations/98765432/directors" } }
+}

@@ -1,0 +1,192 @@
+﻿Vero Scan
+
+
+A legal health score for technology companies that works from both sides, the company and the investor.
+
+
+Country-specific legal health scoring across Africa, the UK, the US and Europe simultaneously. Red/amber/green signals for missing AND defective legal infrastructure. Lawyer-verified reports not just automated flags. Built by a cross-border technology law firm not a software platform.
+
+
+
+
+The Coho/Canopy Analogy
+
+
+Coho connects to your bank data and revenue data. It verifies your financial health without you having to explain your finances manually.
+Canopy connects to your tax data and financial accounts. It organises what exists and flags what is missing or problematic.
+Vero connects to:
+Their company registry data - CAC, Companies House, Delaware Secretary of State
+Their document vault - whatever platform they store documents in
+Their product - via a short technical questionnaire or lightweight scan
+Their regulatory registrations - NDPR, ICO, CBN, FCA
+Their public data - trademark filings, court records, published policies
+
+
+The Six Layer Scan
+Layer 1 - Corporate Foundation Scans: Entity registration, director records, cap table documents, board resolutions, constitutional documents. Flags: Wrong entity type for fundraising stage, missing director filings, undocumented equity, expired board resolutions, missing foreign qualifications for entities operating cross-border.
+Layer 2 - Intellectual Property and Technology Protection Scans: IP assignment documents, contractor agreements, software licence records, trademark registrations, open source usage declarations. Flags: Contractors who built core product without IP assignment, missing founder IP transfer, open source licences creating copyleft risk, unregistered trademarks in operating markets, AI model rights undocumented.
+Layer 3 - Compliance and Regulatory Posture Scans: Regulatory registrations, privacy policies, data processing records, sector-specific licences, AI governance documentation. Flags: NDPR registration missing, GDPR privacy policy absent or outdated, no DPA template for vendors, CBN or FCA licence required but not held, EU AI Act obligations unaddressed, CCPA notice missing for California users.
+Layer 4 - Commercial Infrastructure Scans: MSA template, SaaS terms, API agreements, DPAs, vendor contracts, employment agreements. Flags: No MSA in place, SaaS terms missing key liability caps, no DPA with cloud vendors, employment agreements without IP assignment, no API access agreement governing third party integrations.
+Layer 5 - Fundraising Scans: Cap table documentation, SAFE and SAFT records, shareholder agreements, investor rights documentation, data room organisation. Flags: Cap table not reconciled, SAFE conversion mechanics inconsistent with shareholder agreement, missing drag-along provisions, undocumented advisor equity, no investor data room in place.
+Layer 6 - AI and Data Governance Scans: AI model usage agreements, training data licences, AI governance policy, algorithmic accountability documentation, data processing agreements specific to AI. Flags: No AI model usage agreement, training data licence absent, no AI acceptable use policy, GDPR Article 22 automated decision-making obligations unaddressed, EU AI Act risk classification not completed.
+
+
+What The Output Looks Like
+The Legal Health Score - a number out of 100. Simple. Like a credit score. Updated every time they add a document or complete a scan.
+The Six Layer Breakdown - red, amber, green per layer with a sub-score. A technology company can see immediately which layer is strongest and which needs urgent attention.
+The Gap Report - every red and amber item described in plain language. What is missing, why it matters, what happens if it stays missing - expressed as a business consequence not a legal abstraction.
+"You do not have an IP assignment agreement from your lead developer who built the core product between January 2023 and August 2024. This means your company may not legally own the technology it is selling. This will be flagged in your first investor due diligence and will need to be resolved before any round can close."
+The Priority Action List - the top five things to fix ranked by severity and cost of delay. Each item has a direct action - Quick Order a document, book a consultation, complete a regulatory registration.
+The Verification Badge - once a company reaches a score above a threshold and Vero has reviewed the key documents, they get a verified Legal Health badge. Like a security certificate for a website. They can display it to investors, enterprise clients and partners as proof their legal infrastructure has been professionally reviewed.
+
+
+How The Scan Works
+Step 1 - Company Connect The company logs in and connects their basic information. Company name, jurisdiction, stage, sector, operating markets. This takes two minutes and gives the platform enough to run the public data layer of the scan immediately.
+Step 2 - Public Data Scan The platform automatically checks publicly available data. CAC registration status. Companies House filings. Delaware Secretary of State records. USPTO and UKIPO trademark filings. ICO registration. Published privacy policy on their website. This happens automatically without the company doing anything.
+Step 3 - Document Upload The company uploads their key documents into a structured vault - organised by the six layers. Each slot tells them exactly what goes there and why. They do not need to know what documents they should have - the vault tells them. Empty slots are automatically flagged as gaps.
+Step 4 - Product Questionnaire A short structured questionnaire about what their product does. Do you process personal data? Do you use AI in your product? Do you process payments? Do you operate in regulated sectors? Do you have users in the EU, UK, US or Nigeria? Each answer triggers specific legal obligation checks across the relevant jurisdictions.
+Step 5 - Score Generation The platform generates the Legal Health Score and full six layer report immediately based on what it knows. The score updates in real time as documents are added and gaps are resolved.
+Step 6 - Vero Verification For companies on a paid plan, a lawyer reviews the uploaded documents and verifies that what is there is actually sufficient - not just present. An AI tool cannot tell you if your SAFE agreement has an inconsistent conversion mechanic. A lawyer can. This is the accountability layer that makes Vero’'s product fundamentally different from any automated tool.
+
+
+The Three Plan Structure
+Free - Legal Health Scan Public data scan plus product questionnaire. Approximate score. Top three gaps identified. No document upload. No lawyer review. CTA to upgrade for full report.
+This is our lead generation engine. Every technology company that completes the free scan has self-identified their legal gaps and been shown specifically how we fix them.
+Growth - Legal Health Report Full document upload vault. Complete six layer scan. Full gap report. Priority action list. One Code & Clause lawyer review pass per quarter. Score updates in real time as documents are added.
+This is your productised AI Legal Compliance Audit service.
+Scale - Legal Health Monitoring Everything in Growth plus continuous monitoring. Regulatory change alerts mapped to their specific profile - when NDPR guidance updates, when EU AI Act enforcement dates change, when a new CBN circular drops, the platform flags which of their documents and registrations are affected. Annual full verification. Included as a retainer client benefit.
+This is the retention mechanism for your ongoing legal support clients.
+
+
+
+
+Partnership Strategy For The Vault Layer
+Vero do not build the vault from scratch. Vero partners with an existing platform and add your intelligence layer on top.
+SpotDraft - approach them for a referral and integration partnership. Technology companies store their contracts in SpotDraft. Vero Legal Health connects to SpotDraft via API and reads what documents are present. The gap analysis runs against what is actually in their SpotDraft vault. Gaps generate Quick Order recommendations. Documents delivered by Code & Clause are saved back into SpotDraft automatically. Both platforms win.
+Digify - partnership for the fundraising data room layer. Technology companies preparing to raise set up a Digify data room. Vero Legal Health runs a fundraising readiness scan against what is in the room. Red items get fixed before investors see them.
+Google Drive and Notion - for early-stage companies not yet on SpotDraft. Vero provides a structured Legal Infrastructure Template - a folder structure the company populates. Vero gets shared access. The Health platform reads what is present in the structured folders and generates the score and gap report.
+The key is that Vero is not the vault. But can have a standalone vault services tomorrow. Vero today is the intelligence and verification layer that sits on top of whatever vault the technology company already uses or wants to use. 
+
+
+
+
+Vero Potential Edge
+Every existing tool in this space (SpotDraft, Ironclad, Clerky, PolicyGuard)  is either a document management platform or a compliance monitoring tool. None of them has a legal verification layer. None of them covers Africa,  Nigeria, UK, US and EU simultaneously. None of them understands the specific legal obligations that attach to what a technology company has built, the AI model, the biometric data flow, the cross-border API, the SAFT that needs to work under both Nigerian company law and US securities regulation.
+That combination of automated scanning plus lawyer verification plus cross-border jurisdiction intelligence is what Vero Legal Health is. It is not replicable by a software platform because it requires legal expertise. It is not replicable by a law firm because they do not think in product terms. Vero sits exactly at that intersection.
+
+
+Product Market 
+B2B/B2C Product
+B2B - Technology Companies Scanning Themselves A SaaS company, AI startup, crypto project, fintech, deeptech team, edtech platform, proptech company - any technology company that wants to know the legal state of what they have built and what documents they hold. They run the scan themselves. They see their own Legal Health Score. They fix gaps through Code & Clause.
+B2C - Individuals and Smaller Teams A solo technical founder. A two-person pre-incorporation team. A developer who has built a product and wants to know what legal obligations it creates before they launch. An individual who wants to verify the legal health of a company they are about to join as a co-founder or key hire. This is the consumer angle - accessible, affordable, self-serve.
+Investor-Facing - Third Party Scan An investor, VC firm, angel network, accelerator, corporate venture arm or family office inputs a company name - or uploads the company's documents with permission - and gets a Legal Health Report on that company. This is due diligence productised. Instead of paying a law firm $15,000 to do legal due diligence on a company, they pay Vero $500 for an instant report with a lawyer verification layer.
+This third use case is where the real differentiation lives. No existing platform lets an investor run a legal health scan on a technology company by name. Nobody does this for African technology companies at all.
+
+
+What Vero Scan Is And What It Is Not
+What it is:
+A legal credit score. An at-a-glance signal. The same way a financial credit score does not replace an audit but tells you instantly whether a company's financial behaviour is healthy, trustworthy and fundable - a Legal Health Score does the same thing for legal infrastructure.
+A company either has IP assignment from their contractors or they do not. They either have NDPR registration or they do not. Their SAFE agreement either works with their cap table structure or it has a problem. Their privacy policy either covers their actual data flows or it does not.
+These are not matters of legal opinion. They are matters of fact. The scan establishes the facts. The score reflects them. Every company now has a legal credit score - visible, trackable, improvable over time.
+What it is not:
+It is not legal advice. It is not a full legal review. It does not replace a lawyer reviewing transaction documents before a round closes or a lawyer doing full due diligence before an acquisition. That full review is still Code & Clause's core service - and critically, the Legal Health Score creates the demand for that full review by showing companies and investors exactly where the gaps are.
+The score is the diagnostic. Code & Clause is the treatment.
+
+
+The Credit Score Analogy Again
+When a bank looks at your credit score they are not reading your full financial history. They are reading a signal that reflects it. That signal tells them whether to proceed to a deeper relationship or not.
+When an investor looks at a company's Legal Health Score they are not reading their full legal documentation. They are reading a signal that reflects it. That signal tells them whether the legal infrastructure is clean enough to proceed to a full due diligence conversation - and if it is not, it tells them specifically what is broken.
+When a technology company monitors their own Legal Health Score they are not doing a full legal review every month. They are tracking whether their legal infrastructure is improving or deteriorating as they grow, hire, add products, enter new markets and sign new contracts.
+The score makes legal health visible in a way it has never been before. Right now a company either knows their legal is clean because a lawyer told them so - or they assume it is clean until something goes wrong. The score changes that. Legal health becomes a number. A number you can see, share, improve and be proud of.
+
+
+
+
+Product Jurisdiction To Cover
+Do not think in blocs, but countries. The platform should be country-specific because legal obligations are country-specific. GDPR is not the EU,  it is 27 member states with varying enforcement priorities. Africa is not a jurisdiction, it is 54 countries with completely different legal systems, registry infrastructure and regulatory frameworks.
+E.g United Kingdom, Africa(Nigeria), EU Germany, United States(Delaware and Wyoming). Check which of the African countries aside Nigeria and for EU aside Germany have easier access to government registry API.
+
+
+
+
+
+
+The Jurisdiction Architecture
+How it will work
+When a company or investor starts a scan, they select:
+Where the company is incorporated - single selection. This determines the corporate foundation layer. Different registry, different filing requirements, different corporate law.
+Where the company operates and has users - multiple selection by country. This determines the compliance and regulatory layer. Each country selected adds its specific regulatory obligations to the scan.
+Where their investors are based - multiple selection. This determines the fundraising readiness layer. A Nigerian company with US investors needs SAFE mechanics that work under both Nigerian company law and US securities regulation. A company with UK investors needs documents that satisfy English law requirements.
+What sector they operate in - this determines which sector-specific regulatory frameworks apply within each selected country.
+
+
+
+
+The Country Registry Layer
+Important structural decision. For each country of incorporation, the platform connects to or references the relevant company registry to verify the company's existence, structure and filing status.
+You do not need to build API connections to every registry on day one. For the pilot you reference them. For version two you connect to the ones that have accessible APIs. For version three you build or partner for the ones that require proprietary access.
+The registry map by country - starting with your core markets:
+Nigeria - Corporate Affairs Commission (CAC). Public registry. CAC search API exists. Company name, RC number, directors, share structure, filing status all verifiable.
+United Kingdom - Companies House. Full public API. One of the best registry APIs in the world. Director history, filing history, PSC register, accounts, charges - all accessible.
+United States - varies by state. Delaware Secretary of State for most startups. OpenCorporates aggregates US state registries. EDGAR for SEC-registered companies. USPTO for trademark and patent filings. PACER for federal court records.
+Germany - Handelsregister. Public access. Bundesanzeiger for financial disclosures.
+France - INPI and Registre du Commerce et des Sociétés. Public API access.
+Netherlands - Kamer van Koophandel (KvK). API available.
+Spain - Registro Mercantil. Your GPS Patron client was a Spanish company - you already know this registry. Futura and similar structures registered here.
+Estonia - e-Business Register. One of the most advanced registry APIs in the world. Highly relevant for European tech startups using the e-Residency programme.
+British Virgin Islands - BVI Financial Services Commission. Relevant for holding structures. Less public data but verifiable through registered agent requirements.
+Cayman Islands - General Registry. Similar to BVI. Relevant for fund structures.
+African countries - starting with the highest startup activity:
+Nigeria - CAC as above.
+Kenya - Business Registration Service. Public search available.
+Ghana - Registrar General's Department. Accessible.
+South Africa - Companies and Intellectual Property Commission (CIPC). Public search API.
+Egypt - Commercial Register. Accessible with limitations.
+Rwanda - Rwanda Development Board. Accessible.
+Senegal - APIX. Accessible.
+Ethiopia - Ethiopian Investment Commission. Limited digital access - manual verification for now.
+Tanzania, Uganda, Zambia - all have registries with varying levels of digital accessibility.
+Other startup-heavy markets:
+India - Ministry of Corporate Affairs (MCA21). Excellent API.
+Singapore - Accounting and Corporate Regulatory Authority (ACRA). Excellent API.
+Canada - Corporations Canada. Accessible.
+Australia - ASIC. Accessible.
+Israel - Companies Registrar. Accessible.
+UAE/Dubai - Department of Economic Development. Accessible with limitations.
+Brazil - Junta Comercial varies by state. OpenCorporates covers partial access.
+
+
+How The Country Selection Drives The Report
+When a company selects their countries, the platform builds their specific legal obligation map automatically. Here is what that looks like in practice:
+A Nigerian fintech company incorporated in Nigeria, operating in Nigeria and Kenya, with users in the UK and Germany, and investors based in the US and UK - their Legal Health Report covers:
+Corporate Foundation: CAC registration and filing compliance.
+IP Protection: Nigerian Copyright Act 2022, Patents and Designs Act, NOTAP registration for technology transfer.
+Compliance: CBN licensing for payments. FCCPC consumer protection. NDPR for Nigerian users. ICO registration and UK GDPR for UK users. GDPR for German users - with German-specific enforcement context because German DPA is one of the most active in the EU.
+Commercial: Nigerian contract law governing MSA. UK law considerations for UK enterprise clients. Cross-border DPAs for data flowing between Nigeria, Kenya and the EU.
+Fundraising: SAFE mechanics reviewed against Nigerian company law for Nigerian investor rights and US securities regulation for US investor compliance. UK investor rights agreement requirements.
+AI and Data: If their product uses AI - Nigerian NITDA guidance on AI. UK ICO automated decision-making guidance. German AI enforcement context.
+Every gap flagged in the report is tagged to the specific country and specific legal instrument. Not "GDPR compliance issue" - but "German users: no German-language privacy notice - required under §13 TMG and enforced by Bayerisches Landesamt für Datenschutzaufsicht."
+That country-level specificity is what no other platform delivers. Especially not for African countries.
+
+
+
+
+How Investors Select For African Countries
+For the investor-facing scan, when an investor is looking at an African company or investing across Africa, they select the countries they want the scan to cover. The platform serves them a report that is specific to each country's legal framework - not a generic "Africa compliance" overview.
+An investor backing a pan-African fintech operating in Nigeria, Kenya, Ghana and South Africa gets a report that covers:
+Nigeria - CBN, FCCPC, NDPR, CAC Kenya - Central Bank of Kenya payments regulation, Data Protection Act 2019, Business Registration Service Ghana - Bank of Ghana, Data Protection Act 2012, Registrar General's Department South Africa - SARB, POPIA (Protection of Personal Information Act), CIPC
+Each jurisdiction covered separately. Each gap flagged with the specific country and specific regulatory instrument. The investor knows exactly which country's legal infrastructure is clean and which has problems - and can factor that into their investment decision and their post-investment support plan.
+This is the product that African-focused investors - Ventures Platform, Novastar, Lateral Capital, Future Africa, Partech Africa - have never had before and desperately need. Right now they either pay expensive international law firms to do country-by-country legal due diligence or they skip it and discover the problems after they have wired the money.
+
+
+Arranging The Architecture 
+For your developer, here is the structure to build toward:
+Phase 1 - Core countries, questionnaire-based: Nigeria, UK, USA (Delaware focus), Germany, France, Kenya, Ghana, South Africa. These are your highest-volume markets. The scan is questionnaire-based - no registry API integration yet. The scoring logic knows the legal obligations for each country and flags gaps based on the questionnaire answers.
+Phase 2 - Registry API integration for accessible registries: CAC Nigeria, Companies House UK, Delaware Secretary of State, OpenCorporates for broader coverage etc. The scan pulls public data automatically before the questionnaire even starts. Company name input triggers automatic verification of existence, filing status and director records.
+Phase 3 - Expanded country coverage: Add countries based on demand from pilot feedback. Each new country is a module - its own legal obligation map, its own registry reference, its own compliance framework. New countries can be added without rebuilding the platform.
+Phase 4 - Investor-facing scan: Company name input. Select countries of operation. Platform runs the public data scan automatically. Investor/company/user gets a preliminary report within minutes. Full verified report with Code & Clause lawyer review within 48 hours.
+
+
+
+
+Tasks for Client- working on the question to send to the developer.

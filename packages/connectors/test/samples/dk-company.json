@@ -1,0 +1,68 @@
+{
+  "took": 3,
+  "timed_out": false,
+  "hits": {
+    "total": 1,
+    "max_score": 1.0,
+    "hits": [
+      {
+        "_index": "cvr-v-20200115",
+        "_type": "_doc",
+        "_id": "4000000001",
+        "_score": 1.0,
+        "_source": {
+          "Vrvirksomhed": {
+            "cvrNummer": 31415926,
+            "enhedsNummer": 4000000001,
+            "virksomhedMetadata": {
+              "nyesteNavn": { "navn": "Kestrel Pay ApS", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } },
+              "nyesteVirksomhedsform": { "virksomhedsformkode": 80, "kortBeskrivelse": "APS", "langBeskrivelse": "Anpartsselskab", "ansvarligDataleverandoer": "E&S" },
+              "nyesteStatus": { "statuskode": 1, "kreditoplysningkode": null },
+              "sammensatStatus": "NORMAL",
+              "stiftelsesDato": "2024-03-01",
+              "virkningsDato": "2024-03-01",
+              "nyesteBeliggenhedsadresse": {
+                "vejnavn": "Fiktivvej", "husnummerFra": 1, "postnummer": 2100, "postdistrikt": "København Ø", "landekode": "DK",
+                "kommune": { "kommuneKode": 101, "kommuneNavn": "KØBENHAVN" }
+              },
+              "nyesteHovedbranche": { "branchekode": "620100", "branchetekst": "Computerprogrammering" },
+              "antalPenheder": 1
+            },
+            "deltagerRelation": [
+              {
+                "deltager": { "enhedsNummer": 4000000101, "enhedstype": "PERSON", "navne": [{ "navn": "Ondine Fictivus", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }] },
+                "organisationer": [
+                  {
+                    "hovedtype": "LEDELSESORGAN",
+                    "organisationsNavn": [{ "navn": "Direktion", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }],
+                    "medlemsData": [{ "attributter": [{ "type": "FUNKTION", "vaerdier": [{ "vaerdi": "DIREKTØR", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }] }] }]
+                  }
+                ]
+              },
+              {
+                "deltager": { "enhedsNummer": 4000000102, "enhedstype": "PERSON", "navne": [{ "navn": "Ignatius Exempel", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }] },
+                "organisationer": [
+                  {
+                    "hovedtype": "LEDELSESORGAN",
+                    "organisationsNavn": [{ "navn": "Bestyrelse", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }],
+                    "medlemsData": [{ "attributter": [{ "type": "FUNKTION", "vaerdier": [{ "vaerdi": "BESTYRELSESMEDLEM", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": "2025-06-30" } }] }] }]
+                  }
+                ]
+              },
+              {
+                "deltager": { "enhedsNummer": 4000000103, "enhedstype": "VIRKSOMHED", "navne": [{ "navn": "Kestrel Pay Holding ApS", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }] },
+                "organisationer": [
+                  {
+                    "hovedtype": "REGISTER",
+                    "organisationsNavn": [{ "navn": "EJERREGISTER", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }],
+                    "medlemsData": [{ "attributter": [{ "type": "EJERANDEL_PROCENT", "vaerdier": [{ "vaerdi": "1.0", "periode": { "gyldigFra": "2024-03-01", "gyldigTil": null } }] }] }]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

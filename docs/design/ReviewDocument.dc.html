@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review a document</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.bar a img{height:26px;display:block}
+[data-theme="dark"] .bar a img{content:url(vero-lockup-dark.svg)}
+.bench-wrap{max-width:1280px}
+.benchtop{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 32px}
+.benchgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(340px,1fr);gap:clamp(24px,3vw,48px);align-items:start}
+.sheet{padding:clamp(28px,3.4vw,52px);display:flex;flex-direction:column;gap:18px;box-shadow:var(--shade)}
+.sheet .pgline{display:flex;justify-content:space-between;gap:16px}
+.clause{transition:color .3s}
+.bench .sheet p.dim{color:var(--ink-2)}
+.c9{background:var(--rose-tint);margin-inline:-14px;padding:14px;border-radius:10px;display:flex;flex-direction:column;gap:4px}
+.c9 .fix{background:var(--paper);margin-top:10px;border:1px solid var(--line)}
+.flag{font-size:14.5px;font-weight:600;color:var(--rose-deep)}
+.bench:has(#v-ok[aria-checked="true"]) .c9 .fix{display:none}
+.verdict{position:sticky;top:24px;gap:18px}
+.verdict .btn{width:100%}
+.verdict .opt{padding:14px 18px}
+.note-ok,.note-chg,.note-no{display:none}
+.bench:has(#v-ok[aria-checked="true"]) .note-ok,.bench:has(#v-chg[aria-checked="true"]) .note-chg,.bench:has(#v-no[aria-checked="true"]) .note-no{display:flex;animation:notein .35s var(--ease)}
+@keyframes notein{from{opacity:0;transform:translateY(6px)}}
+.verdict textarea.input{font-size:16px;resize:vertical}
+.sentword{color:var(--good)}
+@media (max-width:980px){.benchgrid{grid-template-columns:minmax(0,1fr)}.verdict{position:static}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <div class="btns" style="gap:16px">
+      <a href="ReviewQueue.dc.html" aria-label="Vero Scan review desk"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+      <span class="b" style="font-size:15.5px">Review desk</span>
+    </div>
+    <nav class="tabs" aria-label="Review desk">
+      <a class="on" href="ReviewQueue.dc.html">Queue</a>
+      <a href="Admin.dc.html">Rule packs</a>
+    </nav>
+    <span class="me" style="cursor:default">Code &amp; Clause <i>CC</i></span>
+  <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </header>
+
+  <main class="wrap bench-wrap">
+    <section class="sec stack g32 bench" id="bench" data-state="work" style="padding-top:24px">
+      <div class="benchtop">
+        <div class="stack g12">
+          <a class="small" href="ReviewQueue.dc.html">Back to the queue</a>
+          <div class="stack g4">
+            <h1 class="t-1">Contractor agreement</h1>
+            <p class="lead">Kestrel Pay Inc., Delaware and Nigeria. Waiting 5 days.</p>
+          </div>
+        </div>
+        <a class="link small" href="ReviewQueue.dc.html">Up next: Employee agreement template</a>
+      </div>
+
+      <div class="benchgrid">
+        <div class="stack g12">
+          <article class="paper sheet" data-redline>
+            <p class="small pgline"><span>Contractor agreement, signed January 2023</span><span>Page 3 of 6</span></p>
+            <p class="dim"><span class="b">7. Payment.</span> The Company pays the Contractor monthly, within 14 days of each invoice.</p>
+            <p class="dim"><span class="b">8. Confidentiality.</span> The Contractor keeps the Company's information confidential during this agreement and after it ends.</p>
+            <div class="c9">
+              <p class="flag">Our software flagged this clause</p>
+              <p><span class="b">9. Ownership of the work.</span> The Contractor retains all right, title and interest in the Deliverables and grants the Company a non-exclusive licence to use them.</p>
+              <div class="fix">
+                <p class="small b" style="margin-bottom:6px;color:var(--rose-deep)">Suggested wording</p>
+                <p>The Contractor assigns to the Company all right, title and interest in the Deliverables on creation, including all intellectual property rights.</p>
+              </div>
+            </div>
+            <p class="dim"><span class="b">10. Ending this agreement.</span> Either party can end this agreement with 30 days' written notice.</p>
+            <p class="dim"><span class="b">11. Governing law.</span> This agreement is governed by the laws of the State of Delaware.</p>
+          </article>
+          <p class="small">Our software also found no separate IP assignment among Kestrel Pay's documents.</p>
+        </div>
+
+        <aside class="next verdict stick" aria-label="Your verdict">
+          <div class="stack g16" data-when="work">
+            <h2 class="t-2">Your verdict</h2>
+            <p class="quiet">Our software thinks clause 9 leaves ownership of the code with the contractor. Check it.</p>
+            <div class="stack g8" role="radiogroup" aria-label="Verdict">
+              <button class="opt" id="v-ok" type="button" role="radio" aria-checked="false"><span>Sufficient<small>It works as written.</small></span></button>
+              <button class="opt" id="v-chg" type="button" role="radio" aria-checked="false"><span>Needs changes<small>It works once something is fixed.</small></span></button>
+              <button class="opt on" id="v-no" type="button" role="radio" aria-checked="true"><span>Not sufficient<small>It doesn't do its job.</small></span></button>
+            </div>
+            <div class="field note-ok">
+              <label for="note-ok">Note to the client</label>
+              <textarea class="input" id="note-ok" rows="6">This does what you need it to do. Nothing to change.</textarea>
+            </div>
+            <div class="field note-chg">
+              <label for="note-chg">Note to the client</label>
+              <textarea class="input" id="note-chg" rows="6">Clause 9 needs to change. It gives Kestrel Pay a licence, not ownership. Replace it with the wording we've suggested and have both sides sign the change.</textarea>
+            </div>
+            <div class="field note-no">
+              <label for="note-no">Note to the client</label>
+              <textarea class="input" id="note-no" rows="6">Clause 9 gives Kestrel Pay a licence, not ownership, so your developer still owns the code. You need a signed IP assignment before your next round. We can draft it for you. Book a call and we'll go through it.</textarea>
+            </div>
+            <button class="btn btn-ink" type="button" data-toast="Sent to Kestrel Pay." data-set="#bench" data-attr="data-state" data-values="sent,sent">Send to client</button>
+          </div>
+          <div class="stack g16" data-when="sent" hidden>
+            <h2 class="t-2">Sent to Kestrel Pay</h2>
+            <p class="quiet">They'll see your verdict and note under Lawyer review. 9 documents are left in your queue.</p>
+            <a class="btn btn-ink" href="ReviewQueue.dc.html">Back to the queue</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1025}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scanning on your phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.ph a{text-decoration:none}
+.mc-stage{flex:0 0 282px;display:flex;flex-direction:column;padding:54px 22px 14px}
+.mc-stage>img{position:relative;z-index:1;height:24px;align-self:flex-start;display:block}
+.iconbtn.ph-theme{position:absolute;top:44px;right:12px;width:44px;height:44px;z-index:3}
+.mc-centre{position:relative;z-index:1;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding-block:6px}
+.gauge.mc-gauge{width:176px}
+.mc-gauge svg{width:100%;height:auto;display:block}
+.mc-lvl{transition:transform 1s var(--ease);transform:translateY(98px)}
+.mc-gauge[data-value="14"] .mc-lvl{transform:translateY(86px)}
+.mc-gauge[data-value="36"] .mc-lvl{transform:translateY(64px)}
+.mc-gauge[data-value="50"] .mc-lvl{transform:translateY(50px)}
+.mc-gauge[data-value="64"] .mc-lvl{transform:translateY(36px)}
+.mc-gauge[data-value="86"] .mc-lvl{transform:translateY(14px)}
+.mc-gauge[data-value="100"] .mc-lvl{transform:translateY(0)}
+.mc-now{position:relative;z-index:1;display:grid;min-height:1.4em;font-size:16px;line-height:1.4;color:var(--ink);font-weight:500;text-align:center}
+.mc-now span{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .4s,transform .7s var(--ease),visibility 0s .4s}
+.ph:has([data-value="2"]) .mc-now [data-at="2"],
+.ph:has([data-value="14"]) .mc-now [data-at="14"],
+.ph:has([data-value="36"]) .mc-now [data-at="36"],
+.ph:has([data-value="50"]) .mc-now [data-at="50"],
+.ph:has([data-value="64"]) .mc-now [data-at="64"],
+.ph:has([data-value="86"]) .mc-now [data-at="86"],
+.ph:has([data-value="100"]) .mc-now [data-at="100"]{opacity:1;visibility:visible;transform:none;transition-delay:.15s,.15s,0s}
+.mc-main{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:16px 22px 26px}
+.mc-title{font-size:24px;line-height:1.15;letter-spacing:-.02em;font-weight:600}
+.mc-rows .row{padding:8px 0;gap:0 12px}
+.mc-rows .row-t{font-size:15.5px;line-height:1.3}
+.mc-rows .row-s{font-size:14px;line-height:1.35;transition:color .3s}
+.mc-rows .st{font-size:14px}
+.mc-end{width:100%}
+.c-only{display:none}
+.ph:has([data-value="100"]) .mc-end{animation:mc-pop .7s var(--spring)}
+@keyframes mc-pop{0%{transform:scale(.96)}50%{transform:scale(1.03)}100%{transform:none}}
+@keyframes mc-breathe{to{opacity:.45}}
+@media (prefers-reduced-motion:no-preference){
+  .mc-rows li>*{transition:opacity .5s}
+  .ph:has([data-value="2"]) .mc-rows li:nth-child(n+2)>*,
+  .ph:has([data-value="14"]) .mc-rows li:nth-child(n+3)>*,
+  .ph:has([data-value="36"]) .mc-rows li:nth-child(n+4)>*,
+  .ph:has([data-value="50"]) .mc-rows li:nth-child(n+5)>*,
+  .ph:has([data-value="64"]) .mc-rows li:nth-child(n+6)>*{opacity:.5}
+  .ph:has([data-value="2"]) .mc-rows li:nth-child(1) .st,
+  .ph:has([data-value="14"]) .mc-rows li:nth-child(2) .st,
+  .ph:has([data-value="36"]) .mc-rows li:nth-child(3) .st,
+  .ph:has([data-value="50"]) .mc-rows li:nth-child(4) .st,
+  .ph:has([data-value="64"]) .mc-rows li:nth-child(5) .st,
+  .ph:has([data-value="86"]) .mc-rows li:nth-child(6) .st{animation:mc-breathe .9s ease-in-out infinite alternate}
+}
+@media (prefers-reduced-motion:reduce){
+  .m-only{display:none}.c-only{display:inline}
+  .mc-now{display:none}
+  .mc-gauge canvas{display:none!important}
+  .mc-gauge>.v3d-fallback{opacity:1!important}
+  .mc-lvl{transform:none!important}
+}
+</style>
+</helmet>
+<div class="ph" data-theme="{{theme}}">
+  <aside class="stage mc-stage">
+    <img src="vero-lockup-dark.svg" alt="Vero Scan">
+    <button class="iconbtn ph-theme" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+    <div class="mc-centre">
+      <div class="gauge mc-gauge" data-v3d="fill" data-value="2" role="img" aria-label="The V fills up as checks finish">
+        <div class="v3d-fallback"><svg viewBox="0 0 132 100" aria-hidden="true"><defs><clipPath id="mc-v"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></clipPath></defs><g clip-path="url(#mc-v)"><rect width="132" height="100" style="fill:var(--field)"></rect><rect class="mc-lvl" width="132" height="100" style="fill:var(--rose)"></rect></g></svg></div>
+      </div>
+    </div>
+    <p class="mc-now" role="status">
+      <span data-at="2">Looking you up on the Delaware register.</span>
+      <span data-at="14">Searching for trademarks in your name.</span>
+      <span data-at="36">Reading your record at Companies House.</span>
+      <span data-at="50">Asking the register in Nigeria.</span>
+      <span data-at="64">Reading the privacy notice on kestrelpay.co.</span>
+      <span data-at="86">Checking Nigeria's data protection register.</span>
+      <span data-at="100">That's everything. Your first read is ready.</span>
+    </p>
+  </aside>
+
+  <main class="mc-main">
+    <div class="stack g4">
+      <h1 class="mc-title"><span class="m-only" data-scan-title>Scanning Kestrel Pay</span><span class="c-only">Scan finished</span></h1>
+      <p class="quiet num"><span class="m-only" data-scan-count>0 of 14 checks done</span><span class="c-only">14 of 14 checks done</span></p>
+    </div>
+    <ul class="rows mc-rows" data-scan="14">
+      <li class="row r-act" data-result="Found, with a registered agent" data-word="Done" data-tone="good" data-working="Reading the register"><span class="stack"><span class="row-t">Delaware company record</span><span class="row-s">Found, with a registered agent</span></span><span class="st good">Done</span></li>
+      <li class="row r-act" data-result="One trademark filed" data-word="Done" data-tone="good" data-working="Searching the US register"><span class="stack"><span class="row-t">US trademarks</span><span class="row-s">One trademark filed</span></span><span class="st good">Done</span></li>
+      <li class="row r-act" data-result="Active, but a filing is overdue" data-word="Issue found" data-tone="watch" data-working="Live from Companies House"><span class="stack"><span class="row-t">Companies House, UK</span><span class="row-s">Active, but a filing is overdue</span></span><span class="st watch">Issue found</span></li>
+      <li class="row r-act" data-result="Active, with two directors" data-word="Done" data-tone="good" data-working="Through our licensed provider"><span class="stack"><span class="row-t">Nigeria company record</span><span class="row-s">Active, with two directors</span></span><span class="st good">Done</span></li>
+      <li class="row r-act" data-result="No clear way to say no to cookies" data-word="Issue found" data-tone="watch" data-working="Reading kestrelpay.co"><span class="stack"><span class="row-t">Privacy notice and cookies</span><span class="row-s">No clear way to say no to cookies</span></span><span class="st watch">Issue found</span></li>
+      <li class="row r-act" data-result="Kestrel Pay isn't on the NDPC list" data-word="Issue found" data-tone="watch" data-working="Searching the NDPC list"><span class="stack"><span class="row-t">Nigeria data protection</span><span class="row-s">Kestrel Pay isn't on the NDPC list</span></span><span class="st watch">Issue found</span></li>
+    </ul>
+    <div class="stack g4" style="margin-top:auto">
+      <a class="btn btn-ink mc-end" href="FirstResult.dc.html" data-scan-end>See your result</a>
+      <p class="small" style="text-align:center">You can leave. We'll email you when it's done.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

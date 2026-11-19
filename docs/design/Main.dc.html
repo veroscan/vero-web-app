@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.home{max-width:1240px}
+.home .lean{gap:clamp(40px,6vw,88px)}
+.home .lean>.side{flex:1 1 400px}
+.hero{align-items:stretch}
+.hero-sec{padding-block:clamp(28px,4vw,56px) clamp(56px,7vw,104px)}
+.scoreline{display:flex;align-items:center;gap:clamp(16px,4vw,56px)}
+.scoreword{display:flex;flex-direction:column;gap:14px}
+.hero .score{font-size:clamp(124px,15.5vw,224px)}
+.hero .gauge{width:clamp(136px,21vw,290px)}
+.hero h1{max-width:22em;font-size:clamp(24px,2.5vw,32px);letter-spacing:-.022em}
+.hero .next{gap:18px;padding:clamp(28px,3vw,44px)}
+.hero .next .t-2{font-size:clamp(25px,2.5vw,32px);line-height:1.14;letter-spacing:-.024em}
+.hero .next .pay{margin-top:auto;padding-top:16px}
+.hero .next .btns{padding-top:2px}
+.hero .next .btn{width:100%}
+.hero .next .quiet{font-size:clamp(16px,1.3vw,18px);line-height:1.5}
+.nextlabel{color:var(--rose-deep);font-size:16px}
+.review{display:flex;flex-direction:column;gap:10px}
+@media (max-width:640px){.scoreword{gap:10px}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <a href="Main.dc.html" aria-label="Vero Scan home"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+    <nav class="tabs" aria-label="Main">
+      <a class="on" href="Main.dc.html">Home</a>
+      <a href="Issues.dc.html">Issues</a>
+      <a href="Documents.dc.html">Documents</a>
+      <a href="Deadlines.dc.html">Deadlines</a>
+      <a href="RecordsDelaware.dc.html">Company</a>
+    </nav>
+    <div class="tools"><button class="searchbtn" type="button" data-search aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>Ctrl K</kbd></button><a class="iconbtn" href="Notifications.dc.html" aria-label="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg></a><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><a class="me" href="Settings.dc.html">Kestrel Pay Inc. <i>AO</i></a></div>
+  </header>
+
+  <main class="wrap home">
+    <section class="sec hero-sec">
+      <div class="lean hero" data-scorebox="72">
+        <div class="main stack g24">
+          <p class="lead">Kestrel Pay's legal health</p>
+          <div class="scoreline">
+            <div class="scoreword">
+              <span class="score" data-count>72</span>
+              <span class="quiet">out of 100</span>
+            </div>
+            <div class="gauge" data-v3d="fill" data-value="72"><div class="v3d-fallback"><svg viewBox="0 0 132 100" width="100%"><path fill="var(--rose)" d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg></div></div>
+          </div>
+          <h1 class="t-2" data-blurin="0.15">A solid base, with one problem an investor would stop at.</h1>
+          <div class="ruler flag" role="img" aria-label="Your score of 72 sits in Needs work. Verification starts at 80."><svg class="pin" style="left:72%" viewBox="0 0 132 100" aria-hidden="true"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg><div class="track"><b></b><b></b><b></b></div><div class="goal"></div><div class="goallabel">80 to get verified</div><div class="keys"><span>At risk</span><span>Needs work</span><span>Healthy</span></div></div>
+          <div class="swap">
+            <p class="small">Up 11 points since August. <a class="link" href="Badge.dc.html">How verification works</a></p>
+            <p class="previewline" data-previewline></p>
+          </div>
+        </div>
+
+        <aside class="side next lifts" aria-label="Your next step" data-preview-score="80" data-preview-text="With this fix, you reach the level for verification.">
+          <p class="nextlabel b">Do this next</p>
+          <h2 class="t-2">Get the code signed over to your company</h2>
+          <p class="quiet">Your lead developer built the product under a contract that never transferred ownership. Until this is signed, Kestrel Pay may not own what it sells.</p>
+          <p class="b pay">This one fix takes you to about 80.</p>
+          <div class="btns">
+            <a class="btn btn-ink" href="Issue.dc.html">Fix this <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="lean">
+        <div class="main stack g20">
+          <h2 class="t-2">Where you stand</h2>
+          <div class="rows">
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">Intellectual property</span><span class="row-s">Who owns your code, brand and ideas</span></span><span class="st risk">At risk</span><span class="num b" style="text-align:right">49</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> Your lead developer hasn't signed the code over to Kestrel Pay.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +8 points</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">Compliance</span><span class="row-s">Data protection and the licences you need</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">68</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> You're not registered with the Nigeria Data Protection Commission.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +3 points</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">Fundraising</span><span class="row-s">Your cap table, SAFEs and investor documents</span></span><span class="st watch">Needs work</span><span class="num b" style="text-align:right">74</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> Your SAFE doesn't match your stock ledger.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +2 points</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">AI and data</span><span class="row-s">How you use and train AI</span></span><span class="st good">Healthy</span><span class="num b" style="text-align:right">79</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> No policy on how your team uses AI.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +1 point</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">Company foundations</span><span class="row-s">Registration, directors and filings</span></span><span class="st good">Healthy</span><span class="num b" style="text-align:right">84</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> Your UK confirmation statement is overdue.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +3 points</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+            <details class="more" name="areas">
+              <summary class="row r-area4"><span class="stack g4"><span class="row-t">Contracts</span><span class="row-s">What you sign with customers, staff and suppliers</span></span><span class="st good">Healthy</span><span class="num b" style="text-align:right">86</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body">
+                <p class="quiet"><span class="b">Top issue:</span> No data processing agreement with your payment processor.</p>
+                <p class="morelinks"><a class="link" href="Issue.dc.html">Fix it, +1 point</a><a class="link" href="Area.dc.html">See this whole area</a></p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="side stack g48">
+          <div class="stack g20">
+            <h2 class="t-2">Coming up</h2>
+            <div class="rows">
+              <a class="row r-time" href="Deadlines.dc.html#d-uk-confirm"><span class="st risk">Overdue</span><span class="stack g4"><span class="row-t" style="font-size:16px">UK confirmation statement</span><span class="row-s">Kestrel Pay UK Ltd</span></span></a>
+              <a class="row r-time" href="Deadlines.dc.html#d-de-tax"><span class="st num">1 Mar</span><span class="stack g4"><span class="row-t" style="font-size:16px">Delaware franchise tax</span><span class="row-s">Kestrel Pay Inc.</span></span></a>
+              <a class="row r-time" href="Deadlines.dc.html#d-ng-audit"><span class="st num">31 Mar</span><span class="stack g4"><span class="row-t" style="font-size:16px">Nigeria data protection audit</span><span class="row-s">Kestrel Pay Nigeria Ltd</span></span></a>
+            </div>
+            <a class="link small" href="Deadlines.dc.html">All deadlines</a>
+          </div>
+          <div class="review">
+            <h2 class="t-3">Lawyer review</h2>
+            <p class="small">A Code &amp; Clause lawyer has read 3 of your 9 key documents.</p>
+            <div class="meter grow" role="progressbar" aria-valuenow="3" aria-valuemin="0" aria-valuemax="9" aria-label="3 of 9 documents read"><i style="width:33.33%"></i></div>
+            <a class="link small" href="LawyerReview.dc.html">See what they found</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1451}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

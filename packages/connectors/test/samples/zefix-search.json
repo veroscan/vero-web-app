@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Kestrel Pay AG",
+    "ehraid": 999999,
+    "uid": "CHE123456788",
+    "chid": "CH99999999999",
+    "legalSeatId": 261,
+    "legalSeat": "Zürich",
+    "registryOfCommerceId": 20,
+    "legalForm": {
+      "id": 3,
+      "uid": "0106",
+      "name": {
+        "de": "Aktiengesellschaft",
+        "fr": "Société anonyme",
+        "it": "Società anonima",
+        "en": "Company limited by shares"
+      },
+      "shortName": {
+        "de": "AG",
+        "fr": "SA",
+        "it": "SA",
+        "en": "Ltd"
+      }
+    },
+    "status": "ACTIVE",
+    "sogcDate": "2026-05-04"
+  },
+  {
+    "name": "Kestrel Pay Hans Fiktiv",
+    "ehraid": 999999,
+    "uid": "CHE987654326",
+    "chid": "CH99999999999",
+    "legalSeatId": 261,
+    "legalSeat": "Zürich",
+    "registryOfCommerceId": 20,
+    "legalForm": {
+      "id": 1,
+      "uid": "0101",
+      "name": {
+        "de": "Einzelunternehmen",
+        "fr": "Entreprise individuelle",
+        "it": "Impresa individuale",
+        "en": "Sole proprietorship"
+      },
+      "shortName": {
+        "de": "EU",
+        "fr": "EI",
+        "it": "II",
+        "en": "SP"
+      }
+    },
+    "status": "ACTIVE",
+    "sogcDate": "2026-05-04"
+  }
+]

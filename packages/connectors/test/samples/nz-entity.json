@@ -1,0 +1,43 @@
+{
+  "entityStatusCode": "50",
+  "entityName": "KESTREL PAY LIMITED",
+  "nzbn": "9429999999996",
+  "entityTypeCode": "LTD",
+  "entityTypeDescription": "NZ Limited Company",
+  "entityStatusDescription": "Registered",
+  "registrationDate": "2024-03-01T00:00:00.000+13:00",
+  "sourceRegister": "COMPANY",
+  "sourceRegisterUniqueIdentifier": "9999901",
+  "lastUpdatedDate": "2026-03-12T10:00:00.000+13:00",
+  "emailAddresses": [{ "uniqueIdentifier": "1", "emailAddress": "ondine@kestrelpay.example", "emailPurpose": "Invoice" }],
+  "addresses": { "links": [], "addressList": [{ "address1": "1 Fictive Street", "address3": "Auckland", "postCode": "1010", "countryCode": "NZ", "addressType": "REGISTERED" }] },
+  "company-details": {
+    "annualReturnFilingMonth": 3,
+    "financialReportFilingMonth": null,
+    "annualReturnLastFiled": "2026-03-12T00:00:00.000+13:00",
+    "hasConstitutionFiled": true,
+    "countryOfOrigin": "NZ",
+    "overseasCompany": "N",
+    "removalCommenced": false
+  },
+  "roles": [
+    {
+      "roleType": "Director", "roleStatus": "ACTIVE", "startDate": "2024-03-01T00:00:00.000+13:00", "endDate": null,
+      "rolePerson": { "title": null, "firstName": "Ondine", "middleNames": "Camille", "lastName": "Fictivus" },
+      "roleAddress": [{ "address1": "9 Home Lane", "address3": "Wellington", "postCode": "6011", "countryCode": "NZ" }]
+    },
+    {
+      "roleType": "Director", "roleStatus": "ACTIVE", "startDate": "2024-03-01T00:00:00.000+13:00", "endDate": null,
+      "rolePerson": { "title": null, "firstName": "Ignatius", "middleNames": null, "lastName": "Exempel" },
+      "roleAddress": []
+    },
+    {
+      "roleType": "Director", "roleStatus": "INACTIVE", "startDate": "2024-03-01T00:00:00.000+13:00", "endDate": "2025-01-31T00:00:00.000+13:00",
+      "rolePerson": { "title": null, "firstName": "Dominique", "middleNames": null, "lastName": "Ancien" }
+    },
+    {
+      "roleType": "Shareholder", "roleStatus": "ACTIVE", "endDate": null,
+      "roleEntity": { "nzbn": "9429000001236", "entityName": "KESTREL PAY HOLDINGS LIMITED" }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "siren": "123456808",
+      "nom_complet": "KESTREL PAY",
+      "nom_raison_sociale": "KESTREL PAY",
+      "nombre_etablissements": 2,
+      "nombre_etablissements_ouverts": 1,
+      "siege": { "code_postal": "75002", "libelle_commune": "PARIS" },
+      "activite_principale": "62.01Z",
+      "categorie_entreprise": "PME",
+      "date_creation": "2024-02-01",
+      "dirigeants": [
+        { "nom": "EXEMPLE", "prenoms": "Camille", "annee_de_naissance": "1988", "qualite": "Président de SAS", "nationalite": "Française", "type_dirigeant": "personne physique" }
+      ],
+      "etat_administratif": "A",
+      "nature_juridique": "5710",
+      "statut_diffusion": "O",
+      "tranche_effectif_salarie": "11",
+      "complements": { "est_entrepreneur_individuel": false }
+    },
+    {
+      "siren": "123456790",
+      "nom_complet": "KESTREL PAYE (JEAN FICTIF)",
+      "nom_raison_sociale": null,
+      "siege": { "code_postal": "69001", "libelle_commune": "LYON" },
+      "etat_administratif": "A",
+      "nature_juridique": "1000",
+      "dirigeants": [],
+      "complements": { "est_entrepreneur_individuel": true }
+    }
+  ],
+  "total_results": 2,
+  "page": 1,
+  "per_page": 10,
+  "total_pages": 1
+}

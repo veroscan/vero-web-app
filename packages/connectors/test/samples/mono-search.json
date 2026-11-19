@@ -1,0 +1,21 @@
+{
+  "status": "successful",
+  "data": [
+    {
+      "id": "co_1",
+      "name": "KESTREL PAY NIGERIA LTD",
+      "rc_number": "1849302",
+      "status": "ACTIVE",
+      "company_type": "Private Company Limited by Shares",
+      "registration_date": "2021-06-12",
+      "address": "1 Sample Close, Lagos",
+      "share_capital": "1000000"
+    },
+    {
+      "id": "co_2",
+      "name": "KESTREL LOGISTICS LTD",
+      "rc_number": "1111111",
+      "status": "INACTIVE"
+    }
+  ]
+}

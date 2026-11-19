@@ -1,0 +1,64 @@
+{
+  "success": true,
+  "result": {
+    "resource_id": "d_3f960c10fed6145404ca7b821f263b87",
+    "fields": [
+      {
+        "type": "text",
+        "id": "uen"
+      },
+      {
+        "type": "text",
+        "id": "issuance_agency_desc"
+      },
+      {
+        "type": "text",
+        "id": "uen_status_desc"
+      },
+      {
+        "type": "text",
+        "id": "entity_name"
+      },
+      {
+        "type": "text",
+        "id": "entity_type_desc"
+      },
+      {
+        "type": "text",
+        "id": "uen_issue_date"
+      },
+      {
+        "type": "text",
+        "id": "reg_street_name"
+      },
+      {
+        "type": "text",
+        "id": "reg_postal_code"
+      },
+      {
+        "type": "int4",
+        "id": "_id"
+      }
+    ],
+    "records": [
+      {
+        "_id": 4,
+        "uen": "99999999Z",
+        "issuance_agency_desc": "ACRA",
+        "uen_status_desc": "Registered",
+        "entity_name": "TAN AH FIKTIF TRADING",
+        "entity_type_desc": "Sole Proprietorship/ Partnership",
+        "uen_issue_date": "2010-01-01",
+        "reg_street_name": "HOME FICTIONAL AVENUE",
+        "reg_postal_code": "000002"
+      }
+    ],
+    "_links": {
+      "start": "/api/action/datastore_search",
+      "next": "/api/action/datastore_search?offset=20"
+    },
+    "total": 1,
+    "filters": "{\"uen\":\"99999999Z\"}",
+    "limit": 20
+  }
+}

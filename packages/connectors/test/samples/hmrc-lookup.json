@@ -1,0 +1,12 @@
+{
+  "target": {
+    "name": "KESTREL PAY UK LTD",
+    "vatNumber": "123456789",
+    "address": {
+      "line1": "1 Sample Street",
+      "postcode": "EC1A 1AA",
+      "countryCode": "GB"
+    }
+  },
+  "processingDate": "2026-11-05T09:42:00+00:00"
+}

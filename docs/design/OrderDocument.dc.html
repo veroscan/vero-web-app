@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order a document</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.vwrap{position:relative}
+.vwrap .input{padding-right:48px}
+.okmark{position:absolute;right:16px;top:50%;width:22px;height:22px;margin-top:-11px;color:var(--good);opacity:0;transform:scale(.4);transition:transform .3s var(--spring),opacity .2s;pointer-events:none}
+.vwrap .input:valid:not(:placeholder-shown)~.okmark{opacity:1;transform:none}
+.input:user-invalid{border-color:var(--risk)}
+.input:user-invalid:focus{border-color:var(--risk);box-shadow:0 0 0 3px var(--risk-tint)}
+.msg{font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+.msg.bad{display:none;color:var(--risk);font-weight:500}
+.field:has(.input:user-invalid) .msg.hint{display:none}
+.field:has(.input:user-invalid) .msg.bad{display:block;animation:nudge .35s var(--ease)}
+@keyframes nudge{20%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+.guided{display:flex;flex-direction:column;gap:clamp(32px,4vw,44px)}
+.gstep{display:grid;grid-template-columns:36px minmax(0,1fr);gap:0 18px;align-items:start}
+.gnum{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:15px;background:var(--mist);color:var(--ink-2);transition:background-color .3s,color .3s}
+.gnum .tk{display:none;width:18px;height:18px}
+.gstep:not(:has(.input:invalid)) .gnum{background:var(--good-tint);color:var(--good)}
+.gstep:not(:has(.input:invalid)) .gnum span{display:none}
+.gstep:not(:has(.input:invalid)) .gnum .tk{display:block;animation:tickin .4s var(--spring)}
+@keyframes tickin{from{transform:scale(.3)}}
+.gbody{display:flex;flex-direction:column;gap:20px;min-width:0;padding-top:4px}
+.panel{flex:1 1 360px;gap:18px;position:sticky;top:24px}
+.fixscore{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.fixscore .word{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.fixscore .bignum{font-size:64px;color:var(--rose)}
+.gauge.mini{width:88px}
+.panel .row{padding:13px 0}
+.panel .btn{width:100%}
+.place-on,.place-off{display:block}
+.checkout:has(.gstep .input:invalid) .place-on{display:none}
+.checkout:not(:has(.gstep .input:invalid)) .place-off{display:none}
+.place-off button{pointer-events:none;opacity:.4}
+.readyline{font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+.readyline .go{display:none;color:var(--good);font-weight:600}
+.checkout:not(:has(.gstep .input:invalid)) .readyline .wait{display:none}
+.checkout:not(:has(.gstep .input:invalid)) .readyline .go{display:inline}
+.panel .previewline{font-size:14.5px;line-height:1.45;min-height:0}
+.placedhead{display:flex;flex-direction:column;gap:14px}
+.donetick{width:56px;height:56px;color:var(--rose)}
+.donetick circle{stroke-dasharray:142;animation:draw .8s var(--ease) both}
+.donetick path{stroke-dasharray:34;stroke-dashoffset:34;animation:draw2 .45s .55s var(--ease) forwards}
+@keyframes draw{from{stroke-dashoffset:142}to{stroke-dashoffset:0}}
+@keyframes draw2{to{stroke-dashoffset:0}}
+.nextrow{grid-template-columns:32px minmax(0,1fr);align-items:start}
+.nextrow>.num{font-size:17px;font-weight:600;color:var(--rose-deep);line-height:1.3}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <img src="vero-lockup.svg" alt="Vero Scan">
+    <a class="small" href="Issue.dc.html">Close</a>
+  <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </header>
+  <main class="wrap">
+    <section class="sec checkout" id="order" data-state="form" style="padding-top:clamp(16px,3vw,40px)">
+      <div class="lean">
+        <div class="main" style="max-width:640px">
+          <div class="stack g32" data-when="form">
+            <div class="stack g8">
+              <h1 class="t-1">Have a lawyer draft your IP assignment</h1>
+              <p class="lead">Code &amp; Clause prepares the deed for Delaware and Nigeria. You and your developer sign it, and it files itself here.</p>
+            </div>
+            <div class="guided">
+              <div class="gstep">
+                <div class="gnum" aria-hidden="true"><span>1</span><svg class="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                <div class="gbody">
+                  <h2 class="t-3">Who needs to sign?</h2>
+                  <div class="field">
+                    <label for="dev">Developer's full name</label>
+                    <div class="vwrap"><input class="input" id="dev" type="text" required pattern="\s*\S+(\s+\S+)+\s*" placeholder="As it appears on their ID" autocomplete="off"><svg class="okmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                    <p class="msg hint">First name and last name.</p>
+                    <p class="msg bad">We need their first and last name, or the deed won't hold up.</p>
+                  </div>
+                  <div class="field">
+                    <label for="devmail">Developer's email</label>
+                    <div class="vwrap"><input class="input" id="devmail" type="email" required pattern=".+@.+\..+" placeholder="name@example.com" autocomplete="off"><svg class="okmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                    <p class="msg hint">We'll send them the deed to sign.</p>
+                    <p class="msg bad">That doesn't look like an email address yet.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="gstep">
+                <div class="gnum" aria-hidden="true"><span>2</span><svg class="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                <div class="gbody">
+                  <h2 class="t-3">We've filled in what we know</h2>
+                  <div class="field">
+                    <label for="co">Your company</label>
+                    <div class="vwrap"><input class="input" id="co" type="text" required value="Kestrel Pay Inc."><svg class="okmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                    <p class="msg bad">We need the company that will own the code.</p>
+                  </div>
+                  <div class="field">
+                    <label for="what">What did they build?</label>
+                    <div class="vwrap"><input class="input" id="what" type="text" required value="Kestrel Pay core payments product, January 2023 to August 2024"><svg class="okmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+                    <p class="msg bad">Tell us what the deed should cover.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack g32" data-when="placed" hidden>
+            <div class="placedhead">
+              <svg class="donetick" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="22"></circle><path d="m14.5 24.5 7 7 12-14"></path></svg>
+              <h1 class="t-1">Order placed. Your lawyer has it.</h1>
+              <p class="lead">A Code &amp; Clause lawyer reads your details first. Nothing goes to your developer until they've checked it.</p>
+            </div>
+            <div class="stack g12">
+              <h2 class="t-3">What happens next</h2>
+              <ol class="rows">
+                <li class="row nextrow"><span class="num">1</span><span class="stack g4"><span class="row-t">Your lawyer drafts the deed</span><span class="row-s">Written for Delaware and Nigeria. Ready in [TURNAROUND].</span></span></li>
+                <li class="row nextrow"><span class="num">2</span><span class="stack g4"><span class="row-t">You and your developer sign</span><span class="row-s">We email it to you both, and we'll remind them if it sits unsigned.</span></span></li>
+                <li class="row nextrow"><span class="num">3</span><span class="stack g4"><span class="row-t">It files itself here</span><span class="row-s">The urgent issue closes and your score moves to about 80.</span></span></li>
+              </ol>
+            </div>
+            <div class="btns">
+              <a class="btn btn-ink" href="Main.dc.html">Back to home</a>
+              <a class="btn btn-line" href="Documents.dc.html">See your documents</a>
+            </div>
+          </div>
+        </div>
+
+        <aside class="side next panel stick" data-scorebox="72" aria-label="Your order">
+          <h2 class="t-2">Your order</h2>
+          <div class="fixscore">
+            <div class="word"><span class="bignum" data-count>72</span><span class="small">out of 100</span></div>
+            <div class="gauge mini" data-v3d="fill" data-value="72" aria-hidden="true"><div class="v3d-fallback"><svg viewBox="0 0 132 100" width="100%"><path fill="var(--rose)" d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg></div></div>
+          </div>
+          <div class="rows">
+            <div class="row r-act"><span class="quiet">IP assignment deed</span><span class="b">[PRICE]</span></div>
+            <div class="row r-act"><span class="quiet">Ready in</span><span class="b">[TURNAROUND]</span></div>
+            <div class="row r-act"><span class="quiet">Your score after signing</span><span class="b num">About 80</span></div>
+          </div>
+          <div class="stack g12" data-when="form">
+            <span class="place-off" data-preview-score="80" data-preview-text="Once it's signed and filed, you reach about 80."><button class="btn btn-ink" type="button" disabled style="width:100%">Place order</button></span>
+            <span class="place-on"><button class="btn btn-ink" type="button" data-preview-score="80" data-preview-text="Once it's signed and filed, you reach about 80." data-set="#order" data-attr="data-state" data-values="placed,placed">Place order</button></span>
+            <div class="swap">
+              <p class="readyline" aria-live="polite"><span class="wait">Add your developer's name and email to place this.</span><span class="go">That's everything we need.</span></p>
+              <p class="previewline" data-previewline></p>
+            </div>
+          </div>
+          <p class="small" data-when="form">A Code &amp; Clause lawyer will read this before it goes to anyone. <a class="link" href="BookLawyer.dc.html">Talk to them first</a></p>
+          <p class="small" data-when="placed" hidden>Your score stays at 72 until the deed is signed. <a class="link" href="BookLawyer.dc.html">Talk to your lawyer</a></p>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":973}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

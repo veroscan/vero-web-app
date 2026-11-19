@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Documents</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.docs .drop{width:100%;background:none;color:inherit;font:inherit;cursor:pointer;padding:clamp(22px,3vw,32px)}
+.docs .drop svg{width:24px;height:24px;color:var(--rose-deep);transition:transform .3s var(--ease)}
+.docs .drop:hover svg,.docs .drop.over svg{transform:translateY(-3px)}
+[data-state]{animation:bodyin .4s var(--ease) both}
+.flowbox{border:1px solid var(--line);border-radius:18px;padding:clamp(22px,3vw,32px)}
+.flowbox.recog{border-color:var(--rose);background:var(--rose-tint)}
+.uprow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.r-doc{grid-template-columns:minmax(0,1fr) 130px 74px 18px;column-gap:20px}
+.r-doc .act{justify-self:end}
+.r-sum{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-doc{grid-template-columns:minmax(0,1fr) auto 18px;column-gap:12px}
+  .r-doc>.stack{grid-column:1/-2}
+  .r-doc>.chev{grid-column:3;grid-row:1}
+  .r-doc>.st{grid-row:2;grid-column:1;align-self:center}
+  .r-doc>.act{grid-row:2;grid-column:2/4}
+}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <a href="Main.dc.html" aria-label="Vero Scan home"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+    <nav class="tabs" aria-label="Main">
+      <a href="Main.dc.html">Home</a>
+      <a href="Issues.dc.html">Issues</a>
+      <a class="on" href="Documents.dc.html">Documents</a>
+      <a href="Deadlines.dc.html">Deadlines</a>
+      <a href="RecordsDelaware.dc.html">Company</a>
+    </nav>
+    <div class="tools"><button class="searchbtn" type="button" data-search aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>Ctrl K</kbd></button><a class="iconbtn" href="Notifications.dc.html" aria-label="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg></a><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><a class="me" href="Settings.dc.html">Kestrel Pay Inc. <i>AO</i></a></div>
+  </header>
+
+  <main class="wrap mid docs">
+    <section class="sec stack g48">
+      <div class="stack g20" data-scorebox="19">
+        <div class="stack g12">
+          <h1 class="t-1"><span class="num" data-count>19</span> of 31 documents in place</h1>
+          <p class="lead">You don't need to know what a company should have. This is the list. Each empty slot counts as a gap until it's filled.</p>
+        </div>
+        <div class="meter grow" style="height:8px;border-radius:4px" role="progressbar" aria-valuenow="19" aria-valuemin="0" aria-valuemax="31" aria-label="19 of 31 documents in place"><i style="width:61.3%"></i></div>
+      </div>
+
+      <div class="stack g16" data-dropflow>
+        <div aria-live="polite">
+          <div data-state="idle">
+            <button class="drop" type="button" data-drop-start>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V5M7 10l5-5 5 5M5 19h14"/></svg>
+              <span class="row-t">Drop a document here</span>
+              <span class="small">We'll work out what it is and where it goes.</span>
+            </button>
+          </div>
+          <div class="flowbox stack g12" data-state="up" hidden>
+            <div class="uprow"><span class="row-t">IP-assignment-signed.pdf</span><span class="small">Uploading</span></div>
+            <div class="meter"><i style="width:0"></i></div>
+          </div>
+          <div class="flowbox stack g4" data-state="read" hidden>
+            <p class="row-t">Reading your document</p>
+            <p class="small">This takes a moment.</p>
+          </div>
+          <div class="flowbox recog stack g12" data-state="done" hidden>
+            <p class="row-t">IP-assignment-signed.pdf</p>
+            <p class="quiet">This looks like an IP assignment between Kestrel Pay Inc. and your lead developer, signed by both on 3 November 2026.</p>
+            <p class="b">Is that right?</p>
+            <div class="btns">
+              <button class="btn btn-ink btn-sm" type="button" data-toast="Filed. Your score is updating." data-drop-reset>Yes, file it</button>
+              <a class="btn btn-line btn-sm" href="DocumentRejected.dc.html">No, it's something else</a>
+            </div>
+          </div>
+        </div>
+        <div class="btns">
+          <a class="btn btn-ink" href="AddDocument.dc.html">Add a document</a>
+          <a class="btn btn-line" href="AddDocument.dc.html">Connect Google Drive or Notion</a>
+        </div>
+      </div>
+
+      <div class="stack g32">
+        <div class="filters" data-filters="#list" role="group" aria-label="Filter documents">
+          <button class="fbtn on" type="button" data-f="all" aria-pressed="true">All</button>
+          <button class="fbtn" type="button" data-f="missing" aria-pressed="false">Missing</button>
+          <button class="fbtn" type="button" data-f="checked" aria-pressed="false">Checked</button>
+        </div>
+
+        <div id="list" class="stack g48">
+          <div class="stack g16" data-group>
+            <h2 class="t-2">Intellectual property</h2>
+            <div class="rows">
+              <details class="more" data-tags="missing">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">IP assignment, lead developer</span><span class="row-s">Moves ownership of the code to the company</span></span><span class="st risk">Missing</span><a class="btn btn-sm btn-ink act" href="AddDocument.dc.html">Add</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body">
+                  <p class="quiet">Without it, the developer may still own the code, and your company may not legally own what it sells. It will be flagged in your first investor due diligence.</p>
+                  <p class="morelinks"><a class="link" href="Issue.dc.html">See the issue</a></p>
+                </div>
+              </details>
+              <details class="more" data-tags="missing">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">Open-source licence list</span><span class="row-s">Shows the code you use doesn't restrict what you sell</span></span><span class="st risk">Missing</span><a class="btn btn-sm btn-line act" href="AddDocument.dc.html">Add</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body"><p class="quiet">Some open-source licences put conditions on how you can sell software built with them. A simple list shows an investor you've looked.</p></div>
+              </details>
+              <details class="more" data-tags="checked">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">Founders' IP assignment</span><span class="row-s">Moves anything built before the company existed</span></span><span class="st good">Lawyer checked</span><a class="link small act" href="LawyerReview.dc.html">View</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body"><p class="quiet">Anything a founder built before the company existed stays theirs until it's signed over. A lawyer read yours on 3 November: nothing to change.</p></div>
+              </details>
+              <details class="more" data-tags="checked">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">Employee agreement template</span><span class="row-s">Makes sure staff work belongs to the company</span></span><span class="st good">We read it</span><a class="link small act" href="Documents.dc.html">View</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body"><p class="quiet">One good template means the same terms cover everyone you hire. Our software has read it, and a lawyer will check it next.</p></div>
+              </details>
+            </div>
+          </div>
+
+          <div class="stack g16" data-group>
+            <h2 class="t-2">Company foundations</h2>
+            <div class="rows">
+              <details class="more" data-tags="missing">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">Delaware franchise tax receipt</span><span class="row-s">Delaware doesn't allow automatic checks, so we need a copy</span></span><span class="st risk">Missing</span><a class="btn btn-sm btn-line act" href="AddDocument.dc.html">Add</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body">
+                  <p class="quiet">A receipt is how we can show the tax is paid. Adding it is worth 2 points, and the next payment is due on 1 March.</p>
+                  <p class="morelinks"><a class="link" href="Deadlines.dc.html#d-de-tax">See the deadline</a></p>
+                </div>
+              </details>
+              <details class="more" data-tags="checked">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">Bylaws and stock ledger</span><span class="row-s">The rules of the company and who owns what</span></span><span class="st good">We read it</span><a class="link small act" href="Documents.dc.html">View</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body"><p class="quiet">These settle who owns what. Our software has read them, and a lawyer will check they agree with each other.</p></div>
+              </details>
+              <details class="more" data-tags="missing">
+                <summary class="row r-doc"><span class="stack g4"><span class="row-t">CAC status report, Nigeria</span><span class="row-s">Confirms your annual returns are up to date</span></span><span class="st none">You told us</span><a class="btn btn-sm btn-line act" href="AddDocument.dc.html">Add proof</a><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="more-body"><p class="quiet">You told us your returns are up to date, but we haven't seen proof. This report lets us mark it as checked.</p></div>
+              </details>
+            </div>
+          </div>
+
+          <div class="rows" data-group>
+            <details class="more" data-tags="missing checked">
+              <summary class="row r-sum"><span class="row-t">Compliance</span><span class="quiet num">7 of 11</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body"><p class="quiet">6 in place, 3 still to add. <a class="link" href="AddDocument.dc.html">Add a document</a></p></div>
+            </details>
+            <details class="more" data-tags="missing checked">
+              <summary class="row r-sum"><span class="row-t">Fundraising</span><span class="quiet num">4 of 6</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body"><p class="quiet">4 in place, 2 still to add. <a class="link" href="AddDocument.dc.html">Add a document</a></p></div>
+            </details>
+            <details class="more" data-tags="missing checked">
+              <summary class="row r-sum"><span class="row-t">Contracts</span><span class="quiet num">3 of 4</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body"><p class="quiet">3 in place, 1 still to add. <a class="link" href="AddDocument.dc.html">Add a document</a></p></div>
+            </details>
+            <details class="more" data-tags="missing checked">
+              <summary class="row r-sum"><span class="row-t">AI and data</span><span class="quiet num">2 of 3</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="more-body"><p class="quiet">2 in place, 1 still to add. <a class="link" href="AddDocument.dc.html">Add a document</a></p></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1841}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

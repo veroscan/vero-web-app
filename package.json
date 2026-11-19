@@ -1,0 +1,51 @@
+{
+  "name": "vero-scan",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Vero Scan web product (monorepo root)",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "db:start": "tsx scripts/db-start.ts",
+    "db:stop": "tsx scripts/db-stop.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "dev:api": "npm run dev --workspace @vero/api",
+    "dev:worker": "npm run start --workspace @vero/worker",
+    "e2e:http": "tsx scripts/e2e-http.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "lint": "node scripts/lint.mjs",
+    "licences": "tsx scripts/licences.ts",
+    "connectors:record": "tsx scripts/connectors-record.ts",
+    "rules:review": "tsx scripts/rules-review.ts",
+    "connectors:replay": "npm run test --workspace @vero/connectors -- test/recorded --reporter=verbose",
+    "dev:web": "npm run dev --workspace @vero/web",
+    "build:web": "npm run build --workspace @vero/web",
+    "start:web": "npm run start --workspace @vero/web",
+    "e2e:web": "npm run e2e --workspace @vero/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "embedded-postgres": "^17.5.0-beta.15",
+    "eslint": "^9.39.1",
+    "pg": "^8.16.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.46.0",
+    "vitest": "^3.2.0"
+  },
+  "overrides": {
+    "sharp": "file:./apps/web/vendor/no-sharp"
+  }
+}

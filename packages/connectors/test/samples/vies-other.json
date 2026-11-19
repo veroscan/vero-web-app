@@ -1,0 +1,38 @@
+{
+  "soleTrader": {
+    "countryCode" : "FR",
+    "vatNumber" : "40123456808",
+    "requestDate" : "2026-11-05T09:42:01.123Z",
+    "valid" : true,
+    "requestIdentifier" : "",
+    "name" : "MONSIEUR JEAN FICTIF",
+    "address" : "9 IMPASSE INVENTEE\n13000 MARSEILLE",
+    "traderNameMatch" : "NOT_PROCESSED"
+  },
+  "invalid": {
+    "countryCode" : "DE",
+    "vatNumber" : "000000000",
+    "requestDate" : "2026-11-05T09:42:01.123Z",
+    "valid" : false,
+    "requestIdentifier" : "",
+    "name" : "---",
+    "address" : "---",
+    "traderNameMatch" : "NOT_PROCESSED"
+  },
+  "msUnavailable": {
+    "actionSucceed" : false,
+    "errorWrappers" : [ { "error" : "MS_UNAVAILABLE" } ]
+  },
+  "invalidInput": {
+    "actionSucceed" : false,
+    "errorWrappers" : [ { "error" : "INVALID_INPUT" } ]
+  },
+  "status": {
+    "vow" : { "available" : true },
+    "countries" : [
+      { "countryCode" : "CY", "availability" : "Unavailable" },
+      { "countryCode" : "DE", "availability" : "Available" },
+      { "countryCode" : "FR", "availability" : "Available" }
+    ]
+  }
+}

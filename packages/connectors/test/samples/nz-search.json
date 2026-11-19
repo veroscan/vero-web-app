@@ -1,0 +1,13 @@
+{
+  "pageSize": 20,
+  "page": 0,
+  "totalItems": 3,
+  "sortBy": "entityName",
+  "sortOrder": "ASC",
+  "items": [
+    { "entityStatusCode": "50", "entityName": "KESTREL PAY LIMITED", "nzbn": "9429999999996", "entityTypeCode": "LTD", "entityTypeDescription": "NZ Limited Company", "entityStatusDescription": "Registered", "registrationDate": "2024-03-01T00:00:00.000+13:00", "sourceRegisterUniqueId": "9999901", "tradingNames": [], "previousEntityNames": [] },
+    { "entityStatusCode": "50", "entityName": "ONDINE FICTIVUS", "nzbn": "9429123456784", "entityTypeCode": "Sole_Trader", "entityTypeDescription": "Sole Trader", "entityStatusDescription": "Registered", "tradingNames": [{ "name": "KESTREL PAY" }] },
+    { "entityStatusCode": "50", "entityName": "KESTREL PAYMENTS LIMITED", "nzbn": "9429000001236", "entityTypeCode": "LTD", "entityTypeDescription": "NZ Limited Company", "entityStatusDescription": "Registered", "sourceRegisterUniqueId": "9999902" }
+  ],
+  "links": []
+}

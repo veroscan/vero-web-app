@@ -1,0 +1,19 @@
+{
+  "meta": { "goldenCopy": { "publishDate": "2026-11-05T08:00:00Z" } },
+  "data": {
+    "type": "relationship-records",
+    "id": "00000KESTRELPAYUK069|LEI|IS_DIRECTLY_CONSOLIDATED_BY|1|fictional|",
+    "attributes": {
+      "validFrom": "2025-01-01T00:00:00Z",
+      "validTo": null,
+      "relationship": {
+        "startNode": { "id": "00000KESTRELPAYUK069", "type": "LEI" },
+        "endNode": { "id": "00000KESTRELPAYSA064", "type": "LEI" },
+        "type": "IS_DIRECTLY_CONSOLIDATED_BY",
+        "status": "ACTIVE",
+        "periods": [{ "startDate": "2025-01-01T00:00:00Z", "type": "RELATIONSHIP_PERIOD" }]
+      },
+      "registration": { "status": "PUBLISHED", "corroborationLevel": "ENTITY_SUPPLIED_ONLY" }
+    }
+  }
+}

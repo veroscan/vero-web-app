@@ -1,0 +1,7 @@
+{
+  "responseHeader": { "status": 0, "QTime": 12, "params": { "q": "{!parent which=\"type_s:parent\"}issuer_lei:00000KESTRELPAYUK069", "wt": "json", "rows": "100" } },
+  "response": { "numFound": 2, "start": 0, "numFoundExact": true, "docs": [
+    { "type_s": "parent", "approval_filing_date": "2026-08-11T00:00:00Z", "document_type": "SUPP", "home_member_state_code": "LU" },
+    { "type_s": "parent", "approval_filing_date": "2025-03-04T00:00:00Z", "document_type": "STDA", "home_member_state_code": "IE" }
+  ] }
+}

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Verified badge</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.bd-hero{--good:#53D3A8;--watch:#F3B340;--risk:#FF7A52;--rose-deep:#F08AA8}
+.bd-hero::after{content:"";position:absolute;inset:0;background:radial-gradient(46% 70% at 27% 50%,rgba(224,106,144,.34),rgba(224,106,144,0) 72%);opacity:0;transition:opacity 1.2s var(--ease);pointer-events:none}
+.bd-hero:has(#seal[data-state="earned"])::after{opacity:1}
+.bd-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(32px,6vw,88px);align-items:center;padding-block:clamp(40px,5vw,72px)}
+.bd-fig{margin:0;display:flex;flex-direction:column;align-items:center;gap:20px}
+.bd-seal-box{position:relative;width:min(460px,100%);aspect-ratio:1}
+.bd-seal{position:absolute;inset:0}
+.bd-burst{position:absolute;inset:6%;border-radius:50%;border:2px solid var(--rose);opacity:0;pointer-events:none}
+#seal[data-state="earned"] ~ .bd-burst{animation:bd-burst 1.3s var(--ease) .1s}
+@keyframes bd-burst{0%{opacity:.8;transform:scale(.9)}100%{opacity:0;transform:scale(1.28)}}
+.bd-flat{width:100%;aspect-ratio:1;border-radius:50%;background:var(--mist);box-shadow:inset 0 0 0 1px var(--field),inset 0 0 0 16px var(--paper),inset 0 0 0 17px var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:48px;color:var(--ink-3);transition:background-color .5s var(--ease),color .5s var(--ease)}
+.bd-flat svg{width:28%;height:auto;margin-bottom:10px;fill:currentColor;transition:fill .5s var(--ease)}
+.bd-flat p{color:inherit}
+.bd-flat .bd-big{font-size:clamp(22px,2.3vw,30px);line-height:1.15;letter-spacing:-.018em;font-weight:600;max-width:7.5em}
+#seal[data-state="earned"] .bd-flat{background:var(--rose);color:var(--on-rose);box-shadow:inset 0 0 0 1px var(--rose),inset 0 0 0 16px var(--rose),inset 0 0 0 17px var(--on-rose)}
+.bd-cap{text-align:center}
+.bd-copy .rows{--line:#3A363E}
+.bd-copy .row{padding:16px 0}
+.bd-toggle{background:none;border:0;padding:6px 2px;margin-left:10px;cursor:pointer;font:600 15.5px "Figtree",sans-serif;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;text-decoration-color:var(--ink-3);transition:text-decoration-color .2s,color .2s}
+.bd-toggle:hover{color:var(--rose-deep);text-decoration-color:currentColor}
+@media (max-width:900px){.bd-grid{grid-template-columns:minmax(0,1fr)}.bd-seal-box{width:min(340px,100%)}.bd-toggle{margin-left:0}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <a href="Main.dc.html" aria-label="Vero Scan home"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+    <nav class="tabs" aria-label="Main">
+      <a class="on" href="Main.dc.html">Home</a>
+      <a href="Issues.dc.html">Issues</a>
+      <a href="Documents.dc.html">Documents</a>
+      <a href="Deadlines.dc.html">Deadlines</a>
+      <a href="RecordsDelaware.dc.html">Company</a>
+    </nav>
+    <div class="tools"><button class="searchbtn" type="button" data-search aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><span>Search</span><kbd>Ctrl K</kbd></button><a class="iconbtn" href="Notifications.dc.html" aria-label="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg></a><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button><a class="me" href="Settings.dc.html">Kestrel Pay Inc. <i>AO</i></a></div>
+  </header>
+
+  <section class="stage bd-hero" aria-label="Your badge and what it takes">
+    <div class="wrap bd-grid">
+      <figure class="bd-fig">
+        <div class="bd-seal-box">
+          <div class="bd-seal" data-v3d="seal" data-state="locked" id="seal" role="img" aria-label="Vero Scan verified seal">
+            <div class="v3d-fallback">
+              <div class="bd-flat">
+                <svg viewBox="0 0 132 100" aria-hidden="true"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></svg>
+                <p class="bd-big">Legal health verified</p>
+                <p class="small" style="color:inherit">Reviewed by Code &amp; Clause</p>
+                <p class="small" style="color:inherit;font-weight:600">Kestrel Pay Inc.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bd-burst" aria-hidden="true"></div>
+        </div>
+        <figcaption class="stack g4 bd-cap">
+          <span class="st none" style="color:var(--ink-2)" data-when="locked">Not earned yet</span>
+          <span class="small" data-when="locked">Kestrel Pay Inc.</span>
+          <span class="st" style="color:var(--rose-deep)" data-when="earned" hidden>Legal health verified</span>
+          <span class="small" data-when="earned" hidden>Reviewed by Code &amp; Clause · Kestrel Pay Inc.</span>
+        </figcaption>
+      </figure>
+
+      <div class="stack g24 bd-copy">
+        <div class="stack g12">
+          <h1 class="t-1">Verified badge</h1>
+          <p class="lead" style="max-width:32em" data-when="locked">A public sign that a lawyer has checked your company's legal health. You haven't earned it yet.</p>
+          <p class="lead" style="max-width:32em" data-when="earned" hidden>A public sign that a lawyer has checked your company's legal health. This is how yours looks once you've earned it.</p>
+        </div>
+        <div class="stack g12">
+          <h2 class="t-3">You need all three</h2>
+          <div class="rows">
+            <div class="row r-act"><span class="row-t">Score of 80 or more</span><span class="st watch num" data-when="locked">You're at 72</span><span class="st good num" data-when="earned" hidden>You're at 80</span></div>
+            <div class="row r-act"><span class="row-t">No urgent issues</span><span class="st risk num" data-when="locked">1 open</span><span class="st good num" data-when="earned" hidden>None open</span></div>
+            <div class="row r-act"><span class="row-t">Lawyer review in the last 12 months</span><span class="st watch num" data-when="locked">3 of 9 read</span><span class="st good num" data-when="earned" hidden>9 of 9 read</span></div>
+          </div>
+        </div>
+        <p class="quiet" data-when="locked">Fixing the urgent issue clears the second one and takes your score to about 80.</p>
+        <p class="quiet" data-when="earned" hidden>All three are done, so your public page and website badge can go live.</p>
+        <div class="btns">
+          <a class="btn btn-ink" href="Issue.dc.html" data-when="locked">Fix the urgent issue</a>
+          <a class="btn btn-ink" href="SharedReport.dc.html" data-when="earned" hidden>See your public page</a>
+          <button class="bd-toggle" type="button" data-set="#seal" data-attr="data-state" data-values="locked,earned" data-labels="Preview it earned,Show it locked">Preview it earned</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <section class="sec stack g16">
+      <h2 class="t-2">What you get once you've earned it</h2>
+      <div class="rows">
+        <div class="row"><span class="row-t">A public page</span><span class="row-s">A link you can send to anyone. It shows your score and what's been checked.</span></div>
+        <div class="row"><span class="row-t">A badge for your website</span><span class="row-s">Put it on your site. It links straight to your public page.</span></div>
+        <div class="row"><span class="row-t">Investors can check it</span><span class="row-s">They open the page and see it for themselves. Nobody has to take your word for it.</span></div>
+      </div>
+      <p class="small"><a class="link" href="SharedReport.dc.html">See what the public page looks like</a></p>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1210}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

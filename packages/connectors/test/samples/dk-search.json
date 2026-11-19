@@ -1,0 +1,49 @@
+{
+  "hits": {
+    "total": 3,
+    "hits": [
+      {
+        "_source": {
+          "Vrvirksomhed": {
+            "cvrNummer": 31415926,
+            "virksomhedMetadata": {
+              "nyesteNavn": { "navn": "Kestrel Pay ApS" },
+              "nyesteVirksomhedsform": { "virksomhedsformkode": 80, "kortBeskrivelse": "APS", "langBeskrivelse": "Anpartsselskab" },
+              "sammensatStatus": "NORMAL",
+              "stiftelsesDato": "2024-03-01",
+              "nyesteBeliggenhedsadresse": { "postnummer": 2100, "kommune": { "kommuneNavn": "KØBENHAVN" } },
+              "nyesteHovedbranche": { "branchekode": "620100" },
+              "antalPenheder": 1
+            },
+            "deltagerRelation": []
+          }
+        }
+      },
+      {
+        "_source": {
+          "Vrvirksomhed": {
+            "cvrNummer": 12345674,
+            "virksomhedMetadata": {
+              "nyesteNavn": { "navn": "Kestrel Pay v/Ondine Fictivus" },
+              "nyesteVirksomhedsform": { "virksomhedsformkode": 10, "kortBeskrivelse": "ENK", "langBeskrivelse": "Enkeltmandsvirksomhed" },
+              "sammensatStatus": "NORMAL",
+              "nyesteBeliggenhedsadresse": { "postnummer": 8000, "kommune": { "kommuneNavn": "AARHUS" } }
+            }
+          }
+        }
+      },
+      {
+        "_source": {
+          "Vrvirksomhed": {
+            "cvrNummer": 10000009,
+            "virksomhedMetadata": {
+              "nyesteNavn": { "navn": "Kestrel Payments A/S" },
+              "nyesteVirksomhedsform": { "virksomhedsformkode": 60, "kortBeskrivelse": "A/S", "langBeskrivelse": "Aktieselskab" },
+              "sammensatStatus": "NORMAL"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

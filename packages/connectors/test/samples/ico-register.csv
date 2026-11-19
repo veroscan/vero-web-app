@@ -1,0 +1,5 @@
+Registration_number,Organisation_name,Organisation_address_line_1,Organisation_postcode,Public_authority,Start_date_of_registration,End_date_of_registration,Trading_names,Payment_tier
+ZA111111,"Sample Widgets, Ltd",1 Road,EC1A 1AA,N,10/08/2025,09/08/2027,,Tier 1
+ZA222222,Kestrel Pay UK Ltd,2 Road,EC1A 2BB,N,10/08/2024,09/08/2026,Kestrel Pay,Tier 1
+ZA333333,Kestrel Pay UK Ltd,3 Road,M1 1AA,N,01/01/2026,31/12/2027,,Tier 2
+ZA444444,Twin Name Ltd,4 Road,B1 1AA,N,01/01/2026,31/12/2027,,Tier 1

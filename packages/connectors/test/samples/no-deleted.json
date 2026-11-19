@@ -1,0 +1,15 @@
+{
+  "organisasjonsnummer": "812345672",
+  "navn": "KESTREL PAY AS",
+  "organisasjonsform": {
+    "kode": "AS",
+    "beskrivelse": "Aksjeselskap"
+  },
+  "slettedato": "2026-01-31",
+  "respons_klasse": "SlettetEnhet",
+  "_links": {
+    "self": {
+      "href": "https://data.brreg.no/enhetsregisteret/api/enheter/812345672"
+    }
+  }
+}

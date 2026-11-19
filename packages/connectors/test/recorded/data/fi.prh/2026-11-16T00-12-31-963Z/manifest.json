@@ -1,0 +1,37 @@
+{
+  "connector": "fi.prh",
+  "recordedAt": "2026-11-16T00:12:32.033Z",
+  "ref": {
+    "name": "Nokia Oyj",
+    "jurisdiction": "FI",
+    "registry_number": "0112038-9"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.fi.prh.business_id",
+      "registry.fi.prh.business_id_status",
+      "registry.fi.prh.company_form",
+      "registry.fi.prh.company_form_code",
+      "registry.fi.prh.identified",
+      "registry.fi.prh.in_employer_register",
+      "registry.fi.prh.in_prepayment_register",
+      "registry.fi.prh.in_vat_register",
+      "registry.fi.prh.main_industry",
+      "registry.fi.prh.main_industry_code",
+      "registry.fi.prh.registered_name",
+      "registry.fi.prh.registered_on",
+      "registry.fi.prh.situations",
+      "registry.fi.prh.status",
+      "registry.fi.prh.trade_register_status"
+    ]
+  }
+}

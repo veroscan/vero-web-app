@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Kestrel Pay AG",
+    "ehraid": 999999,
+    "uid": "CHE123456788",
+    "chid": "CH99999999999",
+    "legalSeatId": 261,
+    "legalSeat": "Zürich",
+    "registryOfCommerceId": 20,
+    "legalForm": {
+      "id": 3,
+      "uid": "0106",
+      "name": {
+        "de": "Aktiengesellschaft",
+        "fr": "Société anonyme",
+        "it": "Società anonima",
+        "en": "Company limited by shares"
+      },
+      "shortName": {
+        "de": "AG",
+        "fr": "SA",
+        "it": "SA",
+        "en": "Ltd"
+      }
+    },
+    "status": "ACTIVE",
+    "sogcDate": "2026-05-04"
+  },
+  {
+    "name": "Kestrel Pay SA",
+    "ehraid": 999999,
+    "uid": "CHE987654326",
+    "chid": "CH99999999999",
+    "legalSeatId": 261,
+    "legalSeat": "Zürich",
+    "registryOfCommerceId": 20,
+    "legalForm": {
+      "id": 3,
+      "uid": "0106",
+      "name": {
+        "de": "Aktiengesellschaft",
+        "fr": "Société anonyme",
+        "it": "Società anonima",
+        "en": "Company limited by shares"
+      },
+      "shortName": {
+        "de": "AG",
+        "fr": "SA",
+        "it": "SA",
+        "en": "Ltd"
+      }
+    },
+    "status": "CANCELLED",
+    "sogcDate": "2026-05-04",
+    "deletionDate": "2020-01-01"
+  }
+]

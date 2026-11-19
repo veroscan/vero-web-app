@@ -1,0 +1,34 @@
+{
+  "Publications": {
+    "DatePublication": "2026-11-06T16:20:00",
+    "PublicationDetail": [
+      {
+        "IdRegistre": 9001,
+        "Nature": "Personne physique",
+        "Nom": "FICTIVUS",
+        "RegistreDetail": [
+          { "TypeChamp": "PRENOM", "Valeur": [{ "Prenom": "Ignatius" }] },
+          { "TypeChamp": "DATE_DE_NAISSANCE", "Valeur": [{ "Jour": "01", "Mois": "02", "Annee": "1970" }] },
+          { "TypeChamp": "NATIONALITE", "Valeur": [{ "Pays": "Atlantide" }] },
+          { "TypeChamp": "ALIAS", "Valeur": [{ "Alias": "Iggy Fictivus" }] }
+        ]
+      },
+      {
+        "IdRegistre": 9002,
+        "Nature": "Personne morale",
+        "Nom": "Kestrel Shadow Trading LLC",
+        "RegistreDetail": [
+          { "TypeChamp": "ALIAS", "Valeur": [{ "Alias": "KST Holdings", "Commentaire": "made up" }, { "Alias": "Shadow Trading Kestrel" }] },
+          { "TypeChamp": "ADRESSE_PM", "Valeur": [{ "Adresse": "1 Imaginary Road", "Pays": "Atlantide" }] },
+          { "TypeChamp": "COURRIEL", "Valeur": [{ "Courriel": "contact@shadow.example" }] }
+        ]
+      },
+      {
+        "IdRegistre": 9003,
+        "Nature": "Navire",
+        "Nom": "MV Fictional Star",
+        "RegistreDetail": [{ "TypeChamp": "NUMERO_OMI", "Valeur": [{ "NumeroOMI": "0000000" }] }]
+      }
+    ]
+  }
+}

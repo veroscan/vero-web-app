@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Legal health report, page 1</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+@page{size:A4;margin:0}
+body{margin:0}
+.vs.rp-shell{min-height:0;display:block}
+.rp{width:794px;height:1123px;overflow:hidden;background:var(--paper);color:var(--ink);padding:60px 64px 44px;display:flex;flex-direction:column;font-size:16px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rp *{animation:none!important;transition:none!important}
+.rp-top{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.rp-top img{height:26px;display:block}
+.rp-top span{font-size:16px;color:var(--ink-2)}
+.rp-title{padding-top:48px}
+.rp-title h1{font-size:44px;line-height:1.06;letter-spacing:-.028em;font-weight:600}
+.rp-title p{font-size:18px;color:var(--ink-2);padding-top:10px}
+.rp-score{display:flex;align-items:center;justify-content:space-between;gap:32px;padding-top:40px}
+.rp-num{display:flex;align-items:flex-end;gap:14px}
+.rp-num b{font-size:132px;line-height:.84;letter-spacing:-.06em;font-weight:500;color:var(--rose);font-variant-numeric:tabular-nums}
+.rp-num span{font-size:17px;color:var(--ink-2);white-space:nowrap}
+.rp-v{width:150px;height:auto;display:block;flex:none}
+.rp-say{font-size:23px;line-height:1.26;letter-spacing:-.015em;font-weight:600;padding-top:24px;max-width:26em}
+.rp .ruler{max-width:none;margin-top:18px}
+.rp .ruler .keys{font-size:16px}
+.rp-h2{font-size:21px;line-height:1.25;letter-spacing:-.012em;font-weight:600;padding-top:32px;padding-bottom:10px}
+.rp-t{width:100%;border-collapse:collapse;border-top:1px solid var(--line)}
+.rp-t th,.rp-t td{padding:8px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-weight:400}
+.rp-t b{display:block;font-weight:600;line-height:1.3}
+.rp-t small{display:block;font-size:16px;line-height:1.35;color:var(--ink-2)}
+.rp-note{margin-top:auto;font-size:16px;font-weight:600}
+.rp-t .w{width:112px;font-weight:600;white-space:nowrap}
+.rp-t .n{width:40px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.rp-foot{display:flex;justify-content:space-between;gap:24px;padding-top:12px;font-size:13.5px;color:var(--ink-3)}
+</style>
+</helmet>
+<div class="vs rp-shell" data-theme="light">
+  <article class="rp" data-theme="light">
+    <header class="rp-top">
+      <img src="vero-lockup.svg" alt="Vero Scan">
+      <span>5 November 2026</span>
+    </header>
+
+    <div class="rp-title">
+      <h1>Kestrel Pay Inc.</h1>
+      <p>Legal health report, with its companies in the UK and Nigeria</p>
+    </div>
+
+    <div class="rp-score">
+      <div class="rp-num"><b>72</b><span>out of 100</span></div>
+      <svg class="rp-v" viewBox="0 0 132 100" aria-hidden="true"><defs><clipPath id="rp-v"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></clipPath></defs><g clip-path="url(#rp-v)"><rect width="132" height="100" style="fill:var(--line)"></rect><rect y="28" width="132" height="72" style="fill:var(--rose)"></rect></g></svg>
+    </div>
+    <p class="rp-say">A solid legal base, with one urgent issue still open.</p>
+    <div class="ruler" role="img" aria-label="A score of 72 sits in Needs work."><svg class="pin" style="left:72%" viewBox="0 0 132 100" aria-hidden="true"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></svg><div class="track"><b></b><b></b><b></b></div><div class="keys"><span>At risk</span><span>Needs work</span><span>Healthy</span></div></div>
+
+    <h2 class="rp-h2">The six areas</h2>
+    <table class="rp-t">
+      <tbody>
+        <tr><td><b>Intellectual property</b><small>Who owns the code, brand and ideas</small></td><td class="w risk">At risk</td><td class="n">49</td></tr>
+        <tr><td><b>Compliance</b><small>Data protection and the licences needed</small></td><td class="w watch">Needs work</td><td class="n">68</td></tr>
+        <tr><td><b>Fundraising</b><small>Cap table, SAFEs and investor documents</small></td><td class="w watch">Needs work</td><td class="n">74</td></tr>
+        <tr><td><b>AI and data</b><small>How the company uses and trains AI</small></td><td class="w good">Healthy</td><td class="n">79</td></tr>
+        <tr><td><b>Company foundations</b><small>Registration, directors and filings</small></td><td class="w good">Healthy</td><td class="n">84</td></tr>
+        <tr><td><b>Contracts</b><small>What it signs with customers, staff and suppliers</small></td><td class="w good">Healthy</td><td class="n">86</td></tr>
+      </tbody>
+    </table>
+
+    <p class="rp-note">This is a signal, not legal advice.</p>
+    <footer class="rp-foot"><span>Vero Scan, by Code &amp; Clause</span><span>Page 1 of 2</span></footer>
+  </article>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic { renderVals(){ return { theme: 'light' }; } }
+</script>
+</body>
+</html>

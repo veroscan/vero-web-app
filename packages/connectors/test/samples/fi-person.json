@@ -1,0 +1,43 @@
+{
+  "totalResults": 1,
+  "companies": [
+    {
+      "businessId": {
+        "value": "9999998-4",
+        "registrationDate": "2020-01-01",
+        "source": "3"
+      },
+      "names": [
+        {
+          "name": "Matti Fiktiivinen",
+          "type": "1",
+          "registrationDate": "2020-01-01",
+          "version": 1,
+          "source": "1"
+        }
+      ],
+      "companyForms": [],
+      "companySituations": [],
+      "registeredEntries": [],
+      "addresses": [
+        {
+          "type": 1,
+          "street": "Kotitie",
+          "postCode": "00200",
+          "postOffices": [
+            {
+              "city": "HELSINKI",
+              "languageCode": "1"
+            }
+          ],
+          "buildingNumber": "5",
+          "source": "1"
+        }
+      ],
+      "tradeRegisterStatus": "1",
+      "status": "2",
+      "registrationDate": "2020-01-01",
+      "lastModified": "2026-01-01T00:00:00"
+    }
+  ]
+}

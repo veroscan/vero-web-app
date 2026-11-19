@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deadlines on your phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.ph a{text-decoration:none}
+.iconbtn.ph-theme{position:absolute;top:50px;right:12px;width:44px;height:44px;z-index:3}
+.ph .fbtn{height:44px;padding:0 13px}
+.ph .filters{flex-wrap:nowrap;gap:6px}
+.mdl-row{grid-template-columns:72px minmax(0,1fr);gap:4px 14px;padding:16px 0}
+.mdl-row>.st{align-self:start;line-height:22px}
+a.mdl-row:hover{background:none;box-shadow:none}
+</style>
+</helmet>
+<div class="ph" data-theme="{{theme}}">
+  <button class="iconbtn ph-theme" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+  <main class="ph-body" style="display:flex;flex-direction:column;padding-bottom:16px">
+    <div class="stack g16">
+      <div class="stack g8">
+        <h1 class="t-1" style="font-size:34px;padding-right:44px">One deadline is overdue</h1>
+        <p class="quiet"><span class="num" data-filter-count data-one=" date" data-many=" dates">5 dates</span> to keep an eye on.</p>
+      </div>
+
+      <div class="filters" data-filters="#mdl-list" role="group" aria-label="Filter by company">
+        <button class="fbtn on" type="button" data-f="all" aria-pressed="true">All</button>
+        <button class="fbtn" type="button" data-f="inc" aria-pressed="false">Inc.</button>
+        <button class="fbtn" type="button" data-f="uk" aria-pressed="false">UK Ltd</button>
+        <button class="fbtn" type="button" data-f="nigeria" aria-pressed="false">Nigeria Ltd</button>
+      </div>
+
+      <div class="rows" id="mdl-list">
+        <a class="row r-time mdl-row" data-tags="uk" href="MobileIssue.dc.html"><span class="st risk">Overdue</span><span class="stack g4"><span class="row-t">UK confirmation statement</span><span class="row-s">Kestrel Pay UK Ltd</span></span></a>
+        <div class="row r-time mdl-row" data-tags="uk"><span class="st num">18 Nov</span><span class="stack g4"><span class="row-t">UK director identity verification</span><span class="row-s">Kestrel Pay UK Ltd</span></span></div>
+        <div class="row r-time mdl-row" data-tags="inc"><span class="st num">1 Mar</span><span class="stack g4"><span class="row-t">Delaware franchise tax</span><span class="row-s">Kestrel Pay Inc.</span></span></div>
+        <div class="row r-time mdl-row" data-tags="nigeria"><span class="st num">31 Mar</span><span class="stack g4"><span class="row-t">Nigeria data protection audit</span><span class="row-s">Kestrel Pay Nigeria Ltd</span></span></div>
+        <div class="row r-time mdl-row" data-tags="inc"><span class="st num">15 Apr</span><span class="stack g4"><span class="row-t">US tax return and Form 5472</span><span class="row-s">Kestrel Pay Inc.</span></span></div>
+      </div>
+    </div>
+
+    <a class="btn btn-ink" href="MobileIssue.dc.html" style="width:100%;margin-top:auto">Fix the overdue one</a>
+  </main>
+
+  <nav class="ph-tabs" aria-label="Main">
+    <a href="MobileHome.dc.html">Home</a>
+    <a href="MobileIssue.dc.html">Issues</a>
+    <a href="MobileDocuments.dc.html">Documents</a>
+    <a class="on" href="MobileDeadlines.dc.html" aria-current="page">Deadlines</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

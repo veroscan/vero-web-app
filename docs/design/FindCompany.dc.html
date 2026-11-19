@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Find your company</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.fc-title{font-size:clamp(36px,4.2vw,56px);line-height:1.04;letter-spacing:-.034em;font-weight:600;text-wrap:balance}
+.fc-opts .opt{animation:fc-opt .6s var(--ease) backwards}
+.fc-opts .opt:nth-child(2){animation-delay:.07s}
+.fc-opts .opt:nth-child(3){animation-delay:.14s}
+@keyframes fc-opt{from{opacity:0;transform:translateY(12px)}}
+.fc-ring{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--field);display:grid;place-items:center;transition:border-color .2s}
+.fc-ring::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--rose-deep);transform:scale(0);transition:transform .3s var(--spring)}
+.opt:hover .fc-ring{border-color:var(--ink-3)}
+.opt[aria-checked="true"] .fc-ring{border-color:var(--rose-deep)}
+.opt[aria-checked="true"] .fc-ring::after{transform:scale(1)}
+.fc-name{min-width:0}
+.fc-hint{margin-left:auto;padding-left:16px;font-size:14.5px;font-weight:500;color:var(--ink-3);text-align:right;white-space:nowrap;transition:color .2s}
+.opt:hover .fc-hint{color:var(--ink-2)}
+.opt[aria-checked="true"] .fc-hint{color:var(--rose-deep);font-weight:600}
+.fc-find{animation:fc-in .6s var(--ease) both}
+@keyframes fc-in{from{opacity:0;transform:translateY(16px)}}
+.fc-box{position:relative}
+.fc-box svg{position:absolute;left:18px;top:50%;width:20px;height:20px;margin-top:-10px;color:var(--ink-3);pointer-events:none;transition:color .2s}
+.fc-box .input{padding-left:50px}
+.fc-box:focus-within svg{color:var(--rose-deep)}
+.fc [data-for]{display:none}
+.fc:has(#o-de[aria-checked="true"]) [data-for="de"],
+.fc:has(#o-uk[aria-checked="true"]) [data-for="uk"],
+.fc:has(#o-ng[aria-checked="true"]) [data-for="ng"]{display:grid}
+.fc-this{transition:transform .28s var(--ease)}
+a.row:hover .fc-this{transform:translateX(-4px)}
+@media (max-width:600px){.fc-opts .opt{flex-wrap:wrap}.fc-hint{margin-left:38px;padding-left:0;text-align:left;width:100%;white-space:normal}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <img src="vero-lockup.svg" alt="Vero Scan">
+    <span class="small">Step 1 of 3</span>
+    <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button></div>
+  </header>
+  <main class="wrap mid" style="padding-block:clamp(32px,6vw,80px) 64px">
+    <div class="stack g32 fc">
+      <h1 class="fc-title">Where is your company registered?</h1>
+
+      <div class="stack g12 fc-opts" role="radiogroup" aria-label="Country of registration">
+        <button class="opt" id="o-de" type="button" role="radio" aria-checked="false" data-reveal="#find"><span class="fc-ring" aria-hidden="true"></span><span class="fc-name">Delaware, United States<small>Most US startups are registered here</small></span><span class="fc-hint">You'll upload a certificate</span></button>
+        <button class="opt" id="o-uk" type="button" role="radio" aria-checked="false" data-reveal="#find"><span class="fc-ring" aria-hidden="true"></span><span class="fc-name">United Kingdom<small>Registered with Companies House</small></span><span class="fc-hint">Live from Companies House</span></button>
+        <button class="opt" id="o-ng" type="button" role="radio" aria-checked="false" data-reveal="#find"><span class="fc-ring" aria-hidden="true"></span><span class="fc-name">Nigeria<small>Registered with the Corporate Affairs Commission</small></span><span class="fc-hint">Through our licensed provider</span></button>
+      </div>
+
+      <div class="stack g24 fc-find" id="find" hidden>
+        <div class="field">
+          <label for="name">Company name</label>
+          <div class="fc-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input class="input" id="name" type="text" value="Kestrel Pay">
+          </div>
+        </div>
+        <div class="rows" aria-label="Matches">
+          <a class="row r-act" data-for="de" href="ConfirmCompany.dc.html"><span class="stack g4"><span class="row-t">Kestrel Pay Inc.</span><span class="row-s">Corporation · File number 7741209</span></span><span class="link small fc-this">This one</span></a>
+          <a class="row r-act" data-for="de" href="ConfirmCompany.dc.html"><span class="stack g4"><span class="row-t">Kestrel Payments LLC</span><span class="row-s">Limited liability company · File number 6620418</span></span><span class="link small fc-this">This one</span></a>
+          <a class="row r-act" data-for="uk" href="ConfirmCompany.dc.html"><span class="stack g4"><span class="row-t">Kestrel Pay UK Ltd</span><span class="row-s">Limited company · Company number 14839221</span></span><span class="link small fc-this">This one</span></a>
+          <a class="row r-act" data-for="ng" href="ConfirmCompany.dc.html"><span class="stack g4"><span class="row-t">Kestrel Pay Nigeria Ltd</span><span class="row-s">Limited company · RC number 1849302</span></span><span class="link small fc-this">This one</span></a>
+        </div>
+      </div>
+
+      <p class="small">Can't see it? <a class="link" href="NotFound.dc.html">Search another way</a>. Not registered yet? <a class="link" href="Question.dc.html">Start without a company</a>.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

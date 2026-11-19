@@ -1,0 +1,31 @@
+{
+  "api_version": "0.4.8",
+  "results": {
+    "company": {
+      "name": "KESTREL PAY AS",
+      "company_number": "KP-000000",
+      "jurisdiction_code": "ke",
+      "incorporation_date": "2024-03-01",
+      "dissolution_date": null,
+      "company_type": "Private limited company",
+      "registry_url": "https://register.example/company/KP-000000",
+      "branch": null,
+      "branch_status": null,
+      "inactive": false,
+      "current_status": "Active",
+      "created_at": "2024-03-05T10:00:00+00:00",
+      "updated_at": "2026-10-01T10:00:00+00:00",
+      "retrieved_at": "2026-10-01T10:00:00+00:00",
+      "opencorporates_url": "https://opencorporates.com/companies/ke/KP-000000",
+      "previous_names": [],
+      "source": { "publisher": "Fictional Companies Registry", "url": "https://register.example", "terms": "Fictional terms", "retrieved_at": "2026-10-01T10:00:00+00:00" },
+      "registered_address_in_full": "1 Imaginary Street, Nowhere Town, ZZ1 1ZZ",
+      "industry_codes": [],
+      "officers": [
+        { "officer": { "id": 1, "uid": null, "name": "AMARA FICTIVE", "position": "director", "start_date": "2024-03-01", "end_date": null, "opencorporates_url": "https://opencorporates.com/officers/1", "occupation": "Engineer", "date_of_birth": "1985-02-01", "address": "9 Invented Road, Nowhere Town" } },
+        { "officer": { "id": 2, "uid": null, "name": "TUNDE INVENTED", "position": "Director", "start_date": "2024-03-01", "end_date": null, "opencorporates_url": "https://opencorporates.com/officers/2" } },
+        { "officer": { "id": 3, "uid": null, "name": "OLD SECRETARY PERSON", "position": "secretary", "start_date": "2024-03-01", "end_date": "2025-01-31", "opencorporates_url": "https://opencorporates.com/officers/3" } }
+      ]
+    }
+  }
+}

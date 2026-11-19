@@ -1,0 +1,40 @@
+{
+  "connector": "fr.recherche_entreprises",
+  "recordedAt": "2026-11-15T07:18:15.481Z",
+  "ref": {
+    "name": "Danone",
+    "jurisdiction": "FR",
+    "siren": "552032534"
+  },
+  "env": {
+    "set": [
+      "FR_RECHERCHE_ENTREPRISES_USER_AGENT"
+    ],
+    "settings": {
+      "FR_RECHERCHE_ENTREPRISES_USER_AGENT": "VeroScan"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.fr.recherche_entreprises.company_category",
+      "registry.fr.recherche_entreprises.created_on",
+      "registry.fr.recherche_entreprises.directors_count",
+      "registry.fr.recherche_entreprises.directors_entity_count",
+      "registry.fr.recherche_entreprises.directors_role_titles",
+      "registry.fr.recherche_entreprises.establishments_count",
+      "registry.fr.recherche_entreprises.establishments_open_count",
+      "registry.fr.recherche_entreprises.hq_commune",
+      "registry.fr.recherche_entreprises.hq_postcode",
+      "registry.fr.recherche_entreprises.identified",
+      "registry.fr.recherche_entreprises.legal_form_code",
+      "registry.fr.recherche_entreprises.naf_code",
+      "registry.fr.recherche_entreprises.partially_published",
+      "registry.fr.recherche_entreprises.registered_name",
+      "registry.fr.recherche_entreprises.siren",
+      "registry.fr.recherche_entreprises.size_band",
+      "registry.fr.recherche_entreprises.status",
+      "registry.fr.recherche_entreprises.vat_number_listed"
+    ]
+  }
+}

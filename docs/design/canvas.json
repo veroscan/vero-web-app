@@ -1,0 +1,672 @@
+{
+"v": 3,
+"createdOnFiles": {
+"v": 1,
+"at": "2026-11-05T09:00:00Z"
+},
+"title": "Vero Scan Product Designs",
+"launch": {
+"view": "canvas"
+},
+"pages": [],
+"boards": {
+"SignIn.dc.html": {
+"x": 0,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "1 Sign in",
+"expand": "fill",
+"is_interactive": true
+},
+"FindCompany.dc.html": {
+"x": 1520,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "2 Find your company",
+"expand": "fill",
+"is_interactive": true
+},
+"NotFound.dc.html": {
+"x": 3040,
+"y": 0,
+"w": 1440,
+"h": 969,
+"title": "2b Company not found",
+"expand": "fill",
+"is_interactive": true
+},
+"ConfirmCompany.dc.html": {
+"x": 4560,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "3 Is this your company?",
+"expand": "fill",
+"is_interactive": true
+},
+"Question.dc.html": {
+"x": 6080,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "4 A few questions",
+"expand": "fill",
+"is_interactive": true
+},
+"Scanning.dc.html": {
+"x": 7600,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "5 Scanning",
+"expand": "fill",
+"is_interactive": true
+},
+"ScanPartial.dc.html": {
+"x": 9120,
+"y": 0,
+"w": 1440,
+"h": 900,
+"title": "5b One source is down",
+"expand": "fill",
+"is_interactive": true
+},
+"FirstResult.dc.html": {
+"x": 10640,
+"y": 0,
+"w": 1440,
+"h": 1156,
+"title": "6 Your first result",
+"expand": "fill",
+"is_interactive": true
+},
+"Main.dc.html": {
+"x": 1520,
+"y": 1576,
+"w": 1440,
+"h": 1451,
+"title": "7 Home",
+"expand": "fill",
+"is_interactive": true
+},
+"Issues.dc.html": {
+"x": 4560,
+"y": 1576,
+"w": 1440,
+"h": 2037,
+"title": "8 All issues",
+"expand": "fill",
+"is_interactive": true
+},
+"Area.dc.html": {
+"x": 6080,
+"y": 1576,
+"w": 1440,
+"h": 1248,
+"title": "9 One area",
+"expand": "fill",
+"is_interactive": true
+},
+"Issue.dc.html": {
+"x": 7600,
+"y": 1576,
+"w": 1440,
+"h": 1305,
+"title": "10 One issue",
+"expand": "fill",
+"is_interactive": true
+},
+"OrderDocument.dc.html": {
+"x": 9120,
+"y": 1576,
+"w": 1440,
+"h": 973,
+"title": "11 Order a document",
+"expand": "fill",
+"is_interactive": true
+},
+"BookLawyer.dc.html": {
+"x": 10640,
+"y": 1576,
+"w": 1440,
+"h": 900,
+"title": "12 Book a lawyer",
+"expand": "fill",
+"is_interactive": true
+},
+"Documents.dc.html": {
+"x": 0,
+"y": 4033,
+"w": 1440,
+"h": 1841,
+"title": "13 Documents",
+"expand": "fill",
+"is_interactive": true
+},
+"AddDocument.dc.html": {
+"x": 1520,
+"y": 4033,
+"w": 1440,
+"h": 911,
+"title": "14 Add a document",
+"expand": "fill",
+"is_interactive": true
+},
+"DocumentRejected.dc.html": {
+"x": 3040,
+"y": 4033,
+"w": 1440,
+"h": 900,
+"title": "14b Document not accepted",
+"expand": "fill",
+"is_interactive": true
+},
+"Deadlines.dc.html": {
+"x": 4560,
+"y": 4033,
+"w": 1440,
+"h": 1785,
+"title": "15 Deadlines",
+"expand": "fill",
+"is_interactive": true
+},
+"RecordsDelaware.dc.html": {
+"x": 6080,
+"y": 4033,
+"w": 1440,
+"h": 1242,
+"title": "16 Company records, Delaware",
+"expand": "fill",
+"is_interactive": true
+},
+"RecordsUK.dc.html": {
+"x": 7600,
+"y": 4033,
+"w": 1440,
+"h": 1192,
+"title": "16 Company records, UK",
+"expand": "fill",
+"is_interactive": true
+},
+"RecordsNigeria.dc.html": {
+"x": 9120,
+"y": 4033,
+"w": 1440,
+"h": 1242,
+"title": "16 Company records, Nigeria",
+"expand": "fill",
+"is_interactive": true
+},
+"LawyerReview.dc.html": {
+"x": 0,
+"y": 6294,
+"w": 1440,
+"h": 1405,
+"title": "17 Lawyer review",
+"expand": "fill",
+"is_interactive": true
+},
+"Badge.dc.html": {
+"x": 1520,
+"y": 6294,
+"w": 1440,
+"h": 1233,
+"title": "18 Verified badge",
+"expand": "fill",
+"is_interactive": true
+},
+"SharedReport.dc.html": {
+"x": 3040,
+"y": 6294,
+"w": 1440,
+"h": 1498,
+"title": "19 Shared report",
+"expand": "fill",
+"is_interactive": true
+},
+"Settings.dc.html": {
+"x": 6308,
+"y": 6294,
+"w": 1440,
+"h": 2010,
+"title": "20 Settings and team",
+"expand": "fill",
+"is_interactive": true
+},
+"Plan.dc.html": {
+"x": 7828,
+"y": 6294,
+"w": 1440,
+"h": 1647,
+"title": "21 Plan",
+"expand": "fill",
+"is_interactive": true
+},
+"ReviewQueue.dc.html": {
+"x": 0,
+"y": 8724,
+"w": 1440,
+"h": 1382,
+"title": "22 Lawyer queue (internal)",
+"expand": "fill",
+"is_interactive": true
+},
+"ReviewDocument.dc.html": {
+"x": 1520,
+"y": 8724,
+"w": 1440,
+"h": 1025,
+"title": "23 Review a document (internal)",
+"expand": "fill",
+"is_interactive": true
+},
+"Admin.dc.html": {
+"x": 3040,
+"y": 8724,
+"w": 1440,
+"h": 1716,
+"title": "24 Admin (internal)",
+"expand": "fill",
+"is_interactive": true
+},
+"MobileHome.dc.html": {
+"x": 940,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: Home",
+"is_interactive": true
+},
+"MobileIssue.dc.html": {
+"x": 1410,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: One issue",
+"is_interactive": true
+},
+"MobileDocuments.dc.html": {
+"x": 1880,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: Documents",
+"is_interactive": true
+},
+"MobileDeadlines.dc.html": {
+"x": 2350,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: Deadlines",
+"is_interactive": true
+},
+"InvestorScan.dc.html": {
+"x": 0,
+"y": 12124,
+"w": 1440,
+"h": 1630,
+"title": "Later: Investor scan",
+"expand": "fill",
+"is_interactive": true
+},
+"InvestorPortfolio.dc.html": {
+"x": 1520,
+"y": 12124,
+"w": 1440,
+"h": 984,
+"title": "Later: Investor portfolio",
+"expand": "fill",
+"is_interactive": true
+},
+"SignInDark.dc.html": {
+"x": 0,
+"y": 14174,
+"w": 1440,
+"h": 900,
+"title": "Dark: 1 Sign in",
+"expand": "fill",
+"is_interactive": true
+},
+"QuestionDark.dc.html": {
+"x": 1520,
+"y": 14174,
+"w": 1440,
+"h": 900,
+"title": "Dark: 4 A few questions",
+"expand": "fill",
+"is_interactive": true
+},
+"ScanningDark.dc.html": {
+"x": 3040,
+"y": 14174,
+"w": 1440,
+"h": 900,
+"title": "Dark: 5 Scanning",
+"expand": "fill",
+"is_interactive": true
+},
+"FirstResultDark.dc.html": {
+"x": 4560,
+"y": 14174,
+"w": 1440,
+"h": 1156,
+"title": "Dark: 6 Your first result",
+"expand": "fill",
+"is_interactive": true
+},
+"MainDark.dc.html": {
+"x": 7600,
+"y": 14174,
+"w": 1440,
+"h": 1451,
+"title": "Dark: 7 Home",
+"expand": "fill",
+"is_interactive": true
+},
+"IssuesDark.dc.html": {
+"x": 9120,
+"y": 14174,
+"w": 1440,
+"h": 2037,
+"title": "Dark: 8 All issues",
+"expand": "fill",
+"is_interactive": true
+},
+"IssueDark.dc.html": {
+"x": 10640,
+"y": 14174,
+"w": 1440,
+"h": 1305,
+"title": "Dark: 10 One issue",
+"expand": "fill",
+"is_interactive": true
+},
+"DocumentsDark.dc.html": {
+"x": 12160,
+"y": 14174,
+"w": 1440,
+"h": 1841,
+"title": "Dark: 13 Documents",
+"expand": "fill",
+"is_interactive": true
+},
+"AddDocumentDark.dc.html": {
+"x": 13680,
+"y": 14174,
+"w": 1440,
+"h": 911,
+"title": "Dark: 14 Add a document",
+"expand": "fill",
+"is_interactive": true
+},
+"DeadlinesDark.dc.html": {
+"x": 15200,
+"y": 14174,
+"w": 1440,
+"h": 1785,
+"title": "Dark: 15 Deadlines",
+"expand": "fill",
+"is_interactive": true
+},
+"RecordsUKDark.dc.html": {
+"x": 16720,
+"y": 14174,
+"w": 1440,
+"h": 1192,
+"title": "Dark: 16 Company records, UK",
+"expand": "fill",
+"is_interactive": true
+},
+"BadgeDark.dc.html": {
+"x": 19760,
+"y": 14174,
+"w": 1440,
+"h": 1233,
+"title": "Dark: 18 Verified badge",
+"expand": "fill",
+"is_interactive": true
+},
+"LawyerReviewDark.dc.html": {
+"x": 21280,
+"y": 14174,
+"w": 1440,
+"h": 1405,
+"title": "Dark: 17 Lawyer review",
+"expand": "fill",
+"is_interactive": true
+},
+"SharedReportDark.dc.html": {
+"x": 22800,
+"y": 14174,
+"w": 1440,
+"h": 1498,
+"title": "Dark: 19 Shared report",
+"expand": "fill",
+"is_interactive": true
+},
+"PlanDark.dc.html": {
+"x": 24320,
+"y": 14174,
+"w": 1440,
+"h": 1647,
+"title": "Dark: 21 Plan",
+"expand": "fill",
+"is_interactive": true
+},
+"MobileHomeDark.dc.html": {
+"x": 26310,
+"y": 14174,
+"w": 390,
+"h": 844,
+"title": "Dark: Phone: Home",
+"is_interactive": true
+},
+"HomeEmpty.dc.html": {
+"x": 0,
+"y": 1576,
+"w": 1440,
+"h": 900,
+"title": "7a Home for a new user",
+"is_interactive": true,
+"expand": "fill"
+},
+"Notifications.dc.html": {
+"x": 3040,
+"y": 1576,
+"w": 1440,
+"h": 1220,
+"title": "7b What's new",
+"is_interactive": true,
+"expand": "fill"
+},
+"ReportPDF.dc.html": {
+"x": 4560,
+"y": 6294,
+"w": 794,
+"h": 1123,
+"title": "19a PDF report, page 1"
+},
+"ReportPDFp2.dc.html": {
+"x": 5434,
+"y": 6294,
+"w": 794,
+"h": 1123,
+"title": "19a PDF report, page 2"
+},
+"MobileSignIn.dc.html": {
+"x": 0,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: Sign in",
+"is_interactive": true
+},
+"MobileScanning.dc.html": {
+"x": 470,
+"y": 10860,
+"w": 390,
+"h": 844,
+"title": "Phone: Scanning",
+"is_interactive": true
+},
+"HomeEmptyDark.dc.html": {
+"x": 6080,
+"y": 14174,
+"w": 1440,
+"h": 900,
+"title": "Dark: 7a Home for a new user",
+"is_interactive": true,
+"expand": "fill"
+},
+"NotificationsDark.dc.html": {
+"x": 18240,
+"y": 14174,
+"w": 1440,
+"h": 1220,
+"title": "Dark: 7b What's new",
+"is_interactive": true,
+"expand": "fill"
+},
+"MobileSignInDark.dc.html": {
+"x": 25840,
+"y": 14174,
+"w": 390,
+"h": 844,
+"title": "Dark: Phone: Sign in",
+"is_interactive": true
+},
+"MobileIssueDark.dc.html": {
+"x": 26780,
+"y": 14174,
+"w": 390,
+"h": 844,
+"title": "Dark: Phone: One issue",
+"is_interactive": true
+}
+},
+"order": [
+"SignIn.dc.html",
+"FindCompany.dc.html",
+"NotFound.dc.html",
+"ConfirmCompany.dc.html",
+"Question.dc.html",
+"Scanning.dc.html",
+"ScanPartial.dc.html",
+"FirstResult.dc.html",
+"Main.dc.html",
+"Issues.dc.html",
+"Area.dc.html",
+"Issue.dc.html",
+"OrderDocument.dc.html",
+"BookLawyer.dc.html",
+"Documents.dc.html",
+"AddDocument.dc.html",
+"DocumentRejected.dc.html",
+"Deadlines.dc.html",
+"RecordsDelaware.dc.html",
+"RecordsUK.dc.html",
+"RecordsNigeria.dc.html",
+"LawyerReview.dc.html",
+"Badge.dc.html",
+"SharedReport.dc.html",
+"Settings.dc.html",
+"Plan.dc.html",
+"ReviewQueue.dc.html",
+"ReviewDocument.dc.html",
+"Admin.dc.html",
+"MobileHome.dc.html",
+"MobileIssue.dc.html",
+"MobileDocuments.dc.html",
+"MobileDeadlines.dc.html",
+"InvestorScan.dc.html",
+"InvestorPortfolio.dc.html",
+"SignInDark.dc.html",
+"QuestionDark.dc.html",
+"ScanningDark.dc.html",
+"FirstResultDark.dc.html",
+"MainDark.dc.html",
+"IssuesDark.dc.html",
+"IssueDark.dc.html",
+"DocumentsDark.dc.html",
+"AddDocumentDark.dc.html",
+"DeadlinesDark.dc.html",
+"RecordsUKDark.dc.html",
+"BadgeDark.dc.html",
+"LawyerReviewDark.dc.html",
+"SharedReportDark.dc.html",
+"PlanDark.dc.html",
+"MobileHomeDark.dc.html",
+"HomeEmpty.dc.html",
+"Notifications.dc.html",
+"ReportPDF.dc.html",
+"ReportPDFp2.dc.html",
+"MobileSignIn.dc.html",
+"MobileScanning.dc.html",
+"HomeEmptyDark.dc.html",
+"NotificationsDark.dc.html",
+"MobileSignInDark.dc.html",
+"MobileIssueDark.dc.html"
+],
+"notes": {
+"t1": {
+"x": 0,
+"y": -300,
+"text": "Getting started",
+"kind": "title1",
+"maxW": 6000
+},
+"t2": {
+"x": 0,
+"y": 1276,
+"text": "Everyday use",
+"kind": "title1",
+"maxW": 6000
+},
+"t3": {
+"x": 0,
+"y": 3733,
+"text": "Documents, deadlines and records",
+"kind": "title1",
+"maxW": 6000
+},
+"t4": {
+"x": 0,
+"y": 5994,
+"text": "Trust, sharing and account",
+"kind": "title1",
+"maxW": 6000
+},
+"t5": {
+"x": 0,
+"y": 8424,
+"text": "Code & Clause team (internal)",
+"kind": "title1",
+"maxW": 4480
+},
+"t6": {
+"x": 0,
+"y": 10560,
+"text": "Phone app",
+"kind": "title1",
+"maxW": 1800
+},
+"t7": {
+"x": 0,
+"y": 11824,
+"text": "After the MVP: investors",
+"kind": "title1",
+"maxW": 2960
+},
+"t8": {
+"x": 0,
+"y": 13874,
+"text": "Dark version",
+"kind": "title1",
+"maxW": 6000
+}
+},
+"designSystems": []
+}

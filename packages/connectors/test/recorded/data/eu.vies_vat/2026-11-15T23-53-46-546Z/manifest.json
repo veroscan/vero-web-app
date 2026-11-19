@@ -1,0 +1,24 @@
+{
+  "connector": "eu.vies_vat",
+  "recordedAt": "2026-11-15T23:53:46.558Z",
+  "ref": {
+    "name": "Siemens AG",
+    "jurisdiction": "DE",
+    "vat_number": "DE129274202"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.eu.vies_vat.request_date",
+      "registry.eu.vies_vat.valid"
+    ]
+  }
+}

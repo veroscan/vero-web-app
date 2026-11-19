@@ -1,0 +1,14 @@
+{
+  "connector": "eu.vies_vat",
+  "recordedAt": "2026-11-15T23:53:46.548Z",
+  "request": {
+    "method": "POST",
+    "url": "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
+  },
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Mon, 16 Nov 2026 02:20:55 GMT"
+  },
+  "body": "{\n  \"countryCode\": \"DE\",\n  \"vatNumber\": \"129274202\",\n  \"requestDate\": \"2026-11-16T02:20:55.204Z\",\n  \"valid\": true,\n  \"requestIdentifier\": \"\",\n  \"name\": \"[redacted]\",\n  \"address\": \"[redacted]\",\n  \"traderName\": \"[redacted]\",\n  \"traderStreet\": \"[redacted]\",\n  \"traderPostalCode\": \"[redacted]\",\n  \"traderCity\": \"[redacted]\",\n  \"traderCompanyType\": \"[redacted]\",\n  \"traderNameMatch\": \"NOT_PROCESSED\",\n  \"traderStreetMatch\": \"[redacted]\",\n  \"traderPostalCodeMatch\": \"NOT_PROCESSED\",\n  \"traderCityMatch\": \"NOT_PROCESSED\",\n  \"traderCompanyTypeMatch\": \"NOT_PROCESSED\"\n}"
+}

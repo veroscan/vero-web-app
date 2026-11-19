@@ -1,0 +1,7 @@
+{
+  "results": [
+    { "company_id": "DE-HRB-X9999-999999", "name": "Kestrel Pay GmbH", "country": "DE", "register_number": "999999", "register_type": "HRB", "register_court": "Musterstadt", "active": true, "legal_form": "gmbh", "address": { "street": "Beispielweg 1", "city": "Musterstadt", "postal_code": "99999", "country": "DE", "formatted_value": "Beispielweg 1, 99999 Musterstadt" }, "purpose": "Software" },
+    { "company_id": "DE-HRB-X9999-999998", "name": "Kestrel Logistik UG (haftungsbeschränkt)", "country": "DE", "register_number": "999998", "register_type": "HRB", "register_court": "Musterstadt", "active": true, "legal_form": "ug", "address": null, "purpose": null },
+    { "company_id": "DE-HRA-X9999-99997", "name": "Ondine Fictivus e.K.", "country": "DE", "register_number": "99997", "register_type": "HRA", "register_court": "Musterstadt", "active": true, "legal_form": "ek", "address": null, "purpose": null }
+  ]
+}

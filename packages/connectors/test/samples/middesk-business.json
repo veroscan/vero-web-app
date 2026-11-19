@@ -1,0 +1,45 @@
+{
+  "object": "business",
+  "id": "biz_sample",
+  "status": "approved",
+  "name": "Kestrel Pay Inc.",
+  "registrations": [
+    {
+      "object": "registration",
+      "id": "reg_1",
+      "name": "KESTREL PAY INC.",
+      "status": "unknown",
+      "sub_status": null,
+      "entity_type": "CORPORATION",
+      "file_number": "7741209",
+      "registration_date": "2022-08-16",
+      "state": "DE",
+      "registered_agent": {
+        "name": "Northwood Agents LLC",
+        "address": "1 Agent Way"
+      },
+      "officers": [
+        {
+          "name": "Amara Adeyemi",
+          "roles": [
+            "CEO"
+          ],
+          "address": "9 Home Lane",
+          "ssn": "000-00-0000"
+        }
+      ],
+      "addresses": [
+        "1 Sample Plaza"
+      ]
+    },
+    {
+      "object": "registration",
+      "id": "reg_2",
+      "name": "KESTREL PAY INC.",
+      "status": "active",
+      "sub_status": "GOOD_STANDING",
+      "state": "CA",
+      "file_number": "CA111"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "name": "Hans Fiktiv Kestrel",
+    "ehraid": 999999,
+    "uid": "CHE987654326",
+    "chid": "CH99999999999",
+    "legalSeatId": 261,
+    "legalSeat": "Zürich",
+    "registryOfCommerceId": 20,
+    "legalForm": {
+      "id": 1,
+      "uid": "0101",
+      "name": {
+        "de": "Einzelunternehmen",
+        "fr": "Entreprise individuelle",
+        "it": "Impresa individuale",
+        "en": "Sole proprietorship"
+      },
+      "shortName": {
+        "de": "EU",
+        "fr": "EI",
+        "it": "II",
+        "en": "SP"
+      }
+    },
+    "status": "ACTIVE",
+    "sogcDate": "2026-05-04",
+    "translation": [],
+    "purpose": "Zahlungsdienste (fiktiv).",
+    "sogcPub": [
+      {
+        "sogcDate": "2026-05-04",
+        "sogcId": 9999999,
+        "registryOfCommerceId": 20,
+        "registryOfCommerceCanton": "ZH",
+        "registryOfCommerceJournalId": 1,
+        "registryOfCommerceJournalDate": "2026-04-30",
+        "message": "Ausgeschiedene Personen: Fiktiv, Hans, von Nirgendwo, in Zürich, Mitglied, mit Kollektivunterschrift zu zweien.",
+        "mutationTypes": [
+          {
+            "id": 1,
+            "key": "aendorgane"
+          }
+        ]
+      }
+    ],
+    "address": {
+      "organisation": "Hans Fiktiv Kestrel",
+      "careOf": null,
+      "street": "Fiktivstrasse",
+      "houseNumber": "1",
+      "addon": null,
+      "poBox": null,
+      "city": "Zürich",
+      "swissZipCode": "8001"
+    },
+    "canton": "ZH",
+    "capitalNominal": "100000",
+    "capitalCurrency": "CHF",
+    "headOffices": [],
+    "furtherHeadOffices": [],
+    "branchOffices": [
+      {
+        "name": "Kestrel Pay AG, Zweigniederlassung Genf",
+        "ehraid": 999999,
+        "uid": "CHE987654326",
+        "chid": "CH99999999999",
+        "legalSeatId": 261,
+        "legalSeat": "Zürich",
+        "registryOfCommerceId": 20,
+        "legalForm": {
+          "id": 3,
+          "uid": "0106",
+          "name": {
+            "de": "Aktiengesellschaft",
+            "fr": "Société anonyme",
+            "it": "Società anonima",
+            "en": "Company limited by shares"
+          },
+          "shortName": {
+            "de": "AG",
+            "fr": "SA",
+            "it": "SA",
+            "en": "Ltd"
+          }
+        },
+        "status": "ACTIVE",
+        "sogcDate": "2026-05-04"
+      }
+    ],
+    "hasTakenOver": [],
+    "wasTakenOverBy": [],
+    "auditCompanies": [
+      {
+        "name": "Fiktiv Revision AG",
+        "ehraid": 999999,
+        "uid": "CHE111111118",
+        "chid": "CH99999999999",
+        "legalSeatId": 261,
+        "legalSeat": "Zürich",
+        "registryOfCommerceId": 20,
+        "legalForm": {
+          "id": 3,
+          "uid": "0106",
+          "name": {
+            "de": "Aktiengesellschaft",
+            "fr": "Société anonyme",
+            "it": "Società anonima",
+            "en": "Company limited by shares"
+          },
+          "shortName": {
+            "de": "AG",
+            "fr": "SA",
+            "it": "SA",
+            "en": "Ltd"
+          }
+        },
+        "status": "ACTIVE",
+        "sogcDate": "2026-05-04"
+      }
+    ],
+    "oldNames": [],
+    "cantonalExcerptWeb": "https://zh.chregister.ch/",
+    "zefixDetailWeb": {
+      "de": "https://www.zefix.admin.ch/de/search/entity/list/firm/999999"
+    }
+  }
+]

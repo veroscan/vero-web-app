@@ -1,0 +1,41 @@
+{
+  "company_name": "KESTREL PAY UK LTD",
+  "company_number": "14839221",
+  "company_status": "active",
+  "type": "ltd",
+  "date_of_creation": "2023-04-12",
+  "sic_codes": [
+    "62012"
+  ],
+  "registered_office_address": {
+    "address_line_1": "1 Sample Street",
+    "locality": "London",
+    "postal_code": "EC1A 1AA"
+  },
+  "registered_office_is_in_dispute": false,
+  "undeliverable_registered_office_address": false,
+  "confirmation_statement": {
+    "last_made_up_to": "2025-09-28",
+    "next_due": "2026-10-12",
+    "next_made_up_to": "2026-09-28",
+    "overdue": true
+  },
+  "accounts": {
+    "next_accounts": {
+      "due_on": "2027-06-30",
+      "overdue": false,
+      "period_start_on": "2025-04-01",
+      "period_end_on": "2026-03-31"
+    },
+    "last_accounts": {
+      "type": "micro-entity",
+      "made_up_to": "2025-03-31"
+    }
+  },
+  "links": {
+    "self": "/company/14839221",
+    "officers": "/company/14839221/officers",
+    "persons_with_significant_control": "/company/14839221/persons-with-significant-control",
+    "filing_history": "/company/14839221/filing-history"
+  }
+}

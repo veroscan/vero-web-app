@@ -1,0 +1,53 @@
+{
+  "meta": { "goldenCopy": { "publishDate": "2026-11-05T08:00:00Z" } },
+  "data": {
+    "type": "lei-records",
+    "id": "00000KESTRELPAYUK069",
+    "attributes": {
+      "lei": "00000KESTRELPAYUK069",
+      "entity": {
+        "legalName": { "name": "KESTREL PAY UK LTD", "language": "en" },
+        "otherNames": [{ "name": "Kestrel Pay", "language": "en", "type": "TRADING_OR_OPERATING_NAME" }],
+        "transliteratedOtherNames": [],
+        "legalAddress": { "language": "en", "addressLines": ["1 Fictional Yard"], "addressNumber": null, "addressNumberWithinBuilding": null, "mailRouting": null, "city": "London", "region": "GB-LND", "country": "GB", "postalCode": "EC1A 0ZZ" },
+        "headquartersAddress": { "language": "en", "addressLines": ["1 Fictional Yard"], "addressNumber": null, "addressNumberWithinBuilding": null, "mailRouting": null, "city": "London", "region": "GB-LND", "country": "GB", "postalCode": "EC1A 0ZZ" },
+        "registeredAt": { "id": "RA000585", "other": null },
+        "registeredAs": "14839221",
+        "jurisdiction": "GB",
+        "category": "GENERAL",
+        "legalForm": { "id": "H0PO", "other": null },
+        "associatedEntity": { "lei": null, "name": null },
+        "status": "ACTIVE",
+        "expiration": { "date": null, "reason": null },
+        "successorEntity": { "lei": null, "name": null },
+        "successorEntities": [],
+        "creationDate": "2023-04-12T00:00:00Z",
+        "subCategory": null,
+        "otherAddresses": [],
+        "eventGroups": []
+      },
+      "registration": {
+        "initialRegistrationDate": "2024-04-12T09:00:00Z",
+        "lastUpdateDate": "2026-04-12T09:00:00Z",
+        "status": "LAPSED",
+        "nextRenewalDate": "2026-04-12T09:00:00Z",
+        "managingLou": "00000FICTIONALLOU000",
+        "corroborationLevel": "FULLY_CORROBORATED",
+        "validatedAt": { "id": "RA000585", "other": null },
+        "validatedAs": "14839221",
+        "otherValidationAuthorities": []
+      },
+      "bic": null,
+      "conformityFlag": "CONFORMING"
+    },
+    "relationships": {
+      "managing-lou": { "links": { "related": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/managing-lou" } },
+      "direct-parent": { "links": {
+        "relationship-record": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/direct-parent-relationship",
+        "lei-record": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/direct-parent"
+      } },
+      "ultimate-parent": { "links": { "reporting-exception": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/ultimate-parent-reporting-exception" } }
+    },
+    "links": { "self": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069" }
+  }
+}

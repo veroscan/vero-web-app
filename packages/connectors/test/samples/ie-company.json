@@ -1,0 +1,20 @@
+{
+  "company_num": 999990,
+  "company_bus_ind": "C",
+  "company_name": "KESTREL PAY LIMITED",
+  "company_addr_1": "1 FICTIVE STREET",
+  "company_addr_2": "DUBLIN 2",
+  "company_addr_3": null,
+  "company_addr_4": null,
+  "company_reg_date": "2024-03-01T00:00:00",
+  "company_status_desc": "Normal",
+  "company_status_date": "2024-03-01T00:00:00",
+  "last_ar_date": "2026-03-01T00:00:00",
+  "next_ar_date": "2027-03-01T00:00:00",
+  "last_acc_date": "2025-12-31T00:00:00",
+  "comp_type_desc": "LTD - Private Company Limited by Shares",
+  "company_type_code": 1,
+  "company_status_code": 1,
+  "place_of_business": null,
+  "eircode": "D02XY00"
+}

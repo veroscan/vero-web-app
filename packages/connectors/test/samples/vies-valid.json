@@ -1,0 +1,19 @@
+{
+  "countryCode" : "FR",
+  "vatNumber" : "40123456808",
+  "requestDate" : "2026-11-05T09:42:01.123Z",
+  "valid" : true,
+  "requestIdentifier" : "",
+  "name" : "SAS KESTREL PAY",
+  "address" : "1 RUE IMAGINAIRE\n75002 PARIS",
+  "traderName" : "---",
+  "traderStreet" : "---",
+  "traderPostalCode" : "---",
+  "traderCity" : "---",
+  "traderCompanyType" : "---",
+  "traderNameMatch" : "NOT_PROCESSED",
+  "traderStreetMatch" : "NOT_PROCESSED",
+  "traderPostalCodeMatch" : "NOT_PROCESSED",
+  "traderCityMatch" : "NOT_PROCESSED",
+  "traderCompanyTypeMatch" : "NOT_PROCESSED"
+}

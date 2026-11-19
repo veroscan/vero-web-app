@@ -1,0 +1,39 @@
+{
+  "connector": "global.gleif",
+  "recordedAt": "2026-11-15T23:52:49.220Z",
+  "ref": {
+    "name": "Siemens AG",
+    "jurisdiction": "DE",
+    "lei": "W38RGI023J3WT1HWRP32"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.global.gleif.country_matches",
+      "registry.global.gleif.direct_parent_reported",
+      "registry.global.gleif.entity_category",
+      "registry.global.gleif.entity_status",
+      "registry.global.gleif.identified",
+      "registry.global.gleif.legal_address_country",
+      "registry.global.gleif.legal_form_code",
+      "registry.global.gleif.legal_jurisdiction",
+      "registry.global.gleif.legal_name",
+      "registry.global.gleif.lei",
+      "registry.global.gleif.lei_lapsed",
+      "registry.global.gleif.name_matches",
+      "registry.global.gleif.next_renewal_on",
+      "registry.global.gleif.registered_as",
+      "registry.global.gleif.registration_authority_id",
+      "registry.global.gleif.registration_status",
+      "registry.global.gleif.ultimate_parent_reported"
+    ]
+  }
+}

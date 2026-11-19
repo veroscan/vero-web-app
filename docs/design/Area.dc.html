@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Intellectual property</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.areanum{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.areanum .bignum{font-size:clamp(88px,9vw,128px);color:var(--risk)}
+.arearuler{max-width:560px}
+.howlabel{font-weight:600;color:var(--ink)}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <a href="Main.dc.html" aria-label="Vero Scan home"><img src="vero-lockup.svg" alt="Vero Scan"></a>
+    <nav class="tabs" aria-label="Main">
+      <a class="on" href="Main.dc.html">Home</a>
+      <a href="Issues.dc.html">Issues</a>
+      <a href="Documents.dc.html">Documents</a>
+      <a href="Deadlines.dc.html">Deadlines</a>
+      <a href="RecordsDelaware.dc.html">Company</a>
+    </nav>
+    <div class="tools"><button class="searchbtn" type="button" data-search aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>Ctrl K</kbd></button><a class="iconbtn" href="Notifications.dc.html" aria-label="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg></a><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><a class="me" href="Settings.dc.html">Kestrel Pay Inc. <i>AO</i></a></div>
+  </header>
+
+  <main class="wrap mid">
+    <section class="sec stack g48" style="padding-top:32px">
+      <div class="stack g24">
+        <a class="small" href="Main.dc.html">Back to home</a>
+        <div class="stack g16" data-scorebox="49">
+          <p class="lead">Intellectual property</p>
+          <div class="areanum">
+            <span class="bignum" data-count>49</span>
+            <span class="st risk" style="font-size:18px">At risk</span>
+          </div>
+          <div class="arearuler"><div class="ruler flag" role="img" aria-label="This area scores 49, which sits in At risk."><svg class="pin" style="left:49%" viewBox="0 0 132 100" aria-hidden="true"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg><div class="track"><b></b><b></b><b></b></div><div class="keys"><span>At risk</span><span>Needs work</span><span>Healthy</span></div></div></div>
+        </div>
+        <h1 class="t-2" style="max-width:24em">One missing signature is holding this whole area down.</h1>
+        <p class="quiet" style="max-width:38em">An urgent issue keeps an area below 50 until it's fixed, however much else is in order. Everything else here is close to fine.</p>
+      </div>
+
+      <div class="stack g16">
+        <h2 class="t-3">To fix</h2>
+        <div class="rows">
+          <a class="row r-act" href="Issue.dc.html"><span class="stack g4"><span class="row-t">Your lead developer hasn't signed the code over to Kestrel Pay</span><span class="row-s">Urgent · Delaware and Nigeria</span></span><span class="b num">+8 points</span></a>
+          <a class="row r-act" href="Issue.dc.html"><span class="stack g4"><span class="row-t">Your brand isn't trademarked in the UK</span><span class="row-s">Worth doing · United Kingdom</span></span><span class="b num">+1 point</span></a>
+        </div>
+      </div>
+
+      <div class="stack g16">
+        <h2 class="t-3">In good shape</h2>
+        <div class="rows">
+          <details class="more">
+            <summary class="row r-open"><span class="row-t">Your brand is trademarked in the US</span><span class="st good">Passed</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="more-body"><p class="quiet"><span class="howlabel">How we know:</span> Found on the USPTO register today.</p></div>
+          </details>
+          <details class="more">
+            <summary class="row r-open"><span class="row-t">Founders have assigned their IP to the company</span><span class="st good">Passed</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="more-body">
+              <p class="quiet"><span class="howlabel">How we know:</span> A lawyer read this on 3 November.</p>
+              <p class="morelinks"><a class="link" href="LawyerReview.dc.html">See the lawyer's note</a></p>
+            </div>
+          </details>
+          <details class="more">
+            <summary class="row r-open"><span class="row-t">Employee contracts include IP terms</span><span class="st good">Passed</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="more-body">
+              <p class="quiet"><span class="howlabel">How we know:</span> You uploaded these and we read them.</p>
+              <p class="morelinks"><a class="link" href="Documents.dc.html">See your documents</a></p>
+            </div>
+          </details>
+          <details class="more">
+            <summary class="row r-open"><span class="row-t">You use an NDA with new partners</span><span class="st none">Not checked</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="more-body">
+              <p class="quiet"><span class="howlabel">How we know:</span> You told us. We haven't seen a copy yet. <a class="link" href="AddDocument.dc.html">Add it</a></p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1284}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

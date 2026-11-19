@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One source is down</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.sp{flex:1;display:grid;grid-template-columns:minmax(0,38fr) minmax(0,62fr);min-height:100vh}
+.sp-stage{display:flex;flex-direction:column;padding:25px clamp(20px,2.4vw,36px) clamp(20px,2.4vw,36px)}
+[data-theme="dark"] .sp-side{border-left:1px solid var(--line)}
+.sp-stage>img{position:relative;z-index:1;height:26px;align-self:flex-start;display:block}
+.sp-centre{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;padding-block:24px}
+.gauge.sp-gauge{width:min(62%,300px)}
+.sp-gauge svg{width:100%;height:auto;display:block}
+.sp-lvl{transform:translateY(7px);animation:sp-rise 1.6s var(--ease) backwards}
+@keyframes sp-rise{from{transform:translateY(98px)}}
+.sp-note{position:relative;z-index:1;min-height:3em;font-size:clamp(18px,1.6vw,21px);line-height:1.35;letter-spacing:-.008em;color:#fff;font-weight:500;max-width:18em}
+.sp-side{display:flex;flex-direction:column;min-width:0}
+.sp-side .bar{justify-content:flex-end}
+.sp-main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:32px;width:100%;max-width:680px;margin-inline:auto;padding:clamp(12px,2vw,24px) clamp(20px,3vw,40px) clamp(40px,6vw,88px)}
+.sp-retry{animation:sp-breathe 1.1s ease-in-out infinite alternate}
+@keyframes sp-breathe{to{opacity:.45}}
+@media (max-width:980px){.sp{grid-template-columns:minmax(0,1fr);min-height:0}.sp-stage{min-height:300px}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <div class="sp">
+    <aside class="stage sp-stage">
+      <img src="vero-lockup-dark.svg" alt="Vero Scan">
+      <div class="sp-centre">
+        <div class="gauge sp-gauge" data-v3d="fill" data-value="93" role="img" aria-label="13 of 14 checks done">
+          <div class="v3d-fallback"><svg viewBox="0 0 132 100" aria-hidden="true"><defs><clipPath id="sp-v"><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></clipPath></defs><g clip-path="url(#sp-v)"><rect width="132" height="100" style="fill:var(--field)"></rect><rect class="sp-lvl" width="132" height="100" style="fill:var(--rose)"></rect></g></svg></div>
+        </div>
+      </div>
+      <p class="sp-note">We'll keep trying in the background.</p>
+    </aside>
+
+    <div class="sp-side">
+      <header class="bar"><div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button></div></header>
+      <main class="sp-main">
+        <div class="stack g12">
+          <h1 class="t-1">13 of 14 checks are done</h1>
+          <p class="lead">We couldn't reach the Nigerian company register just now. Your result is ready, and we'll keep trying in the background.</p>
+        </div>
+        <ul class="rows">
+          <li class="row r-act"><span class="stack g4"><span class="row-t">Corporate Affairs Commission, Nigeria</span><span class="row-s">Not responding. We last tried a minute ago.</span></span><span class="st watch sp-retry">Retrying</span></li>
+        </ul>
+        <p class="quiet">There's nothing you need to do. Until this comes back, Nigerian company details won't count for or against your score. We'll email you when it updates.</p>
+        <div><a class="btn btn-ink" href="FirstResult.dc.html">See your result</a></div>
+      </main>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

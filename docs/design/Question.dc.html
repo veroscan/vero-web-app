@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A few questions</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.q-main{flex:1;display:flex;align-items:center;width:100%;padding-block:clamp(24px,4vw,48px) clamp(48px,7vw,96px)}
+.q-flow{width:100%}
+.q{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(40px,7vw,104px);align-items:start}
+.q-title{font-size:clamp(38px,4.7vw,66px);line-height:1.02;letter-spacing:-.036em;font-weight:600;text-wrap:balance}
+[data-step] .q-title{animation:stepin .7s var(--ease) backwards}
+.q-how{font-size:17px;color:var(--ink-2)}
+.q-why{max-width:27em;padding-top:clamp(8px,1.4vw,20px);font-size:15.5px}
+[data-step] .opt{animation:q-opt .55s var(--ease) backwards}
+[data-step] .opt:nth-child(2){animation-delay:.05s}
+[data-step] .opt:nth-child(3){animation-delay:.1s}
+[data-step] .opt:nth-child(4){animation-delay:.15s}
+@keyframes q-opt{from{opacity:0;transform:translateX(26px)}}
+.opt kbd{flex:none;transition:color .2s,border-color .2s,background-color .2s}
+.opt[aria-pressed="true"] kbd,.opt[aria-checked="true"] kbd{background:var(--rose);border-color:var(--rose);color:var(--on-rose)}
+.q-nav{justify-content:space-between;padding-top:8px}
+.q-hint{flex:1;text-align:center;font-size:14.5px;color:var(--ink-3)}
+.q-hint kbd{font:500 13px "Figtree",sans-serif;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--ink-2)}
+.flowbar{flex:none}
+@media (hover:none),(max-width:560px){.q-hint{display:none}}
+@media (max-width:860px){.q{grid-template-columns:minmax(0,1fr)}.q-main{align-items:flex-start}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <div class="flowbar" aria-hidden="true"><i data-flow-bar style="width:50%"></i></div>
+  <header class="bar">
+    <img src="vero-lockup.svg" alt="Vero Scan">
+    <span class="small num" data-flow-label aria-live="polite">Question 6 of 12</span>
+    <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button></div>
+  </header>
+  <main class="wrap q-main">
+    <div class="q-flow" data-flow="12" data-first="6">
+      <a data-flow-start hidden href="ConfirmCompany.dc.html">Back to your company</a>
+      <a data-flow-end hidden href="Scanning.dc.html">Start the scan</a>
+
+      <section class="q" data-step>
+        <div class="stack g16">
+          <h1 class="q-title">Who built your product?</h1>
+          <p class="q-how">Choose all that apply.</p>
+          <p class="small q-why"><span class="b">Why we ask.</span> Whoever writes the code can own it unless they've signed it over. We'll check the right agreements for each group.</p>
+        </div>
+        <div class="stack g20">
+          <div class="stack g12" role="group" aria-label="Choose all that apply">
+            <button class="opt on" type="button" aria-pressed="true"><span>Founders</span><kbd>1</kbd></button>
+            <button class="opt" type="button" aria-pressed="false"><span>Employees</span><kbd>2</kbd></button>
+            <button class="opt on" type="button" aria-pressed="true"><span>Contractors or freelancers</span><kbd>3</kbd></button>
+            <button class="opt" type="button" aria-pressed="false"><span>An outside agency</span><kbd>4</kbd></button>
+          </div>
+          <div class="btns q-nav">
+            <button class="btn btn-line" type="button" data-flow-back>Back</button>
+            <span class="q-hint">Press <kbd>Enter</kbd> to continue</span>
+            <button class="btn btn-ink" type="button" data-flow-next>Continue</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="q" data-step hidden>
+        <div class="stack g16">
+          <h1 class="q-title">Do you use AI in the product?</h1>
+          <p class="q-how">Pick the closest one.</p>
+          <p class="small q-why"><span class="b">Why we ask.</span> AI changes what your terms and privacy notice need to say. We'll check they match what you actually do.</p>
+        </div>
+        <div class="stack g20">
+          <div class="stack g12" role="radiogroup" aria-label="Do you use AI in the product?">
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>No<small>Nothing in the product uses AI.</small></span><kbd>1</kbd></button>
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>Yes, we use someone else's<small>For example, a feature built on OpenAI or Anthropic.</small></span><kbd>2</kbd></button>
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>Yes, we train our own<small>Your own models, perhaps using your users' data.</small></span><kbd>3</kbd></button>
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>Not sure<small>That's fine. We'll ask you about it later.</small></span><kbd>4</kbd></button>
+          </div>
+          <div class="btns q-nav">
+            <button class="btn btn-line" type="button" data-flow-back>Back</button>
+            <span class="q-hint">Press <kbd>1</kbd> to <kbd>4</kbd> to answer</span>
+            <button class="btn btn-ink" type="button" data-flow-next>Continue</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="q" data-step hidden>
+        <div class="stack g16">
+          <h1 class="q-title">Do you handle payments?</h1>
+          <p class="q-how">Pick the closest one.</p>
+          <p class="small q-why"><span class="b">Why we ask.</span> Moving money can need a licence, and the rules change from country to country. We'll only look at the ones that apply to you.</p>
+        </div>
+        <div class="stack g20">
+          <div class="stack g12" role="radiogroup" aria-label="Do you handle payments?">
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>No<small>Nobody pays through the product.</small></span><kbd>1</kbd></button>
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>Yes, through a provider<small>Stripe, Paystack or similar handle the money.</small></span><kbd>2</kbd></button>
+            <button class="opt" type="button" role="radio" aria-checked="false" data-pick><span>Yes, we move the money ourselves<small>You hold funds or send them on for your users.</small></span><kbd>3</kbd></button>
+          </div>
+          <div class="btns q-nav">
+            <button class="btn btn-line" type="button" data-flow-back>Back</button>
+            <span class="q-hint">Press <kbd>1</kbd> to <kbd>3</kbd> to answer</span>
+            <button class="btn btn-ink" type="button" data-flow-next>Continue</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="q" data-step hidden>
+        <div class="stack g16">
+          <h1 class="q-title">Where are your users?</h1>
+          <p class="q-how">Choose all that apply.</p>
+          <p class="small q-why"><span class="b">Why we ask.</span> Data and consumer rules follow your users, not just your company. We'll check each place you choose.</p>
+        </div>
+        <div class="stack g20">
+          <div class="stack g12" role="group" aria-label="Choose all that apply">
+            <button class="opt" type="button" aria-pressed="false"><span>Nigeria</span><kbd>1</kbd></button>
+            <button class="opt" type="button" aria-pressed="false"><span>United Kingdom</span><kbd>2</kbd></button>
+            <button class="opt" type="button" aria-pressed="false"><span>United States</span><kbd>3</kbd></button>
+            <button class="opt" type="button" aria-pressed="false"><span>Other</span><kbd>4</kbd></button>
+          </div>
+          <div class="btns q-nav">
+            <button class="btn btn-line" type="button" data-flow-back>Back</button>
+            <span class="q-hint">Press <kbd>Enter</kbd> to continue</span>
+            <button class="btn btn-ink" type="button" data-flow-next>Continue</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

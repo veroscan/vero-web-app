@@ -1,0 +1,6 @@
+Nom de l'organisme désignant;SIREN organisme désignant;NAF;Adresse postale;Code postal;Ville;Organisme DPO;SIREN organisme DPO;Nom DPO;Prénom DPO;Téléphone DPO;Courriel DPO;Date de la désignation
+KESTREL PAY;123 456 808;62.01Z;"1 rue Imaginaire; bâtiment B";75002;PARIS;;;EXEMPLE;Camille;+33 1 00 00 00 00;dpo@kestrelpay.example;14/05/2024
+KESTREL PAY;123456808;62.01Z;1 rue Imaginaire;75002;PARIS;;;EXEMPLE;Camille;+33 1 00 00 00 00;dpo@kestrelpay.example;02/01/2023
+HERON FICTIF;123456790;70.22Z;"2 avenue Fictive
+Cedex 9";69001;LYON;CABINET DPO FICTIF;999999980;CONSEIL;Dominique;01 00 00 00 01;"dominique.conseil@cabinet.example";2021-09-30
+ASSOCIATION SANS SIREN;;94.99Z;3 place Inventée;13001;MARSEILLE;;;PERSONNE;Alex;;alex@asso.example;

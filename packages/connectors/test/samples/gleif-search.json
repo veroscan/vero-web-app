@@ -1,0 +1,51 @@
+{
+  "meta": { "goldenCopy": { "publishDate": "2026-11-05T08:00:00Z" }, "pagination": { "currentPage": 1, "perPage": 10, "from": 1, "to": 3, "total": 3, "lastPage": 1 } },
+  "data": [
+    {
+      "type": "lei-records", "id": "0000FICTIVEJANE00015",
+      "attributes": {
+        "lei": "0000FICTIVEJANE00015",
+        "entity": {
+          "legalName": { "name": "JANE FICTIVE", "language": "en" },
+          "otherNames": [{ "name": "Kestrel Pay UK", "language": "en", "type": "TRADING_OR_OPERATING_NAME" }],
+          "legalAddress": { "addressLines": ["9 Imaginary Close"], "city": "Nowhere Town", "country": "GB", "postalCode": "ZZ1 9ZZ" },
+          "registeredAt": { "id": "RA999999", "other": null }, "registeredAs": null, "jurisdiction": "GB", "category": "SOLE_PROPRIETOR",
+          "legalForm": { "id": "8888", "other": "Sole trader" }, "status": "ACTIVE"
+        },
+        "registration": { "status": "ISSUED", "nextRenewalDate": "2027-01-01T00:00:00Z" }
+      },
+      "relationships": {}
+    },
+    {
+      "type": "lei-records", "id": "00000KESTRELPAYUK069",
+      "attributes": {
+        "lei": "00000KESTRELPAYUK069",
+        "entity": {
+          "legalName": { "name": "KESTREL PAY UK LTD", "language": "en" }, "otherNames": [],
+          "legalAddress": { "addressLines": ["1 Fictional Yard"], "city": "London", "country": "GB", "postalCode": "EC1A 0ZZ" },
+          "registeredAt": { "id": "RA000585", "other": null }, "registeredAs": "14839221", "jurisdiction": "GB", "category": "GENERAL",
+          "legalForm": { "id": "H0PO", "other": null }, "status": "ACTIVE"
+        },
+        "registration": { "status": "LAPSED", "nextRenewalDate": "2026-04-12T09:00:00Z" }
+      },
+      "relationships": {
+        "direct-parent": { "links": { "relationship-record": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/direct-parent-relationship" } },
+        "ultimate-parent": { "links": { "reporting-exception": "https://api.gleif.org/api/v1/lei-records/00000KESTRELPAYUK069/ultimate-parent-reporting-exception" } }
+      }
+    },
+    {
+      "type": "lei-records", "id": "00000KESTRELHOLD0082",
+      "attributes": {
+        "lei": "00000KESTRELHOLD0082",
+        "entity": {
+          "legalName": { "name": "KESTREL PAY HOLDINGS LIMITED", "language": "en" }, "otherNames": [],
+          "legalAddress": { "addressLines": ["1 Fictional Yard"], "city": "London", "country": "GB", "postalCode": "EC1A 0ZZ" },
+          "registeredAt": { "id": "RA000585", "other": null }, "registeredAs": "14839222", "jurisdiction": "GB", "category": "GENERAL",
+          "legalForm": { "id": "H0PO", "other": null }, "status": "ACTIVE"
+        },
+        "registration": { "status": "ISSUED", "nextRenewalDate": "2027-04-12T09:00:00Z" }
+      },
+      "relationships": {}
+    }
+  ]
+}

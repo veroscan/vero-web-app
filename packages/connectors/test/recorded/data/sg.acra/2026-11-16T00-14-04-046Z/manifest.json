@@ -1,0 +1,30 @@
+{
+  "connector": "sg.acra",
+  "recordedAt": "2026-11-16T00:14:04.064Z",
+  "ref": {
+    "name": "Singapore Airlines Limited",
+    "jurisdiction": "SG",
+    "registry_number": "197200078R"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.sg.acra.entity_type",
+      "registry.sg.acra.identified",
+      "registry.sg.acra.issuing_agency",
+      "registry.sg.acra.registered_name",
+      "registry.sg.acra.registered_postcode",
+      "registry.sg.acra.status",
+      "registry.sg.acra.uen",
+      "registry.sg.acra.uen_issued_on"
+    ]
+  }
+}

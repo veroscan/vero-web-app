@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fictional sample in the shape of the EU consolidated financial sanctions list (XML 1.1). Every name, date and address is made up. -->
+<export xmlns="http://eu.europa.ec/fpi/fsd/export" generationDate="2026-11-12T18:00:00.000+01:00" globalFileId="999001">
+  <sanctionEntity designationDetails="" unitedNationId="" euReferenceNumber="EU.9001.01" logicalId="9001">
+    <regulation regulationType="regulation" organisationType="commission" publicationDate="2026-01-01" numberTitle="0000/2026 (fictional)" programme="FICT" logicalId="1"/>
+    <subjectType code="person" classificationCode="P"/>
+    <nameAlias firstName="Orsolya" middleName="" lastName="FABULIX" wholeName="Orsolya FABULIX" function="" gender="F" title="" nameLanguage="" strong="true" regulationLanguage="en" logicalId="11"/>
+    <nameAlias firstName="" middleName="" lastName="" wholeName="Orsi Fabulix" function="" gender="" title="" nameLanguage="" strong="false" regulationLanguage="en" logicalId="12"/>
+    <citizenship region="" countryIso2Code="00" countryDescription="Utopia" regulationLanguage="en" logicalId="13"/>
+    <birthdate circa="false" calendarType="GREGORIAN" city="Nowhere Town" zipCode="" birthdate="1971-03-04" dayOfMonth="4" monthOfYear="3" year="1971" region="" place="" countryIso2Code="00" countryDescription="Utopia" regulationLanguage="en" logicalId="14"/>
+    <address city="Nowhere Town" street="7 Invented Lane" poBox="" zipCode="00000" region="" place="" asAtListingTime="false" contactInfo="orsi@fabulix.example" countryIso2Code="00" countryDescription="Utopia" regulationLanguage="en" logicalId="15"/>
+  </sanctionEntity>
+  <sanctionEntity designationDetails="" unitedNationId="" euReferenceNumber="EU.9002.02" logicalId="9002">
+    <regulation regulationType="regulation" organisationType="commission" publicationDate="2026-01-01" numberTitle="0000/2026 (fictional)" programme="FICT" logicalId="2"/>
+    <subjectType code="enterprise" classificationCode="E"/>
+    <nameAlias firstName="" middleName="" lastName="" wholeName="Kestrel Umbra Trading GmbH" function="" gender="" title="" nameLanguage="" strong="true" regulationLanguage="en" logicalId="21"/>
+    <nameAlias firstName="" middleName="" lastName="" wholeName="KUT Holdings" function="" gender="" title="" nameLanguage="" strong="false" regulationLanguage="en" logicalId="22"/>
+    <address city="Imaginary City" street="1 Fictional Strasse" poBox="" zipCode="00000" region="" place="" asAtListingTime="false" contactInfo="" countryIso2Code="00" countryDescription="Utopia" regulationLanguage="en" logicalId="23"/>
+  </sanctionEntity>
+  <sanctionEntity designationDetails="" unitedNationId="" euReferenceNumber="EU.9003.03" logicalId="9003">
+    <regulation regulationType="regulation" organisationType="commission" publicationDate="2026-01-01" numberTitle="0000/2026 (fictional)" programme="FICT" logicalId="3"/>
+    <subjectType code="enterprise" classificationCode="E"/>
+    <nameAlias firstName="" middleName="" lastName="" wholeName="Umbra Shipping Lines (Pty) Ltd" function="" gender="" title="" nameLanguage="" strong="true" regulationLanguage="en" logicalId="31"/>
+  </sanctionEntity>
+</export>

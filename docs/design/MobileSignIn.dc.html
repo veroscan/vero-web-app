@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in on your phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.ph a:not(.link){text-decoration:none}
+.ms-stage{flex:0 0 408px;display:flex;flex-direction:column;justify-content:space-between;padding:56px 22px 22px}
+.ms-stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(to top,var(--paper),transparent);pointer-events:none}
+.ms-haze{position:absolute;inset:0;background:radial-gradient(60% 50% at 60% 46%,var(--rose),transparent 72%);opacity:0;transition:opacity .9s var(--ease);pointer-events:none}
+.ph:has(.input:focus) .ms-haze{opacity:.3}
+.ms-logo{position:relative;z-index:2;height:24px;align-self:flex-start;display:block}
+.ms-line{position:relative;z-index:2;color:var(--ink);font-size:41px;line-height:1.02;letter-spacing:-.036em;font-weight:600;max-width:8.6em}
+.ms-3d{position:absolute;top:66px;bottom:92px;left:14%;right:-8%}
+.ms-v{flex:none;width:76%;height:auto;fill:url(#ms-enamel);animation:ms-float 9s ease-in-out infinite alternate}
+@keyframes ms-float{from{transform:translateY(-1.5%) rotate(-1deg)}to{transform:translateY(1.5%) rotate(1deg)}}
+.ms-main{flex:1;position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:18px 22px 30px}
+.ms-in{animation:ms-rise .8s var(--ease) backwards;animation-delay:calc(.45s + var(--n)*.09s)}
+@keyframes ms-rise{from{opacity:0;transform:translateY(18px)}}
+.ms-or{display:flex;align-items:center;gap:14px;font-size:14.5px;color:var(--ink-3)}
+.ms-or::before,.ms-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.ms-g{width:18px;height:18px;fill:currentColor}
+.ms-title{font-size:24px;line-height:1.15;letter-spacing:-.02em;font-weight:600;padding-right:48px}
+.iconbtn.ph-theme{position:absolute;top:8px;right:12px;width:44px;height:44px;z-index:3}
+.ms-main .input{height:50px}
+.ms-legal a{display:inline-block;padding:12px 4px;margin:-12px -4px}
+</style>
+</helmet>
+<div class="ph" data-theme="{{theme}}">
+  <div class="stage ms-stage">
+    <div class="ms-3d" data-v3d="hero" aria-hidden="true">
+      <div class="v3d-fallback"><svg class="ms-v" viewBox="0 0 132 100"><defs><linearGradient id="ms-enamel" x1="0" y1="0" x2=".55" y2="1"><stop offset="0" style="stop-color:var(--rose-hover)"></stop><stop offset=".6" style="stop-color:var(--rose)"></stop><stop offset="1" style="stop-color:var(--rose-deep)"></stop></linearGradient></defs><path d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"></path></svg></div>
+    </div>
+    <div class="ms-haze"></div>
+    <img class="ms-logo" src="vero-lockup-dark.svg" alt="Vero Scan">
+    <p class="ms-line" data-blurin="0.3">Know exactly where your company stands.</p>
+  </div>
+
+  <main class="ms-main">
+    <button class="iconbtn ph-theme" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+    <h1 class="ms-title ms-in" style="--n:0">Get your legal health score</h1>
+    <form class="stack g12" action="FindCompany.dc.html">
+      <a class="btn btn-line ms-in" style="--n:1;width:100%" href="FindCompany.dc.html"><svg class="ms-g" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.64 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.96S8.78 6.26 12 6.26c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.7 14.55 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c6.93 0 9.2-4.86 9.2-7.36 0-1.03-.05-1.74-.15-2.74Z"></path></svg>Continue with Google</a>
+      <p class="ms-or ms-in" style="--n:2">or</p>
+      <div class="stack g8 ms-in" style="--n:3">
+        <label class="b" for="ms-email" style="font-size:15px">Work email</label>
+        <input class="input" id="ms-email" type="email" value="amara@kestrelpay.co">
+      </div>
+      <a class="btn btn-ink ms-in" style="--n:4;width:100%" href="FindCompany.dc.html">Continue</a>
+    </form>
+    <p class="small ms-in ms-legal" style="--n:5">We'll email you a sign-in link. By continuing you accept our <a class="link" href="Settings.dc.html">terms</a> and <a class="link" href="Settings.dc.html">privacy policy</a>.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

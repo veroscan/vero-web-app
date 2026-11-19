@@ -1,0 +1,30 @@
+{
+  "active_count": 1,
+  "ceased_count": 1,
+  "total_results": 2,
+  "items": [
+    {
+      "kind": "corporate-entity-person-with-significant-control",
+      "name": "Kestrel Pay Inc.",
+      "natures_of_control": [
+        "ownership-of-shares-75-to-100-percent"
+      ],
+      "notified_on": "2023-04-12",
+      "address": {
+        "premises": "1 Sample Plaza"
+      }
+    },
+    {
+      "kind": "individual-person-with-significant-control",
+      "name": "Mr Ceased Person",
+      "ceased_on": "2024-02-02",
+      "date_of_birth": {
+        "month": 1,
+        "year": 1970
+      },
+      "address": {
+        "premises": "4 Home Close"
+      }
+    }
+  ]
+}

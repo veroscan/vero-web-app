@@ -1,0 +1,9 @@
+{
+  "name": "sharp",
+  "version": "0.0.0-vero-none",
+  "private": true,
+  "description": "Stands in for sharp, which is banned (LGPL binaries). Holds no image code. Next.js lists sharp as optional and npm has no way to drop an optional dependency from the lockfile. images.unoptimized is true, so nothing calls this.",
+  "license": "UNLICENSED",
+  "main": "./index.mjs",
+  "exports": "./index.mjs"
+}

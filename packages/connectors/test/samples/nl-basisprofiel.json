@@ -1,0 +1,19 @@
+{
+  "kvkNummer": "99912345",
+  "indNonMailing": "Ja",
+  "naam": "Kestrel Pay B.V.",
+  "formeleRegistratiedatum": "20240301",
+  "materieleRegistratie": { "datumAanvang": "20240301" },
+  "totaalWerkzamePersonen": 4,
+  "statutaireNaam": "Kestrel Pay B.V.",
+  "handelsnamen": [{ "naam": "Kestrel Pay B.V.", "volgorde": 0 }, { "naam": "Kestrel Pay", "volgorde": 1 }],
+  "sbiActiviteiten": [
+    { "sbiCode": "6201", "sbiOmschrijving": "Ontwikkelen, produceren en uitgeven van software", "indHoofdactiviteit": "Nee" },
+    { "sbiCode": "62010", "sbiOmschrijving": "Ontwikkelen, produceren en uitgeven van software", "indHoofdactiviteit": "Ja" }
+  ],
+  "links": [],
+  "_embedded": {
+    "hoofdvestiging": { "vestigingsnummer": "000000000001", "kvkNummer": "99912345", "eersteHandelsnaam": "Kestrel Pay B.V.", "indHoofdvestiging": "Ja", "adressen": [{ "type": "bezoekadres", "straatnaam": "Fictiefstraat", "huisnummer": 1, "postcode": "1011AA", "plaats": "Amsterdam" }] },
+    "eigenaar": { "rsin": "000000000", "rechtsvorm": "BeslotenVennootschap", "uitgebreideRechtsvorm": "Besloten Vennootschap", "adressen": [], "websites": ["www.kestrelpay.example"] }
+  }
+}

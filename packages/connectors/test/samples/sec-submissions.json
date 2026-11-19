@@ -1,0 +1,29 @@
+{
+  "cik": "1999999",
+  "name": "KESTREL PAY INC.",
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0001999999-25-000001",
+        "0001999999-24-000009",
+        "0001999999-23-000001"
+      ],
+      "filingDate": [
+        "2025-06-03",
+        "2024-11-01",
+        "2023-01-01"
+      ],
+      "form": [
+        "D",
+        "8-K",
+        "D/A"
+      ],
+      "primaryDocument": [
+        "primary_doc.xml",
+        "x.htm",
+        "xslFormDX01/primary_doc.xml"
+      ]
+    },
+    "files": []
+  }
+}

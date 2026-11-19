@@ -1,0 +1,42 @@
+{
+  "name": "@vero/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "exports": {
+    "./db": "./src/db/index.ts",
+    "./infra": "./src/infra/index.ts",
+    "./jobs": "./src/jobs/index.ts",
+    "./compose": "./src/compose.ts",
+    "./config": "./src/config.ts",
+    "./deps": "./src/deps.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@aws-sdk/client-s3": "^3.900.0",
+    "@aws-sdk/s3-request-presigner": "^3.900.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/rate-limit": "^10.3.0",
+    "@vero/connectors": "*",
+    "@vero/rules": "*",
+    "@vero/shared": "*",
+    "bullmq": "^5.60.0",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.6.0",
+    "ioredis": "^5.8.0",
+    "otpauth": "^9.4.0",
+    "pdfjs-dist": "^5.4.149",
+    "pg": "^8.16.0",
+    "stripe": "^19.3.0",
+    "tsx": "^4.20.0",
+    "zod": "^4.1.0"
+  }
+}

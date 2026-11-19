@@ -1,0 +1,35 @@
+{
+  "connector": "cz.ares",
+  "recordedAt": "2026-11-16T00:13:12.400Z",
+  "ref": {
+    "name": "ČEZ, a. s.",
+    "jurisdiction": "CZ",
+    "registry_number": "45274649"
+  },
+  "env": {
+    "set": [
+      "PUBLIC_API_USER_AGENT"
+    ],
+    "settings": {
+      "PUBLIC_API_USER_AGENT": "VeroScan-engine-check/1.0"
+    }
+  },
+  "expected": {
+    "status": "found",
+    "factKeys": [
+      "registry.cz.ares.established_on",
+      "registry.cz.ares.ico",
+      "registry.cz.ares.identified",
+      "registry.cz.ares.in_public_register",
+      "registry.cz.ares.insolvency_record_active",
+      "registry.cz.ares.legal_form_code",
+      "registry.cz.ares.nace_codes",
+      "registry.cz.ares.public_register_file",
+      "registry.cz.ares.region",
+      "registry.cz.ares.registered_name",
+      "registry.cz.ares.status",
+      "registry.cz.ares.vat_number_present",
+      "registry.cz.ares.vat_payer"
+    ]
+  }
+}

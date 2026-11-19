@@ -1,0 +1,17 @@
+{
+  "status": [
+    "live-recievership"
+  ],
+  "cases": [
+    {
+      "number": 1,
+      "type": "creditors-voluntary-liquidation",
+      "dates": [
+        {
+          "type": "wound-up-on",
+          "date": "2026-01-01"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+
+# Local database, uploaded files and other runtime data
+.data/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+coverage/
+
+# Logs and editors
+*.log
+.DS_Store
+.vscode/
+.idea/

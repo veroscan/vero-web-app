@@ -1,0 +1,19 @@
+{
+  "status": "successful",
+  "data": [
+    {
+      "name": "Amara Adeyemi",
+      "designation": "director",
+      "phone": "+2348000000000",
+      "email": "amara@example.com",
+      "address": "9 Home Lane, Lagos",
+      "date_of_birth": "1988-05-01",
+      "bvn": "22222222222"
+    },
+    {
+      "surname": "Okafor",
+      "first_name": "Tunde",
+      "phone": "+2348000000001"
+    }
+  ]
+}

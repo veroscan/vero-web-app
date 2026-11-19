@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "title": "KESTREL PAY INC.",
+      "sosId": "7741209",
+      "entityType": "Corporation",
+      "filingDate": "2022-08-16",
+      "status": "unknown",
+      "agentName": "Northwood Agents LLC",
+      "nextReportDueDate": "2027-03-01",
+      "officers": [
+        {
+          "name": "Amara Adeyemi",
+          "title": "CEO",
+          "address": "9 Home Lane"
+        }
+      ]
+    }
+  ]
+}

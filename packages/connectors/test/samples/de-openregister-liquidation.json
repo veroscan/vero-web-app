@@ -1,0 +1,15 @@
+{
+  "id": "DE-HRB-X9999-999998",
+  "register": { "company_id": "DE-HRB-X9999-999998", "register_number": "999998", "register_type": "HRB", "register_court": "Musterstadt", "start_date": "2023-01-10" },
+  "status": "liquidation",
+  "name": { "name": "Kestrel Logistik UG (haftungsbeschränkt)", "legal_form": "ug", "start_date": "2023-01-10" },
+  "address": { "city": "Musterstadt", "country": "DE", "start_date": "2023-01-10", "formatted_value": "Musterstadt" },
+  "capital": { "amount": 500, "currency": "EUR", "start_date": "2023-01-10" },
+  "representation": [
+    { "id": "DE-HRB-X9999-999990", "name": "Heron Holding GmbH", "type": "legal_person", "role": "LIQUIDATOR", "start_date": "2026-01-01", "end_date": null, "legal_person": { "name": "Heron Holding GmbH", "city": "Musterstadt", "country": "DE" }, "natural_person": null }
+  ],
+  "legal_form": "ug",
+  "incorporated_at": "2023-01-10",
+  "terminated_at": null,
+  "insolvencies": [ { "id": "00000000-0000-4000-8000-000000000000", "current_status": "opened", "court": "Musterstadt", "case_number": "X 1/26", "proceeding_kind": "regular_insolvency", "administration_kind": "external_administration", "opened_at": "2026-02-01", "closed_at": null } ]
+}

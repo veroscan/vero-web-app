@@ -1,0 +1,14 @@
+{
+  "api_version": "0.4.8",
+  "results": {
+    "companies": [
+      { "company": { "name": "AMARA FICTIVE", "company_number": "KP-999999", "jurisdiction_code": "ke", "incorporation_date": "2020-01-01", "company_type": "Sole proprietorship", "inactive": false, "current_status": "Active", "registered_address_in_full": "9 Invented Road, Nowhere Town" } },
+      { "company": { "name": "KESTREL PAY AS", "company_number": "KP-000000", "jurisdiction_code": "ke", "incorporation_date": "2024-03-01", "company_type": "Private limited company", "inactive": false, "current_status": "Active", "branch": null, "source": { "publisher": "Fictional Companies Registry" } } },
+      { "company": { "name": "KESTREL PAYMENTS AS", "company_number": "KP-000001", "jurisdiction_code": "ke", "incorporation_date": "2025-06-01", "company_type": "Private limited company", "inactive": false, "current_status": "Active", "branch": "F" } }
+    ],
+    "page": 1,
+    "per_page": 10,
+    "total_pages": 1,
+    "total_count": 3
+  }
+}

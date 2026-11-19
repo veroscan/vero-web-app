@@ -1,0 +1,40 @@
+{
+  "ico": "87654334",
+  "obchodniJmeno": "Jan Fiktivní",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevStatu": "Česká republika",
+    "kodKraje": 116,
+    "nazevKraje": "Jihomoravský kraj",
+    "kodObce": 582786,
+    "nazevObce": "Brno",
+    "nazevUlice": "Domovská",
+    "cisloDomovni": 1,
+    "psc": 60200,
+    "textovaAdresa": "Domovská 7, 60200 Brno",
+    "standardizaceAdresy": true
+  },
+  "pravniForma": "101",
+  "datumVzniku": "2015-01-01",
+  "seznamRegistraci": {
+    "stavZdrojeRos": "AKTIVNI",
+    "stavZdrojeVr": "NEEXISTUJICI",
+    "stavZdrojeRes": "AKTIVNI",
+    "stavZdrojeRzp": "AKTIVNI",
+    "stavZdrojeNrpzs": "NEEXISTUJICI",
+    "stavZdrojeRpsh": "NEEXISTUJICI",
+    "stavZdrojeRcns": "NEEXISTUJICI",
+    "stavZdrojeSzr": "NEEXISTUJICI",
+    "stavZdrojeDph": "AKTIVNI",
+    "stavZdrojeSkDph": "NEEXISTUJICI",
+    "stavZdrojeSd": "NEEXISTUJICI",
+    "stavZdrojeIr": "NEEXISTUJICI",
+    "stavZdrojeCeu": "NEEXISTUJICI",
+    "stavZdrojeRs": "NEEXISTUJICI",
+    "stavZdrojeRed": "NEEXISTUJICI",
+    "stavZdrojeMonitor": "NEEXISTUJICI"
+  },
+  "czNace": [
+    "62010"
+  ]
+}

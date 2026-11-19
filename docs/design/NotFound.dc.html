@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Company not found</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="vero.css">
+<script src="vero-ui.js"></script>
+<script src="vero-3d.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+.rows>details.more{animation:rowin .55s var(--ease) both}
+.rows>details.more:nth-child(2){animation-delay:.04s}.rows>details.more:nth-child(3){animation-delay:.08s}.rows>details.more:nth-child(4){animation-delay:.12s}.rows>details.more:nth-child(5){animation-delay:.16s}.rows>details.more:nth-child(n+6){animation-delay:.2s}
+details.more[open] .more-body>*{animation:bodyin .45s var(--ease) both}
+@keyframes bodyin{from{opacity:0;transform:translateY(-6px)}}
+.more-body p{max-width:40em}
+.morelinks{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14.5px}
+.r-area4{grid-template-columns:minmax(0,1fr) 110px 44px 18px}
+.r-open{grid-template-columns:minmax(0,1fr) auto 18px}
+@media (max-width:640px){
+  .r-area4{grid-template-columns:minmax(0,1fr) 36px 18px;column-gap:12px}
+  .r-area4>.st{grid-row:2;grid-column:1}
+  .r-open{column-gap:12px}
+}
+.bignum{font-weight:500;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.meter.grow i{animation:growin 1.3s .15s var(--ease) both}
+@keyframes growin{from{width:0}}
+.btn .arr{width:18px;height:18px;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.ruler.flag{container-type:inline-size;padding-top:62px;max-width:none}
+.ruler.flag .pin{top:22px}
+.ruler.flag .goal{left:80%;top:0;bottom:auto;height:72px;width:1.5px;margin-left:-.75px}
+.ruler.flag .goallabel{left:calc(80% + 8px);right:auto;top:-2px;bottom:auto;transform:none}
+@container (max-width:560px){.ruler.flag .goallabel{left:auto;right:calc(20% + 8px)}}
+.swap{display:grid}
+.swap>*{grid-area:1/1;transition:opacity .25s}
+.swap:has(.previewline.on)>:not(.previewline){opacity:0}
+@media (max-width:900px){.stick{position:static!important}}
+@media (max-width:760px){.searchbtn kbd{display:none}}
+.vwrap{position:relative}
+.vwrap .input{padding-right:48px}
+.okmark{position:absolute;right:16px;top:50%;width:22px;height:22px;margin-top:-11px;color:var(--good);opacity:0;transform:scale(.4);transition:transform .3s var(--spring),opacity .2s;pointer-events:none}
+.vwrap .input:valid:not(:placeholder-shown)~.okmark{opacity:1;transform:none}
+.input:user-invalid{border-color:var(--risk)}
+.input:user-invalid:focus{border-color:var(--risk);box-shadow:0 0 0 3px var(--risk-tint)}
+.msg{font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+.msg.bad{display:none;color:var(--risk);font-weight:500}
+.field:has(.input:user-invalid) .msg.hint{display:none}
+.field:has(.input:user-invalid) .msg.bad{display:block;animation:nudge .35s var(--ease)}
+@keyframes nudge{20%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+.nf{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(32px,6vw,88px);align-items:center;padding-block:clamp(24px,5vw,72px) clamp(32px,4vw,56px)}
+.nf h1{font-size:clamp(40px,5.2vw,68px);line-height:1.02;letter-spacing:-.035em;font-weight:600}
+.emptyv{width:100%;max-width:360px;aspect-ratio:132/100;justify-self:center}
+.lookup{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.lookup .btn{min-height:56px}
+@media (max-width:820px){.nf{grid-template-columns:minmax(0,1fr)}.emptyv{order:-1;max-width:200px;justify-self:start}}
+@media (max-width:480px){.lookup{grid-template-columns:minmax(0,1fr)}}
+</style>
+</helmet>
+<div class="vs" data-theme="{{theme}}">
+  <header class="bar">
+    <img src="vero-lockup.svg" alt="Vero Scan">
+    <span class="small">Step 1 of 3</span>
+  <div class="tools"><button class="iconbtn" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </header>
+  <main class="wrap">
+    <section class="nf">
+      <div class="stack g20">
+        <h1 data-blurin="0.1">We couldn't find "Kestrel Pay" at Companies House</h1>
+        <p class="lead" style="max-width:32em">That's usually a small spelling difference, or the company is registered under another name.</p>
+      </div>
+      <div class="gauge emptyv" data-v3d="fill" data-value="0" role="img" aria-label="An empty V. There's nothing to score until we find your company."><div class="v3d-fallback"><svg viewBox="0 0 132 100" width="100%"><path fill="var(--mist)" d="M14.7 0H51L35 26.5C31 32 26 35 19 35 8 35 0 27 0 17 0 8 6 2 14.7 0ZM97 0h35L74 92.6c-3.5 4.9-8.5 7.4-14 7.4-6 0-11.5-3-15-7.5L22.4 58.4C27 61.5 31.5 64 37.6 64c6.4 0 11.4-2.5 14.9-7.5L84 7c3-4 8-7 13-7Z"/></svg></div></div>
+    </section>
+
+    <section class="stack g32" style="padding-bottom:64px;max-width:720px">
+      <form class="field" action="ConfirmCompany.dc.html">
+        <label for="num">Try your company number</label>
+        <div class="lookup">
+          <div class="vwrap"><input class="input" id="num" type="text" required pattern="\s*([0-9]{8}|[A-Za-z]{2}[0-9]{6})\s*" placeholder="For example 14839221" autocomplete="off"><svg class="okmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+          <button class="btn btn-ink" type="submit">Search</button>
+        </div>
+        <p class="msg hint">It's on your certificate of incorporation.</p>
+        <p class="msg bad">UK company numbers have 8 characters, like 14839221.</p>
+      </form>
+
+      <div class="rows">
+        <a class="row r-act" href="FindCompany.dc.html"><span class="stack g4"><span class="row-t">It's registered in another country</span><span class="row-s">Go back and choose Delaware or Nigeria</span></span><span class="link small">Change</span></a>
+        <a class="row r-act" href="Question.dc.html"><span class="stack g4"><span class="row-t">We haven't registered yet</span><span class="row-s">You can still get a score, and we'll show you what to set up first</span></span><span class="link small">Continue</span></a>
+        <a class="row r-act" href="BookLawyer.dc.html"><span class="stack g4"><span class="row-t">I'm sure it's registered</span><span class="row-s">Tell us the details and a person will look it up</span></span><span class="link small">Ask us</span></a>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":969}}'>
+class Component extends DCLogic { renderVals(){ return { theme: this.props.theme ?? 'light' }; } }
+</script>
+</body>
+</html>

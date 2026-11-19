@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<feed xmlns="http://www.w3.org/2005/Atom"><entry title="ARRAY(0x1)"><content type="text/xml"><company-info name="ARRAY(0x2)"><addresses><address type="business"><city>WILMINGTON</city></address></addresses><cik>0001999999</cik><state>DE</state></company-info></content><id>urn:tag:www.sec.gov:cik=0001999999</id></entry><entry title="ARRAY(0x3)"><content type="text/xml"><company-info name="ARRAY(0x4)"><cik>0001888888</cik></company-info></content></entry></feed>

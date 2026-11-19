@@ -1,0 +1,13 @@
+{
+  "applicationNumber": "099999901",
+  "markFeature": "WORD",
+  "markBasis": "EU_TRADEMARK",
+  "niceClasses": [9, 36],
+  "wordMarkSpecification": { "verbalElement": "KESTREL PAY" },
+  "applicants": [{ "name": "Sample Applicant Person" }],
+  "applicationDate": "2024-03-01",
+  "registrationDate": "2024-07-15T00:00:00Z",
+  "expiryDate": "2034-03-01",
+  "status": "REGISTERED",
+  "statusDate": "2024-07-15"
+}

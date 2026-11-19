@@ -1,0 +1,12 @@
+{
+  "pagina": 1,
+  "resultatenPerPagina": 20,
+  "totaal": 4,
+  "resultaten": [
+    { "kvkNummer": "99912345", "rsin": "000000000", "naam": "Kestrel Pay B.V.", "type": "rechtspersoon", "actief": "Ja", "links": [] },
+    { "kvkNummer": "99912345", "rsin": "000000000", "vestigingsnummer": "000000000001", "naam": "Kestrel Pay B.V.", "type": "hoofdvestiging", "actief": "Ja", "adres": { "binnenlandsAdres": { "type": "bezoekadres", "straatnaam": "Fictiefstraat", "plaats": "Amsterdam" } }, "links": [] },
+    { "kvkNummer": "99912353", "vestigingsnummer": "000000000002", "naam": "Kestrel Pay O. Fictivus", "type": "hoofdvestiging", "actief": "Ja", "adres": { "binnenlandsAdres": { "type": "bezoekadres", "straatnaam": "Thuisweg", "plaats": "Utrecht" } }, "links": [] },
+    { "kvkNummer": "99912361", "rsin": "000000001", "naam": "Kestrel Payments N.V.", "type": "rechtspersoon", "actief": "Ja", "links": [] }
+  ],
+  "links": []
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "corporationId": "98765432",
+    "act": "Canada Business Corporations Act",
+    "status": "Active",
+    "corporationNames": [
+      { "CorporationName": { "name": "9876543 Canada Inc.", "nameType": "Primary", "current": false, "effectiveDate": "2024-03-01", "expiryDate": "2024-09-30" } },
+      { "CorporationName": { "name": "Kestrel Pay Inc.", "nameType": "Primary", "current": true, "effectiveDate": "2024-10-01", "expiryDate": null } }
+    ],
+    "adresses": [
+      { "address": { "addressLine": ["1 Fictive Street"], "city": "Ottawa", "postalCode": "K1A 0A1", "provinceCode": "ON", "countryCode": "CA" } }
+    ],
+    "directorLimits": { "minimum": 1, "maximum": 10 },
+    "businessNumbers": { "businessNumber": "000000000" },
+    "annualReturns": [
+      { "annualReturn": { "annualMeetingdate": "2025-03-01", "yearOfFiling": "2025" } },
+      { "annualReturn": { "annualMeetingdate": "2026-03-01", "yearOfFiling": "2026" } }
+    ],
+    "activities": [
+      { "activity": { "activity": "Incorporation", "date": "2024-03-01" } },
+      { "activity": { "activity": "Amendment", "date": "2024-10-01" } }
+    ]
+  },
+  null
+]
