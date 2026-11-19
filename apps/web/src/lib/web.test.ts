@@ -101,7 +101,7 @@ describe('question steps', () => {
 });
 
 function issue(severity: IssueSummary['severity'], points: number | null, outcome: IssueSummary['outcome'] = 'gap'): IssueSummary {
-  return { ruleKey: `GB.X.${severity.toUpperCase()}`, companyId: '00000000-0000-4000-8000-000000000000', companyName: 'Co', headline: 'H', layer: 1, layerName: 'L', area: 'A', severity, severityWord: 'W', outcome, outcomeWord: 'O', country: 'GB', countryLabel: 'United Kingdom', appliesBecause: 'incorporated', points, dueOn: null, actionType: 'upload', quickOrder: null, howWeKnow: [] };
+  return { ruleKey: `GB.X.${severity.toUpperCase()}`, companyId: '00000000-0000-4000-8000-000000000000', companyName: 'Co', headline: 'H', layer: 1, layerName: 'L', area: 'A', severity, severityWord: 'W', outcome, outcomeWord: 'O', country: 'GB', countryLabel: 'United Kingdom', appliesBecause: 'incorporated', points, dueOn: null, actionType: 'upload', howWeKnow: [] };
 }
 
 describe('issues', () => {

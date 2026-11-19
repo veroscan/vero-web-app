@@ -311,7 +311,7 @@ describe('how we know', () => {
     expect(howWeKnow({ ...base, source_name: 'NDPC', method: 'official_list' }, asOf)).toBe('Found on the NDPC list');
     expect(howWeKnow({ ...base, source_name: 'you', method: 'document' }, asOf)).toBe('You uploaded this and we read it');
     expect(howWeKnow({ ...base, source_name: 'you', method: 'attested' }, asOf)).toBe('You told us');
-    expect(howWeKnow({ ...base, source_name: 'lawyer', method: 'lawyer' }, asOf)).toBe('A lawyer read this');
+    expect(howWeKnow({ ...base, source_name: 'lawyer', method: 'lawyer' }, asOf)).toBe('You uploaded this and it was reviewed');
   });
 
   it('gives the date when it was not today', () => {

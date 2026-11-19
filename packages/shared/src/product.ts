@@ -221,7 +221,6 @@ export const issueSummarySchema = z.object({
   declaredMissing: z.boolean().optional(),
   dueOn: z.string().nullable(),
   actionType: z.string(),
-  quickOrder: z.string().nullable(),
   howWeKnow: z.array(z.string()),
 });
 export type IssueSummary = z.infer<typeof issueSummarySchema>;

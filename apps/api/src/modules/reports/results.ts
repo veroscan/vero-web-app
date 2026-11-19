@@ -176,8 +176,8 @@ function summary(item: LoadedFinding, points: number | null, heldByUrgent = fals
     canDeclareMissing: item.detail.document_rule && item.outcome === 'verify' && item.detail.reason === 'not_seen_yet',
     declaredMissing: item.detail.declared_missing,
     dueOn: item.detail.due_on,
-    actionType: item.detail.remediation.quick_order ? 'quick_order' : item.detail.remediation.action_type,
-    quickOrder: item.detail.remediation.quick_order ?? null,
+    // Vero sells no documents, so a rule's old order code never reaches a customer.
+    actionType: item.detail.remediation.action_type,
     howWeKnow: howWeKnow(item),
   };
 }
@@ -325,7 +325,7 @@ export async function buildOverview(deps: AppDeps, tx: Tx, organisationId: strin
           title: next.finding.detail.headline,
           why: next.finding.row.whyItMatters ?? '',
           points: set.entitlements.priorityList ? next.points : null,
-          actionType: next.finding.detail.remediation.quick_order ? 'quick_order' : next.finding.detail.remediation.action_type,
+          actionType: next.finding.detail.remediation.action_type,
         }
       : null,
     topDeadlines: deadlines.map((row) => ({
