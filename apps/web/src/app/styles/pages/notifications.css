@@ -31,7 +31,7 @@
 .pg-notifications .grp2{padding:0 22px}
 .pg-notifications .gh2{display:flex;align-items:baseline;gap:10px;padding:22px 0 6px}
 .pg-notifications .gh2 h3{font-size:14px;font-weight:700}
-.pg-notifications .gh2 span{font-size:13px;font-weight:600;color:var(--ink-4)}
+.pg-notifications .gh2 span{font-size:13px;font-weight:600;color:var(--ink-3)}
 .pg-notifications .nt{display:grid;grid-template-columns:120px 1fr auto;gap:20px;align-items:center;padding:16px 14px;margin:0 -14px;width:calc(100% + 28px);border:0;background:none;text-align:left;font:inherit;color:inherit;border-radius:14px;cursor:pointer;transition:background .15s}
 .pg-notifications .nt+.nt{box-shadow:inset 0 1px 0 var(--line-2)}
 .pg-notifications .nt:hover{background:var(--hover)}

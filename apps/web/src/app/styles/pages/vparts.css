@@ -5,7 +5,7 @@
 .vchg{font-family:"Lowres Pixel";font-size:20px;font-weight:400;white-space:nowrap}
 .vchg.pos{color:var(--good)}
 .vchg.neg{color:var(--urgent)}
-.vchg.no{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink-4)}
+.vchg.no{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink-3)}
 .vblocks i{animation:vblk .5s var(--ease) both;animation-delay:calc(var(--i,0) * 35ms + 350ms);transform-origin:bottom}
 @keyframes vblk{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
 .next .art~h3{padding-right:96px}

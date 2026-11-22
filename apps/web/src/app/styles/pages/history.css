@@ -39,7 +39,7 @@
 .pg-hist .db .lb2{font-size:13px;font-weight:700;color:var(--ink-3);margin-top:28px}
 .pg-hist .hs-mv{display:flex;align-items:center;gap:14px;margin-top:18px;padding:16px 18px;border-radius:16px;background:#F4F6FB}
 .pg-hist .hs-mv .pixel{font-size:44px}
-.pg-hist .hs-mv .from{color:var(--ink-4)}
+.pg-hist .hs-mv .from{color:var(--ink-3)}
 .pg-hist .hs-mv .to{color:var(--navy)}
 .pg-hist .hs-mv .i{color:var(--ink-4)}
 .pg-hist .hs-mv .t{font-size:13px;color:var(--ink-3);font-weight:600;line-height:1.4;margin-left:6px}

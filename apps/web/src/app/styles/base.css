@@ -12,6 +12,8 @@ img,svg{display:block}
 :focus-visible{outline:2px solid var(--sky-2);outline-offset:2px;border-radius:8px}
 ::selection{background:#CFE6FF;color:#000066}
 a.link,button.link{color:var(--sky-2);font-weight:700;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+/* a link inside a sentence also carries a soft underline, so it isn't told apart by colour alone */
+p a.link,p button.link,.ov-new .link{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
 a.link:hover,button.link:hover{text-decoration:underline;text-underline-offset:3px}
 .vroot{min-height:100vh}
 .btn{cursor:pointer;border:0;white-space:nowrap;text-decoration:none}
@@ -70,7 +72,7 @@ a.link:hover,button.link:hover{text-decoration:underline;text-underline-offset:3
 /* sidebar extras */
 .side.v3 .wr{gap:10px}
 .side.v3 .wr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.side.v3 .gh-empty{padding:2px 10px 6px;font-size:12.5px;color:var(--ink-4);font-weight:600}
+.side.v3 .gh-empty{padding:2px 10px 6px;font-size:12.5px;color:var(--ink-3);font-weight:600}
 .side.v3 .usr button.usrb{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border-radius:10px;padding:2px 0;min-width:0}
 .side.v3 .usr .t{min-width:0}
 .side.v3 .usr small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
@@ -151,7 +153,7 @@ a.link:hover,button.link:hover{text-decoration:underline;text-underline-offset:3
 [data-theme="dark"] .light-only{display:none!important}
 [data-theme="dark"] .dark-only{display:block!important}
 /* a bright island inside dark (the printable report's paper) takes back the bright status colours */
-[data-theme="dark"] [data-theme="light"]{color-scheme:light;--navy:#000066;--navy-2:#0B1180;--ink-4:#B4B9CB;--bg:#F5F6FA;--panel:#FFFFFF;--hover:#F7F8FC;--sel:#EEF1FF;--sky-2:#0182FA;--urgent:#E5484D;--urgent-bg:#FFF0F0;--warn:#C27A0A;--warn-bg:#FFF6E6;--good:#0E9F78;--good-bg:#E7F7F1}
+[data-theme="dark"] [data-theme="light"]{color-scheme:light;--navy:#000066;--navy-2:#0B1180;--ink:#0B0E3A;--ink-2:#4E5472;--ink-3:#696E8B;--ink-4:#B4B9CB;--line:#E8EBF2;--line-2:#EFF1F6;--bg:#F5F6FA;--panel:#FFFFFF;--hover:#F7F8FC;--sel:#EEF1FF;--sky-2:#036DD7;--urgent:#C23F4A;--urgent-bg:#FFF0F0;--warn:#9C6314;--warn-bg:#FFF6E6;--good:#0B7D5F;--good-bg:#E7F7F1}
 
 /* the sidebar stays put while the page scrolls */
 @media (min-width:961px){

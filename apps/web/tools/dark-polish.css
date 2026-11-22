@@ -52,7 +52,7 @@ input::placeholder{color:var(--ink-4)}
 .sbox .go{background:linear-gradient(180deg,#4C86FF,#2F64F0)!important}
 option{background:#06084A;color:#F1F3FF}
 /* documents stay paper: the one bright object on the dark, so the evidence reads first */
-.sheet{background:#F5F7FD!important;--ink:#0B0E3A;--ink-2:#4E5472;--ink-3:#8A90A8;--line:#E3E7F0;--line-2:#EFF1F6;color:#0B0E3A!important;
+.sheet{background:#F5F7FD!important;--ink:#0B0E3A;--ink-2:#4E5472;--ink-3:#696E8B;--line:#E3E7F0;--line-2:#EFF1F6;--sky-2:#036DD7;--urgent:#C23F4A;--warn:#9C6314;--good:#0B7D5F;color:#0B0E3A!important;
   box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 40px 80px -30px rgba(0,0,10,.95)!important}
 .sheet p{color:#2A2F55!important}.sheet *{border-color:#E3E7F0}
 .sheet mark{background:#FFD9DB!important;color:#0B0E3A!important}

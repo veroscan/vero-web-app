@@ -143,7 +143,7 @@
 .pg-scan .op .k svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .2s}
 .pg-scan .op.on{background:#fff;border-color:#fff;color:var(--ink);box-shadow:0 24px 50px -28px rgba(0,0,30,.8)}
 .pg-scan .op.on small{color:var(--ink-3)}
-.pg-scan .op.on kbd{color:var(--ink-4)}
+.pg-scan .op.on kbd{color:var(--ink-3)}
 .pg-scan .op.on .k{background:#000066;border-color:#000066}
 .pg-scan .op.on .k svg{opacity:1}
 .pg-scan .typed{display:flex;flex-direction:column;gap:8px}
@@ -161,13 +161,13 @@
 .pg-scan .ans tbody tr{cursor:pointer;transition:background .15s}
 .pg-scan .ans tbody tr:hover{background:var(--hover)}
 .pg-scan .ans tbody tr:last-child td{border-bottom:0}
-.pg-scan .ans .n{font-family:"Lowres Pixel";font-size:20px;color:var(--ink-4);width:44px;line-height:1.1}
+.pg-scan .ans .n{font-family:"Lowres Pixel";font-size:20px;color:var(--ink-3);width:44px;line-height:1.1}
 .pg-scan .ans tr.cur .n{color:var(--sky-2)}
 .pg-scan .ans tr.got .n{color:#000066}
 .pg-scan .ans td b{font-weight:700;font-size:14px}
 .pg-scan .ans td small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
 .pg-scan .ans .a{font-weight:700;color:var(--ink)}
-.pg-scan .ans .a.none{color:var(--ink-4);font-weight:600}
+.pg-scan .ans .a.none{color:var(--ink-3);font-weight:600}
 
 /* ---------- live scan ---------- */
 .pg-scan .reader{display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:400px;overflow:hidden}
@@ -217,7 +217,7 @@
 .pg-scan .fl .h{font-size:12.5px;font-weight:600;color:var(--ink-3);padding-top:14px}
 .pg-scan .fl .it{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-2);font-size:13.5px;font-weight:700;animation:rowin .45s var(--ease) both}
 .pg-scan .fl .it span{font-weight:700;white-space:nowrap}
-.pg-scan .fl .none{padding:9px 0;font-size:13.5px;font-weight:600;color:var(--ink-4)}
+.pg-scan .fl .none{padding:9px 0;font-size:13.5px;font-weight:600;color:var(--ink-3)}
 .pg-scan .pb{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-top:22px}
 .pg-scan .pb i{height:16px;border-radius:3px;background:var(--line);transition:background .35s}
 .pg-scan .pb i.good{background:#000066}
@@ -239,7 +239,7 @@
 .pg-scan .lv .fd{color:var(--ink-2);font-weight:600;line-height:1.5;min-width:220px}
 .pg-scan .lv tr.now td{background:#F6FAFF}
 .pg-scan .lv tr.now .st2{color:var(--sky-2)}
-.pg-scan .lv .wait td{color:var(--ink-4)}
+.pg-scan .lv .wait td{color:var(--ink-3)}
 @keyframes rowdrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .pg-scan .lv .foot{padding:14px 22px 18px;border-top:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-3);line-height:1.5}
 .pg-scan .tone-good{color:var(--good)}
@@ -272,7 +272,7 @@
 .pg-scan .areas .note2{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px;font-weight:600;color:rgba(255,255,255,.6);line-height:1.5}
 .pg-scan .fx td{padding:16px 22px}
 .pg-scan .fx tr.f{cursor:pointer}
-.pg-scan .fx .rk{font-family:"Lowres Pixel";font-size:24px;color:var(--ink-4);width:56px;line-height:1}
+.pg-scan .fx .rk{font-family:"Lowres Pixel";font-size:24px;color:var(--ink-3);width:56px;line-height:1}
 .pg-scan .fx tr.f.first .rk{color:var(--urgent)}
 .pg-scan .fx .why{font-size:13px;color:var(--ink-2);font-weight:600;margin-top:4px;line-height:1.5;max-width:460px}
 .pg-scan .fx a{color:inherit;text-decoration:none}

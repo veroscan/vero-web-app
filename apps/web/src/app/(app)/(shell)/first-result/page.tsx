@@ -122,7 +122,7 @@ export default function FirstResultPage() {
               <div className="cov">
                 <div className="t">
                   <span>{level ? `${LEVEL[level]}, ${register.label}` : register.label}</span>
-                  <span>
+                  <span data-testid="score-basis">
                     <b>{counted}</b> of {plural(totalChecks, 'check', 'checks')}
                   </span>
                 </div>

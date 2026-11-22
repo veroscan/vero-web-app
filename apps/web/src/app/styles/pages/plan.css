@@ -37,14 +37,14 @@
 .pg-plan .cmp td:first-child{color:var(--ink);font-weight:600}
 .pg-plan .cmp td:first-child small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:500;line-height:1.45;margin-top:3px}
 .pg-plan .cmp td .i{color:var(--navy);width:18px;height:18px;stroke-width:2.4}
-.pg-plan .cmp td .no{color:var(--ink-4)}
+.pg-plan .cmp td .no{color:var(--ink-3)}
 .pg-plan .cmp td .pl{color:var(--ink-3)}
 .pg-plan .cmp tbody tr{transition:background .15s}
 .pg-plan .cmp tbody tr:hover td{background:var(--hover)}
 .pg-plan .cmp tfoot td{padding:18px 22px 22px;border-bottom:0;vertical-align:top}
 .pg-plan .cmp tfoot .btn{height:38px;font-size:13.5px;width:100%;justify-content:center}
 .pg-plan .cmp tfoot .curb{display:flex;align-items:center;justify-content:center;height:38px;font-size:13.5px;font-weight:700;color:var(--navy)}
-.pg-plan .cmp tfoot .curb.quiet{color:var(--ink-4);font-weight:600}
+.pg-plan .cmp tfoot .curb.quiet{color:var(--ink-3);font-weight:600}
 .pg-plan .cmp tfoot td.cur{border-radius:0 0 14px 14px}
 
 /* billing */

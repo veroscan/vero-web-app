@@ -33,7 +33,7 @@
 .pg-records .notes{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 
 /* working area: the record */
-.pg-records .tabs .tab small{font-size:12.5px;font-weight:600;color:var(--ink-4);margin-left:2px}
+.pg-records .tabs .tab small{font-size:12.5px;font-weight:600;color:var(--ink-3);margin-left:2px}
 .pg-records .tabs .tab.on small{color:var(--ink-3)}
 .pg-records .tabs{overflow-x:auto}
 .pg-records .tabs .tab{white-space:nowrap;text-decoration:none}
@@ -73,7 +73,7 @@
 .pg-records .xn .btn .i{width:15px;height:15px}
 .pg-records .xn .locked{font-size:12.5px;color:var(--ink-3)}
 .pg-records .xn.band{background:#FFF7E8}
-.pg-records .changesnote{margin-top:16px;font-size:12px;font-weight:600;color:var(--ink-4);line-height:1.5}
+.pg-records .changesnote{margin-top:16px;font-size:12px;font-weight:600;color:var(--ink-3);line-height:1.5}
 
 @media (max-width:1180px){
   .pg-records .rec{grid-template-columns:1fr 320px}
