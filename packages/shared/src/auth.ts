@@ -11,6 +11,8 @@ export const requestMagicLinkBodySchema = z.object({
   email: emailSchema,
   /** Carried from an invitation email so a new person joins that team on first sign-in. */
   invitationToken: z.string().min(1).max(200).optional(),
+  /** Sent by the Vero phone app: the link in the email then offers to open the app. */
+  app: z.boolean().optional(),
 });
 export type RequestMagicLinkBody = z.infer<typeof requestMagicLinkBodySchema>;
 
@@ -47,6 +49,11 @@ export const signInResponseSchema = z.object({
   mfaRequired: z.boolean(),
   isNewUser: z.boolean(),
   activeOrganisationId: uuidSchema.nullable(),
+  /**
+   * Only for the phone app (requests marked `x-vero-client: mobile`). It keeps this in the device's
+   * secure store and sends it as a Bearer token. Browsers get an HttpOnly cookie and never this.
+   */
+  sessionToken: z.string().optional(),
 });
 export type SignInResponse = z.infer<typeof signInResponseSchema>;
 

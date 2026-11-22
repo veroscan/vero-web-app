@@ -9,7 +9,12 @@ import { TLink } from '@/components/TLink';
 import { api, asApiError, type ApiError } from '@/lib/api';
 import { peekNext, takeNext } from '@/lib/next-path';
 
-type State = { kind: 'working' } | { kind: 'expired' } | { kind: 'used' } | { kind: 'invalid' } | { kind: 'failed'; error: ApiError };
+/** The phone app's own address for a sign-in link (its scheme is set in apps/mobile/app.json). */
+function appLink(token: string): string {
+  return `vero://sign-in?token=${encodeURIComponent(token)}`;
+}
+
+type State ={ kind: 'working' } | { kind: 'expired' } | { kind: 'used' } | { kind: 'invalid' } | { kind: 'failed'; error: ApiError };
 
 const SIGN_UP_TOP = (
   <>
@@ -25,6 +30,9 @@ function Verify() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get('token');
+  // A link asked for from the phone app opens the app, and is only used here if the person chooses to.
+  const forApp = params.get('app') === '1';
+  const [inBrowser, setInBrowser] = useState(false);
   const [state, setState] = useState<State>({ kind: 'working' });
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -34,6 +42,10 @@ function Verify() {
   useEffect(() => {
     if (!token) {
       setState({ kind: 'invalid' });
+      return;
+    }
+    if (forApp && !inBrowser) {
+      window.location.href = appLink(token);
       return;
     }
     const key = `${token}:${attempt}`;
@@ -58,7 +70,35 @@ function Verify() {
         else setState({ kind: 'failed', error });
       },
     );
-  }, [token, attempt, router]);
+  }, [token, attempt, router, forApp, inBrowser]);
+
+  if (token && forApp && !inBrowser) {
+    return (
+      <SignInFrame top={SIGN_UP_TOP}>
+        <div className="reading" role="status" data-testid="open-in-app">
+          <span className="state-mark">
+            <img src="/brand/app-icon.svg" alt="" />
+          </span>
+          <div>
+            <h1>
+              <Words text="Opening the Vero app" />
+            </h1>
+            <p className="lead">You asked for this link from the app, so it signs you in there.</p>
+          </div>
+        </div>
+        <a className="cta" href={appLink(token)}>
+          Open the Vero app
+        </a>
+        <p className="lead">
+          Nothing happened? Copy this page&apos;s address and paste it into the app, or{' '}
+          <button type="button" className="link" onClick={() => setInBrowser(true)}>
+            sign in on this browser instead
+          </button>
+          .
+        </p>
+      </SignInFrame>
+    );
+  }
 
   if (sentTo) {
     return (

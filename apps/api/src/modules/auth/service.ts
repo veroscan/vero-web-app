@@ -43,7 +43,7 @@ function totpInvalid(): AppError {
  */
 export async function requestMagicLink(
   deps: AppDeps,
-  input: { email: string; invitationToken?: string },
+  input: { email: string; invitationToken?: string; app?: boolean },
   meta: RequestMeta,
 ): Promise<void> {
   const { rateLimits } = deps.config;
@@ -73,7 +73,8 @@ export async function requestMagicLink(
     await writeAudit(tx, { action: 'auth.magic_link.requested', target: `email:${emailHash}`, meta });
   });
 
-  const link = `${deps.config.webBaseUrl}/sign-in/verify?token=${encodeURIComponent(token)}`;
+  // From the phone app, the web page this opens hands the link on to the app instead of signing the browser in.
+  const link = `${deps.config.webBaseUrl}/sign-in/verify?token=${encodeURIComponent(token)}${input.app ? '&app=1' : ''}`;
   await deps.mailer.send({
     to: input.email,
     subject: 'Your Vero sign-in link',

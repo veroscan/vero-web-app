@@ -13,6 +13,7 @@ import { registerJobHandlers } from './jobs';
 import { registerAdminRoutes } from './modules/admin/routes';
 import { registerAuditRoutes } from './modules/audit/routes';
 import { registerAuthRoutes } from './modules/auth/routes';
+import { isNativeClient, SESSION_COOKIE } from './modules/auth/session';
 import { registerBillingRoutes } from './modules/billing/routes';
 import { registerCompanyRoutes } from './modules/companies/routes';
 import { registerDeadlineRoutes } from './modules/deadlines/routes';
@@ -183,6 +184,8 @@ export async function buildApp(deps: AppDeps, options: BuildAppOptions = {}): Pr
   app.addHook('onRequest', async (request) => {
     if (!STATE_CHANGING.has(request.method)) return;
     if (request.routeOptions.config?.skipOriginCheck === true) return;
+    // The phone app: no cookie to ride on, and its marking header can't be sent cross-site (see session.ts).
+    if (isNativeClient(request) && !request.cookies[SESSION_COOKIE]) return;
     const origin = originOf(request);
     if (!origin || !config.allowedOrigins.includes(origin)) throw errors.originNotAllowed();
   });

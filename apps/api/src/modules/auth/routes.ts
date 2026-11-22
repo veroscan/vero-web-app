@@ -18,7 +18,7 @@ import {
   verifyMagicLink,
 } from './service';
 import { useRecoveryCode } from './recovery';
-import { clearSessionCookie, setSessionCookie } from './session';
+import { clearSessionCookie, isNativeClient, setSessionCookie } from './session';
 
 export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
   defineRoute(app, deps, contract.auth.requestMagicLink, { auth: 'public' }, async ({ body, meta }) => {
@@ -26,8 +26,10 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
     return { ok: true as const };
   });
 
-  defineRoute(app, deps, contract.auth.verifyMagicLink, { auth: 'public' }, async ({ body, meta, reply }) => {
+  defineRoute(app, deps, contract.auth.verifyMagicLink, { auth: 'public' }, async ({ body, meta, reply, request }) => {
     const { sessionToken, response } = await verifyMagicLink(deps, body.token, meta);
+    // The phone app keeps the token in the device's secure store; a browser only ever gets the HttpOnly cookie.
+    if (isNativeClient(request)) return { ...response, sessionToken };
     setSessionCookie(reply, deps.config, sessionToken);
     return response;
   });

@@ -23,7 +23,8 @@ const extraArgs = process.argv.slice(2);
 
 const workspaces = ['apps', 'packages'].flatMap((group) =>
   readdirSync(join(root, group), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && existsSync(join(root, group, entry.name, 'package.json')))
+    // apps/mobile is a separate Expo project with its own toolchain and lint (`npm run lint` inside it).
+    .filter((entry) => entry.isDirectory() && entry.name !== 'mobile' && existsSync(join(root, group, entry.name, 'package.json')))
     .map((entry) => `${group}/${entry.name}`),
 );
 
@@ -31,7 +32,7 @@ const passes = [
   ...workspaces.map((workspace) => ({ name: workspace, args: [workspace] })),
   {
     name: 'everything else',
-    args: ['.', ...workspaces.flatMap((workspace) => ['--ignore-pattern', `${workspace}/**`])],
+    args: ['.', ...workspaces.flatMap((workspace) => ['--ignore-pattern', `${workspace}/**`]), '--ignore-pattern', 'apps/mobile/**'],
   },
 ];
 

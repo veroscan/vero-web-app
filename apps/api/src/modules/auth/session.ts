@@ -14,6 +14,30 @@ export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 /** Avoids a database write on every request: the expiry only rolls once an hour. */
 const ROLL_AFTER_MS = 60 * 60 * 1000;
 
+/**
+ * The Vero phone app marks every request with this header and carries its session as a Bearer
+ * token, because it has no browser cookie jar. A browser on another site cannot send a custom
+ * header without a CORS preflight, and the API refuses preflights from origins it doesn't know,
+ * so the mark can't be forged cross-site. That is what lets these requests skip the Origin check.
+ */
+export const NATIVE_CLIENT_HEADER = 'x-vero-client';
+
+export function isNativeClient(request: FastifyRequest): boolean {
+  return request.headers[NATIVE_CLIENT_HEADER] === 'mobile';
+}
+
+function bearerToken(request: FastifyRequest): string | undefined {
+  const header = request.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return undefined;
+  const token = header.slice('Bearer '.length).trim();
+  return token.length > 0 && token.length <= 200 ? token : undefined;
+}
+
+/** The cookie for browsers; for the phone app only, its Bearer token. */
+function sessionTokenOf(request: FastifyRequest): string | undefined {
+  return request.cookies[SESSION_COOKIE] ?? (isNativeClient(request) ? bearerToken(request) : undefined);
+}
+
 export interface SessionContext {
   sessionId: string;
   userId: string;
@@ -82,8 +106,9 @@ export async function authenticate(
   reply: FastifyReply,
   options: { allowMfaPending: boolean },
 ): Promise<SessionContext> {
-  const token = request.cookies[SESSION_COOKIE];
+  const token = sessionTokenOf(request);
   if (!token) throw errors.unauthenticated();
+  const native = isNativeClient(request) && !request.cookies[SESSION_COOKIE];
 
   const now = deps.now();
   const tokenHash = hashToken(token);
@@ -110,13 +135,13 @@ export async function authenticate(
         .update(schema.session)
         .set({ expiresAt: new Date(now.getTime() + SESSION_LIFETIME_MS), lastSeenAt: now })
         .where(eq(schema.session.id, found.sessionId));
-      setSessionCookie(reply, deps.config, token);
+      if (!native) setSessionCookie(reply, deps.config, token);
     }
     return found;
   });
 
   if (!row) {
-    clearSessionCookie(reply, deps.config);
+    if (!native) clearSessionCookie(reply, deps.config);
     throw errors.unauthenticated();
   }
   if (row.mfaEnabled && !row.mfaVerifiedAt && !options.allowMfaPending) throw errors.mfaRequired();

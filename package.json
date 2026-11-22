@@ -9,7 +9,9 @@
     "node": ">=24"
   },
   "workspaces": [
-    "apps/*",
+    "apps/api",
+    "apps/web",
+    "apps/worker",
     "packages/*"
   ],
   "scripts": {

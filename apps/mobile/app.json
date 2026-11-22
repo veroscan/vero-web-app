@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Vero",
+    "slug": "vero",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "vero",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#00004A",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vero.app"
+    },
+    "android": {
+      "package": "com.vero.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#00004A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/LowresPixel-Regular.otf"]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#00004A",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
