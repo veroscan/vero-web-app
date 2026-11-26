@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test';
 import { WEB_URL } from './support/env';
-import { apiJson, calm, expect, expectAccessible, expectNoSideways, seedPlain, seedScanned, signIn, sql, test, uniqueEmail } from './support/helpers';
+import { apiJson, calm, chooseOption, expect, expectAccessible, expectNoSideways, seedPlain, seedScanned, signIn, sql, test, uniqueEmail } from './support/helpers';
 
 async function checkScreen(page: Page): Promise<void> {
   await expectAccessible(page);
@@ -86,7 +86,7 @@ test('company look-ups: an update really reaches the client, and is audited; not
   await expect(row.locator('.st')).toHaveText('New');
   const update = row.getByRole('button', { name: 'Update' });
   await expect(update).toBeDisabled();
-  await row.getByLabel('Set it to').selectOption('completed');
+  await chooseOption(desk, row.getByLabel('Set it to'), 'Completed');
   await update.click();
   await expect(desk.getByText('Updated. The client has been told.')).toBeVisible();
   await expect(row.locator('.st')).toHaveText('Updated before');
@@ -198,17 +198,17 @@ test('admin: staff access and a plan really change, and paging works', async ({ 
 
   await page.goto('/review/work');
   await expect(page.getByTestId('staff-refused')).toBeVisible();
-  await person.getByLabel('Staff access').selectOption('lawyer');
+  await chooseOption(desk, person.getByLabel('Staff access'), 'Lawyer');
   await expect(person.getByTestId('admin-staff-role')).toHaveText('Staff: lawyer');
   await page.goto('/review/work');
   await expect(page.getByTestId('staff-work')).toBeVisible();
-  await person.getByLabel('Staff access').selectOption('none');
+  await chooseOption(desk, person.getByLabel('Staff access'), 'Not staff');
   await expect(person.getByTestId('admin-staff-role')).toHaveText('Not staff');
   await page.goto('/review/work');
   await expect(page.getByTestId('staff-refused')).toBeVisible();
 
   const org = person.locator(`[data-org="${organisationId}"]`);
-  await org.getByLabel(/Plan for/).selectOption('growth');
+  await chooseOption(desk, org.getByLabel(/Plan for/), 'Growth');
   await org.getByRole('button', { name: 'Set plan' }).click();
   await expect(desk.getByText(/is now on Growth\. They've been told\./)).toBeVisible();
   expect((await apiJson<{ current: string }>(page, 'get', '/v1/plans')).current).toBe('growth');
@@ -219,7 +219,7 @@ test('admin: staff access and a plan really change, and paging works', async ({ 
   await desk.goto(`/admin?from=${Math.floor(Number(self?.n ?? 0) / 50) * 50}`);
   const me = desk.locator(`[data-testid="admin-user"][data-email="${adminEmail}"]`);
   await me.locator('summary').click();
-  await me.getByLabel('Staff access').selectOption('none');
+  await chooseOption(desk, me.getByLabel('Staff access'), 'Not staff');
   await expect(me.getByRole('alert')).toContainText("You can't remove your own access");
 
   await desk.route('**/v1/admin/users**', (route) => route.fulfill({ json: { users: [], hasMore: false } }));

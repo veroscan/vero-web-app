@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { samplePdf } from '../../api/src/seed/sample-pdf';
 import { WEB_URL } from './support/env';
-import { calm, expect, expectAccessible, expectNoSideways, seedPlain, seedScanned, signIn, sql, test } from './support/helpers';
+import { calm, chooseOption, expect, expectAccessible, expectNoSideways, seedPlain, seedScanned, signIn, sql, test } from './support/helpers';
 
 const FOUNDER_SLOT = 'gb_founder_ip_assignment';
 const FOUNDER_RULE = 'GB.IP.FOUNDER_ASSIGNMENT';
@@ -138,7 +138,7 @@ test('"No, it\'s something else" lets the person choose where it belongs', async
   await expect(confirm).toBeVisible({ timeout: 60_000 });
   await confirm.getByRole('button', { name: "No, it's something else" }).click();
   const select = confirm.getByLabel('Where does it belong?');
-  await select.selectOption('gb_contractor_ip_assignment');
+  await chooseOption(page, select, { value: 'gb_contractor_ip_assignment' });
   await confirm.getByRole('button', { name: 'File it here' }).click();
   await expect(page.getByTestId('drop-done')).toBeVisible();
   expect((await documentsOf(page, companyId))[0]?.slotKey).toBe('gb_contractor_ip_assignment');

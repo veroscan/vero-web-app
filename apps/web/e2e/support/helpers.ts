@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright';
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Locator, type Page } from '@playwright/test';
 import pg from 'pg';
 import { SUPERUSER_URL, WEB_URL } from './env';
 
@@ -157,7 +157,22 @@ export async function turnOffRelated(page: Page): Promise<void> {
 
 /** The one country picker on the search screens, by the name it shows. */
 export async function chooseCountry(page: Page, label: string): Promise<void> {
-  await page.getByLabel('Country of registration').selectOption({ label });
+  await chooseOption(page, page.getByLabel('Country of registration'), label);
+}
+
+/**
+ * Picks from the app's own dropdown (`@/components/Select`): opens it, then clicks the option shown
+ * as `label`, or the one carrying `{ value }`. The list is drawn at the page root, so it is found from the page.
+ */
+export async function chooseOption(page: Page, trigger: Locator | string, choice: string | { value: string }): Promise<void> {
+  const button = typeof trigger === 'string' ? page.getByTestId(trigger) : trigger;
+  await button.click();
+  const list = page.getByRole('listbox');
+  await expect(list).toBeVisible();
+  const options = list.getByRole('option');
+  if (typeof choice === 'string') await options.filter({ has: page.getByText(choice, { exact: true }) }).click();
+  else await options.and(page.locator(`[data-value="${choice.value}"]`)).click();
+  await expect(list).toBeHidden();
 }
 
 /** Answers on screen until the flow moves on: the first choice, or Continue where there's none. */

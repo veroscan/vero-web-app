@@ -51,6 +51,7 @@ test('a file one byte over the limit is refused before anything is sent', async 
     if (request.method() === 'POST' && request.url().includes('too-big.pdf')) sent = true;
   });
   await page.locator('input[type="file"]').setInputFiles({ name: 'too-big.pdf', mimeType: 'application/pdf', buffer: pdfOfSize(25 * MB + 1) });
-  await expect(page.getByTestId('drop-failed')).toContainText('That file is too big to upload. The limit is 25 MB');
+  await expect(page.getByTestId('drop-failed')).toContainText('This file is too big');
+  await expect(page.getByTestId('drop-failed')).toContainText("The limit is 25 MB, so it wasn't uploaded.");
   expect(sent, 'the file stayed in the browser').toBe(false);
 });

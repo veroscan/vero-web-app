@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import type { Browser, Page } from '@playwright/test';
 import { WEB_URL } from './support/env';
-import { apiJson, calm, expect, expectAccessible, expectNoSideways, holdWithUrgentGaps, linkFromOutbox, requestLink, seedPlain, seedScanned, signIn, sql, test, uniqueEmail } from './support/helpers';
+import { apiJson, calm, chooseOption, expect, expectAccessible, expectNoSideways, holdWithUrgentGaps, linkFromOutbox, requestLink, seedPlain, seedScanned, signIn, sql, test, uniqueEmail } from './support/helpers';
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -284,7 +284,7 @@ test('settings: a real invite, a real email, joining with a new account, changin
   await page.goto('/settings');
   await page.getByRole('button', { name: 'Invite someone' }).click();
   await page.getByLabel('Their work email').fill(email);
-  await page.getByLabel('What they can do').selectOption('member');
+  await chooseOption(page, page.getByLabel('What they can do'), 'Member');
   await page.getByRole('button', { name: 'Send invite' }).click();
   await expect(page.getByText("Invite sent. They'll get an email from us.")).toBeVisible();
   const pending = page.locator(`[data-testid="pending-row"][data-email="${email}"]`);
@@ -311,7 +311,7 @@ test('settings: a real invite, a real email, joining with a new account, changin
   const row = page.locator(`[data-testid="member-row"][data-email="${email}"]`);
   await expect(row).toBeVisible();
   await expect(page.locator(`[data-testid="pending-row"][data-email="${email}"]`)).toHaveCount(0);
-  await row.getByRole('combobox').selectOption('admin');
+  await chooseOption(page, row.getByRole('combobox'), 'Admin');
   await expect(page.getByText(/is now admin\./)).toBeVisible();
   await expect.poll(async () => (await sql<{ role: string }>('SELECT m.role FROM membership m JOIN "user" u ON u.id = m.user_id WHERE u.email = $1 AND m.organisation_id = $2', [email, organisationId]))[0]?.role).toBe('admin');
 
@@ -354,6 +354,7 @@ test('settings: an invite can be withdrawn, and one for someone else is refused 
   await other.context().close();
 
   await pending.getByRole('button', { name: 'Withdraw' }).click();
+  await pending.getByRole('button', { name: 'Yes, withdraw' }).click();
   await expect(pending).toHaveCount(0);
 
   const stray = await freshPage(browser);
@@ -427,6 +428,7 @@ test('settings: signing out everywhere really ends the session', async ({ page, 
   await seedScanned(page);
   await page.goto('/settings');
   await page.getByTestId('sign-out-everywhere').click();
+  await page.getByTestId('sign-out-everywhere-yes').click();
   await page.waitForURL('**/sign-in**');
   await page.goto('/settings');
   await page.waitForURL('**/sign-in**');
@@ -488,8 +490,10 @@ test("plan: no invented prices, checkout is Stripe's own, and it says what reall
   await expect(page.getByTestId('plan-price')).toHaveText(['Nothing to pay', 'Not set yet', 'Not set yet']);
   await expect(screen).not.toContainText(/[$£€₦]\s?\d/);
   await expect(screen).not.toContainText('[PRICE]');
-  await expect(page.getByTestId('plan-change')).toContainText("Payments go through Stripe's own checkout");
-  await expect(page.getByTestId('plan-change')).toContainText('our team can change your plan by hand');
+  // Payments are off here, so the screen says that plainly instead of promising a checkout it can't open.
+  await expect(page.getByTestId('plan-change')).toContainText("Billing isn't switched on yet");
+  await expect(page.getByTestId('plan-change')).toContainText('our team changes plans by hand');
+  await expect(page.getByTestId('billing-off')).toContainText("Billing isn't switched on yet");
   await expect(page.locator('[data-plan="free"]').getByText('Your plan')).toBeVisible();
   await expect(page.getByTestId('plan-score')).toContainText('Your read today');
 

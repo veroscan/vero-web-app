@@ -36,10 +36,10 @@ describe('scan cancel, progress and issue activity', () => {
     const again = await h.request('POST', `/v1/scans/${started.id}/cancel`, { cookie: owner.cookie });
     expect(again.statusCode).toBe(200);
     expect(again.json<ScanDetail>().status).toBe('cancelled');
-    const { rows } = await h.admin.query(`SELECT count(*)::int AS n FROM finding WHERE scan_id = $1`, [started.id]);
-    expect(rows[0].n).toBe(0);
-    const audits = await h.admin.query(`SELECT count(*)::int AS n FROM audit_log WHERE action = 'scan.cancelled' AND target = $1`, [started.id]);
-    expect(audits.rows[0].n).toBe(1);
+    const { rows } = await h.admin.query<{ n: number }>(`SELECT count(*)::int AS n FROM finding WHERE scan_id = $1`, [started.id]);
+    expect(rows[0]?.n).toBe(0);
+    const audits = await h.admin.query<{ n: number }>(`SELECT count(*)::int AS n FROM audit_log WHERE action = 'scan.cancelled' AND target = $1`, [started.id]);
+    expect(audits.rows[0]?.n).toBe(1);
     // A new scan can start straight away.
     expect((await h.request('POST', `/v1/companies/${company.id}/scans`, { cookie: owner.cookie })).statusCode).toBe(202);
     await h.queue.drain();

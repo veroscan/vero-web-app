@@ -345,7 +345,7 @@ function LinkName({ link, canRename, onChanged }: { link: ShareLink; canRename: 
     <div className="nmrow">
       <b>{link.name ?? 'Public page'}</b>
       {canRename ? (
-        <button ref={opener} className="rnopen" type="button" aria-label={link.name ? `Rename ${link.name}` : 'Name this link'} onClick={() => setEditing(true)} data-testid="share-rename">
+        <button ref={opener} className="rnopen" type="button" aria-label={link.name ? `Rename ${link.name}` : 'Add a name to this link'} onClick={() => setEditing(true)} data-testid="share-rename">
           {link.name ? 'Rename' : 'Add a name'}
         </button>
       ) : null}

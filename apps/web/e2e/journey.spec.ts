@@ -32,7 +32,7 @@ test('a new person goes from the magic link to Home, through a full fixture scan
   await page.waitForURL('**/onboarding/scanning');
   await expect(page.getByTestId('scan-row').first()).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/is scanned$/);
-  await expect(page.getByTestId('scan-count')).toHaveText(/^(\d+)\s*of\s*\1 sources? read$/);
+  await expect(page.getByTestId('scan-count')).toHaveText(/^(\d+)\s*of\s*\1 steps? done$/);
   await expect(page.getByTestId('sample-note')).toBeVisible();
   // The email the scanning screen promised has really gone out.
   await expect.poll(async () => (await sql('SELECT 1 FROM outbox WHERE to_email = $1 AND template = $2', [email, 'scan-result'])).length).toBeGreaterThan(0);
@@ -148,7 +148,7 @@ test('the search narrows a group of companies to one of them', async ({ page }) 
     allCount = 0;
   }
   expect(allCount, 'a tab lists findings from both companies').toBeGreaterThan(0);
-  const search = page.getByRole('textbox', { name: 'Search findings' });
+  const search = page.getByRole('searchbox', { name: 'Search findings' });
   await search.fill('Kestrel Pay Nigeria');
   await expect.poll(async () => page.getByTestId('issue-row').count()).toBeLessThan(allCount);
   const nigeria = await page.getByTestId('issue-row').count();
@@ -255,10 +255,10 @@ test('Ctrl+K searches for real, and a route that does not exist says so', async 
   await page.keyboard.press('Control+k');
   const dialog = page.getByRole('dialog', { name: 'Search' });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('textbox').fill('zzzz-nothing');
+  await dialog.getByRole('combobox').fill('zzzz-nothing');
   await expect(dialog).toContainText('Nothing matches that.');
   const issues = (await (await page.request.get('/v1/search?q=confirmation')).json()) as { issues: { title: string }[]; deadlines: { title: string }[] };
-  await dialog.getByRole('textbox').fill('confirmation');
+  await dialog.getByRole('combobox').fill('confirmation');
   const first = issues.issues[0]?.title ?? issues.deadlines[0]?.title ?? '';
   expect(first).not.toBe('');
   await expect(dialog).toContainText(first);

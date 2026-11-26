@@ -208,7 +208,7 @@ describe('the watchlist', () => {
   afterAll(() => h.close());
 
   it('is empty at first, and says how many the plan allows', async () => {
-    expect(await watchlist(h, owner)).toEqual({ companies: [], used: 0, limit: 25 });
+    expect(await watchlist(h, owner)).toMatchObject({ companies: [], used: 0, limit: 25, monitoring: { on: false } });
   });
 
   it('follows a registry candidate, scans its public record, and keeps it off the company list', async () => {

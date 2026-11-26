@@ -536,8 +536,8 @@ async function runSources(deps: AppDeps, row: ScanRow): Promise<void> {
   const monitoring = row.trigger === 'monitoring';
 
   const ask = async (connector: Connector, identifiers: Identifiers): Promise<void> => {
-    // A cancelled scan asks nothing more, and keeps nothing a source answers after the stop.
-    if (await wasCancelled(deps, row)) return;
+    // A cancelled scan is checked once per stage, before its sources start together (checking here would
+    // stagger them); an answer that lands after the stop is still thrown away below.
     const ref = companyRef(company, website, connector, { identifiers });
     if (monitoring && PAID_VENDORS.has(connector.id) && !(await monitoringMayAskVendor(deps, scope, connector, ref))) {
       // Not asked, and nothing paid: the answer from before stands, and this scan doesn't list it.
@@ -562,6 +562,7 @@ async function runSources(deps: AppDeps, row: ScanRow): Promise<void> {
   const first = pending.filter((connector) => !STAGE_TWO.has(connector.id));
   const second = pending.filter((connector) => STAGE_TWO.has(connector.id));
   const told = resolveIdentifiers(answers, []);
+  if (await wasCancelled(deps, row)) return;
   await Promise.all(first.map((connector) => ask(connector, told)));
   if (second.length === 0 || (await wasCancelled(deps, row))) return;
 

@@ -5,6 +5,7 @@
 // Signs in through the real magic link: asks the local API for a link, reads it from the dev
 // outbox table, opens it, and keeps the session in tools/.shots/<email>.json for the next run.
 // Development only: it talks to the local embedded Postgres with the dev superuser password.
+/* global process, URL, setTimeout, console, localStorage -- a Node script; localStorage is used only inside the page's init script. */
 import { chromium } from '@playwright/test';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -56,7 +57,9 @@ try {
   await context.addInitScript((t) => {
     try {
       localStorage.setItem('vero-theme', t);
-    } catch {}
+    } catch {
+      // A private window can refuse storage; the theme still comes from colorScheme.
+    }
   }, theme);
   if (fresh) await signIn(context);
   const page = await context.newPage();
@@ -67,7 +70,9 @@ try {
     await context.addInitScript((t) => {
       try {
         localStorage.setItem('vero-theme', t);
-      } catch {}
+      } catch {
+        // A private window can refuse storage; the theme still comes from colorScheme.
+      }
     }, theme);
     await signIn(context);
     const again = await context.newPage();

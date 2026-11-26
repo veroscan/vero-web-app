@@ -123,7 +123,9 @@ test('saying "we don\'t have it" explains itself first, lowers the score, and ca
   await expect(choice).toContainText('it becomes a gap, which may lower your score');
   // Said once, even though the API's reason opens with the same words.
   expect((await page.getByTestId('not-seen').innerText()).match(/(We|Vero) ha(ve|s)n't seen this yet/g)).toHaveLength(1);
-  await expect(choice.getByRole('link', { name: 'Add the document' })).toHaveAttribute('href', /\/documents\/add\?company=/);
+  // The upload now sits on the finding itself, right above this choice, so the choice no longer repeats it as a link.
+  await expect(page.locator('input[type="file"]')).toHaveCount(1);
+  await expect(choice.getByRole('link', { name: 'Add the document' })).toHaveCount(0);
 
   // A failure leaves everything as it was, and says so.
   await page.route('**/issues/*/missing', (route) => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'internal_error', message: 'Something went wrong on our side. Please try again.' } }) }));

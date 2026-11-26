@@ -350,9 +350,14 @@ describe('row-level security, directly in the database, as the API role', () => 
     });
 
     it('system scope alone does not open tenant data', async () => {
+      // Tables whose only door is the system scope (billing accounts, Stripe events, the waitlist, ...) are platform
+      // tables that happen to mention an organisation. Read from the database, so a new one can't be forgotten here.
+      const systemOnly = await h.admin.query<{ relname: string }>(
+        `SELECT c.relname FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid WHERE p.polname = 'system_scope_only'`,
+      );
+      const platform = new Set(['outbox', 'job_run', ...systemOnly.rows.map((row) => row.relname)]);
       await asApp({ 'app.scope': 'system' }, async () => {
-        // outbox and job_run are platform tables that happen to mention an organisation.
-        for (const table of tenantTables.filter((name) => name !== 'outbox' && name !== 'job_run')) {
+        for (const table of tenantTables.filter((name) => !platform.has(name))) {
           const { rows } = await app.query(`SELECT 1 FROM "${table}" WHERE organisation_id IS NOT NULL`);
           expect(rows, table).toEqual([]);
         }
