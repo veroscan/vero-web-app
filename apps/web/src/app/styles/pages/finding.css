@@ -138,3 +138,15 @@
   .pg-finding .trk .gain2{animation:none}
   .pg-finding .rel a .i{transition:none}
 }
+
+/* Activity: what has happened to this finding, newest first */
+.pg-finding .tl{list-style:none;margin:0;padding:8px 22px 16px}
+.pg-finding .tl li{position:relative;padding:12px 0 12px 22px}
+.pg-finding .tl li+li{border-top:1px solid var(--line-2)}
+.pg-finding .tl li::before{content:"";position:absolute;left:2px;top:19px;width:9px;height:9px;border-radius:50%;background:var(--ink-4)}
+.pg-finding .tl li.k-cleared::before{background:var(--good)}
+.pg-finding .tl li.k-opened::before,.pg-finding .tl li.k-reopened::before{background:var(--warn)}
+.pg-finding .tl b{display:block;font-size:13.5px;font-weight:700;line-height:1.45}
+.pg-finding .tl small{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:1px}
+.pg-finding .tl p{margin-top:4px;font-size:13px;line-height:1.5;color:var(--ink-2);font-weight:500;overflow-wrap:anywhere}
+.pg-finding .mh .sub{margin-left:auto;font-size:12.5px;color:var(--ink-3);font-weight:600}

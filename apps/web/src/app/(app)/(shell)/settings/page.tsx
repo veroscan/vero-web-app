@@ -1,7 +1,7 @@
 'use client';
 
 import '@/app/styles/pages/settings.css';
-import { type Invitation, type Member, type Role, type TotpEnrolResponse } from '@vero/shared';
+import { type EmailNotificationTopic, type Invitation, type Member, type NotificationPreferences, type Role, type SessionInfo, type TotpEnrolResponse } from '@vero/shared';
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { Icon } from '@/components/Icon';
 import { Reveal, Scramble, Words } from '@/components/Motion';
@@ -15,7 +15,7 @@ import { entitlementsOf, planNameOf, roleCan } from '@/lib/entitlements';
 import { longDate } from '@/lib/format';
 import { softly } from '@/lib/motion';
 import { countryLong } from '@/lib/records';
-import { ROLE_WORDS } from '@/lib/trust';
+import { ROLE_WORDS, sinceWords } from '@/lib/trust';
 import { useResource } from '@/lib/useResource';
 
 function FormProblem({ message }: { message: string | null }) {
@@ -431,56 +431,101 @@ function Team() {
   );
 }
 
-const UPDATE_KINDS = [
-  {
-    title: 'Deadlines approaching',
-    note: '30, 7 and 1 day before a date, and when one passes',
-  },
-  { title: 'Score changes', note: 'When a score in this workspace moves' },
-  { title: 'Team news', note: 'People joining, and changes to roles' },
-  { title: 'From Vero', note: 'Anything about your account itself' },
+const UPDATE_KINDS: ReadonlyArray<{ key: EmailNotificationTopic; title: string; note: string }> = [
+  { key: 'deadline', title: 'Deadlines approaching', note: 'Before a date, on the days you choose under Deadlines, and when one passes' },
+  { key: 'score', title: 'Score changes', note: 'When a re-check finds something new, or a score or status moves' },
+  { key: 'team', title: 'Team news', note: 'People joining, and changes to roles' },
+  { key: 'lookup', title: 'Company lookups', note: 'Updates on a company we looked up by hand for you' },
+  { key: 'system', title: 'From Vero', note: 'Anything about your account itself' },
 ];
 
 function Notifications() {
+  const resource = useResource(() => api.notifications.preferences(), []);
+  const [saved, setSaved] = useState<NotificationPreferences | null>(null);
+  const [saving, setSaving] = useState<EmailNotificationTopic | null>(null);
+  const [status, setStatus] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
+  const prefs = saved ?? resource.data ?? null;
+
+  const choose = async (key: EmailNotificationTopic, on: boolean) => {
+    setSaving(key);
+    setStatus(null);
+    try {
+      const next = await api.notifications.updatePreferences({ body: { email: { [key]: on } } });
+      setSaved(next);
+      const title = UPDATE_KINDS.find((kind) => kind.key === key)?.title ?? 'That';
+      setStatus({ tone: 'ok', text: on ? `Saved. ${title} will be emailed to you.` : `Saved. ${title} won't be emailed to you.` });
+    } catch (error) {
+      setStatus({ tone: 'bad', text: `${asApiError(error).message} Your choice wasn't saved.` });
+    }
+    setSaving(null);
+  };
+
   return (
     <Reveal as="section" className="mod" id="notifications">
       <div className="mh">
         <h2>Notifications</h2>
         <span className="sub2">What reaches you, and where</span>
       </div>
-      <table className="nm2">
-        <thead>
-          <tr>
-            <th>Update</th>
-            <th>In Vero</th>
-            <th>By email</th>
-          </tr>
-        </thead>
-        <tbody className="rows-in">
-          {UPDATE_KINDS.map((kind, index) => (
-            <tr key={kind.title} style={{ '--r': index } as CSSProperties}>
-              <td>
-                <b>{kind.title}</b>
-                <small>{kind.note}</small>
-              </td>
-              <td>
-                <span className="stx" style={{ color: 'var(--good)' }}>
-                  On
-                </span>
-              </td>
-              <td>
-                <span className="stx muted">Not yet</span>
-              </td>
+      <div className="sub3" id="email-me-about">
+        Email me about
+      </div>
+      {resource.error && !prefs ? (
+        <div className="bd" role="alert" data-testid="settings-email-error">
+          <FormProblem message={resource.error.message} />
+          <button className="btn btn-g btn-sm" type="button" onClick={resource.reload}>
+            Try again
+          </button>
+        </div>
+      ) : (
+        <table className="nm2" aria-labelledby="email-me-about" aria-busy={!prefs}>
+          <thead>
+            <tr>
+              <th>Update</th>
+              <th>In Vero</th>
+              <th>By email</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="foot4" data-testid="settings-notifications">
-        Everything comes to{' '}
+          </thead>
+          <tbody className="rows-in">
+            {UPDATE_KINDS.map((kind, index) => {
+              const on = prefs?.email[kind.key] ?? false;
+              return (
+                <tr key={kind.key} style={{ '--r': index } as CSSProperties}>
+                  <td>
+                    <b>{kind.title}</b>
+                    <small>{kind.note}</small>
+                  </td>
+                  <td>
+                    <span className="stx" style={{ color: 'var(--good)' }}>
+                      On
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className="switch"
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      aria-label={`Email me about ${kind.title.toLowerCase()}`}
+                      disabled={!prefs || saving !== null}
+                      data-testid={`email-pref-${kind.key}`}
+                      onClick={() => void choose(kind.key, !on)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      <p className={`foot4${status?.tone === 'bad' ? ' bad' : ''}`} role="status" data-testid="settings-notifications">
+        {saving ? 'Saving' : status ? status.text : !prefs && !resource.error ? 'Getting your choices' : 'Switch one on and it is emailed to you as well as shown in What’s new. Changes save as you make them.'}
+      </p>
+      <p className="foot4 plain">
+        Everything also comes to{' '}
         <TLink className="link" href="/notifications">
           What&apos;s new
         </TLink>
-        , for owners and admins. You can&apos;t choose between them, or have them emailed, yet.
+        , for owners and admins. Sign-in links and invitations are always emailed.
       </p>
     </Reveal>
   );
@@ -865,11 +910,70 @@ function Organisations() {
   );
 }
 
+const SESSIONS_SHOWN = 5;
+
+function SessionRow({ session, onChanged, onSignOut, leaving, disabled }: { session: SessionInfo; onChanged: () => void; onSignOut: () => void; leaving: boolean; disabled: boolean }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const end = async () => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await api.me.revokeSession({ params: { sessionId: session.id } });
+      toast('Signed out on that device.');
+      onChanged();
+    } catch (error) {
+      setProblem(asApiError(error).message);
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="rw sess" data-testid={session.current ? 'session-current' : 'session-other'}>
+      <div>
+        <b>
+          {session.device ?? 'A device we can’t name'}
+          {session.current ? <span className="stx here">This device</span> : null}
+        </b>
+        <small>
+          Signed in {longDate(session.createdAt)}. Last used {sinceWords(session.lastUsedAt)}.
+        </small>
+        {problem ? <FormProblem message={problem} /> : null}
+      </div>
+      <div className="r">
+        {session.current ? (
+          <button className="btn btn-g" type="button" disabled={leaving || disabled} onClick={onSignOut}>
+            <Icon name="out" />
+            {leaving ? 'Signing out' : 'Sign out'}
+          </button>
+        ) : (
+          <Confirm
+            label="Sign out"
+            question="Sign out on that device?"
+            yes="Yes, sign out"
+            no="Keep it"
+            busyWord="Signing out"
+            busy={busy}
+            onYes={() => void end()}
+            triggerClass="btn btn-g"
+            yesClass="btn btn-g danger"
+            noClass="btn btn-g"
+            testId="session-sign-out"
+            yesTestId="session-sign-out-yes"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Security() {
   const session = useSession();
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const sessions = useResource(() => api.me.sessions(), []);
+  const [showAllSessions, setShowAllSessions] = useState(false);
   const signOut = () => {
     setLeaving(true);
     setProblem(null);
@@ -910,20 +1014,41 @@ function Security() {
         </div>
         <TwoStep />
       </div>
-      <div className="sub3 ruled">Sessions</div>
-      <div className="rws">
-        <div className="rw">
-          <div>
-            <b>{session.me.user.name ?? session.me.user.email}</b>
-            <small>Signed in on this device</small>
+      <div className="sub3 ruled" id="signed-in">
+        Where you&apos;re signed in
+      </div>
+      <div className="rws" role="group" aria-labelledby="signed-in" data-testid="sessions">
+        {sessions.error && !sessions.data ? (
+          <div className="rw">
+            <div>
+              <b>We couldn&apos;t load your sessions</b>
+              <small>{sessions.error.message}</small>
+            </div>
+            <div className="r">
+              <button className="btn btn-g" type="button" onClick={sessions.reload}>
+                Try again
+              </button>
+            </div>
           </div>
-          <div className="r">
-            <button className="btn btn-g" type="button" disabled={leaving || busy} onClick={signOut}>
-              <Icon name="out" />
-              {leaving ? 'Signing out' : 'Sign out'}
-            </button>
+        ) : !sessions.data ? (
+          <div className="rw" role="status">
+            <div>
+              <small>Getting your sessions</small>
+            </div>
           </div>
-        </div>
+        ) : (
+          (showAllSessions ? sessions.data.sessions : sessions.data.sessions.slice(0, SESSIONS_SHOWN)).map((item) => <SessionRow key={item.id} session={item} onChanged={sessions.reload} onSignOut={signOut} leaving={leaving} disabled={busy} />)
+        )}
+        {sessions.data && sessions.data.sessions.length > SESSIONS_SHOWN ? (
+          <button className="link more-sessions" type="button" aria-expanded={showAllSessions} onClick={() => setShowAllSessions((value) => !value)} data-testid="sessions-more">
+            {showAllSessions ? 'Show fewer' : `Show ${sessions.data.sessions.length - SESSIONS_SHOWN} more`}
+          </button>
+        ) : null}
+        {sessions.data ? (
+          <p className="foot5">
+            A device is named from the browser it signed in with, never by address or place. &ldquo;Last used&rdquo; updates about once an hour, and a session that isn&apos;t used for a while ends by itself.
+          </p>
+        ) : null}
         <div className="rw">
           <div>
             <b>Sign out everywhere</b>

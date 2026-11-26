@@ -3,7 +3,7 @@
 import '@/app/styles/pages/deadlines.css';
 import type { Deadline, DeadlineListResponse } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
+import { Fragment, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import { Empty, ErrorState, Loading, PlanLink, SampleNote, SourcesDownNote } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
@@ -12,7 +12,26 @@ import { After, Hero, Plain } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
-import { basisWords, buildLanes, calendarFile, daysTo, groupDeadlines, leadOverdue, monthsBefore, nextDue, rowDate, trackingWords, type Lanes } from '@/lib/deadlines';
+import {
+  basisWords,
+  buildLanes,
+  calendarFile,
+  daysTo,
+  groupDeadlines,
+  leadLabel,
+  leadOverdue,
+  leadWords,
+  monthsBefore,
+  nextDue,
+  REMINDER_LIMIT,
+  reminderOptions,
+  reminderSourceWords,
+  rowDate,
+  sameDays,
+  STANDARD_DAYS,
+  trackingWords,
+  type Lanes,
+} from '@/lib/deadlines';
 import { entitlementsOf, planNameOf, roleCan } from '@/lib/entitlements';
 import { longDate, plural, shortDate } from '@/lib/format';
 import { isWatched, watchingNote } from '@/lib/plan-words';
@@ -77,14 +96,176 @@ function statusOf(deadline: Deadline): { word: string; tone: string } {
   return { word: 'On track', tone: 'var(--good)' };
 }
 
+/** The days to remind on, as switches. A team can keep up to 6. */
+function ReminderPicker({ idBase, value, onChange, disabled }: { idBase: string; value: readonly number[]; onChange: (days: number[]) => void; disabled: boolean }) {
+  const full = value.length >= REMINDER_LIMIT;
+  return (
+    <div className="rem-grid" role="group" aria-label="Remind me">
+      {reminderOptions(value).map((day) => {
+        const on = value.includes(day);
+        return (
+          <button
+            key={day}
+            id={`${idBase}-${day}`}
+            className="rem-opt"
+            type="button"
+            role="switch"
+            aria-checked={on}
+            disabled={disabled || (!on && full)}
+            data-testid="reminder-option"
+            onClick={() => onChange(on ? value.filter((item) => item !== day) : [...value, day].sort((a, b) => b - a))}
+          >
+            <span>{leadLabel(day)}</span>
+            <i className="sw" aria-hidden="true" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** One date's own reminders, opened under its row. Going back to the team's choice is one click. */
+function RowReminders({ deadline, onClose, onSaved }: { deadline: Deadline; onClose: () => void; onSaved: () => void }) {
+  const toast = useToast();
+  const reminders = deadline.reminders;
+  const [days, setDays] = useState<number[]>(() => [...(reminders?.leadDays ?? [])]);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => panel.current?.focus(), []);
+  if (!reminders) return null;
+
+  const save = async (leadDays: number[] | null) => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await api.deadlines.setReminders({ params: { deadlineId: deadline.id }, body: { leadDays } });
+      toast(leadDays === null ? "Back to your team's reminders." : 'Reminders saved for this date.');
+      onSaved();
+      onClose();
+    } catch (error) {
+      setProblem(asApiError(error).message);
+      setBusy(false);
+    }
+  };
+  const keys = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      onClose();
+    }
+  };
+
+  return (
+    <div className="rem-panel" ref={panel} tabIndex={-1} role="group" aria-label={`Reminders for ${deadline.title}`} onKeyDown={keys} data-testid="deadline-reminders-panel">
+      <p className="rem-lead">
+        <b>Remind me before this date.</b> {reminderSourceWords(reminders.source)}: {leadWords(reminders.leadDays)}.
+      </p>
+      <ReminderPicker idBase={`rem-${deadline.id}`} value={days} onChange={setDays} disabled={busy} />
+      {days.length >= REMINDER_LIMIT ? <p className="muted rem-hint">That is the most you can choose. Switch one off to pick another.</p> : null}
+      {problem ? (
+        <p className="formerror" role="alert">
+          {problem}
+        </p>
+      ) : null}
+      <div className="rem-acts">
+        <button className="btn btn-sm btn-p" type="button" disabled={busy || sameDays(days, reminders.leadDays)} onClick={() => void save(days)} data-testid="reminders-save">
+          {busy ? 'Saving' : 'Save'}
+        </button>
+        {reminders.source === 'deadline' ? (
+          <button className="btn btn-sm btn-g" type="button" disabled={busy} onClick={() => void save(null)}>
+            Use my team&apos;s reminders
+          </button>
+        ) : null}
+        <button className="btn btn-sm btn-g" type="button" disabled={busy} onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** The team's own reminder days, for every date that hasn't one of its own. */
+function ReminderDefaults({ canEdit }: { canEdit: boolean }) {
+  const toast = useToast();
+  const resource = useResource(() => api.deadlines.reminderDefaults(), []);
+  const saved = resource.data;
+  const [days, setDays] = useState<number[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  if (resource.loading && !saved) return <Loading what="Getting your reminders" />;
+  if (resource.error && !saved) return <ErrorState error={resource.error} onRetry={resource.reload} title="We couldn't load your reminders" />;
+  if (!saved) return null;
+  const current = days ?? saved.leadDays;
+  const dirty = !sameDays(current, saved.leadDays);
+
+  const save = async (leadDays: number[] | null) => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await api.deadlines.setReminderDefaults({ body: { leadDays } });
+      toast(leadDays === null ? `Back to Vero's standard: ${leadWords(saved.standardLeadDays)}.` : 'Reminders saved.');
+      setDays(null);
+      resource.reload();
+    } catch (error) {
+      setProblem(asApiError(error).message);
+    }
+    setBusy(false);
+  };
+  const email = saved.channels.includes('email');
+
+  return (
+    <div className="rem-defaults" data-testid="reminder-defaults">
+      <p className="muted rem-lead">
+        Right now: <b>{leadWords(saved.leadDays)}</b>. {saved.source === 'standard' ? "That is Vero's standard." : "That is your team's choice."} Reminders arrive in What&apos;s new{email ? ', and by email to each person who has deadline emails on' : ''}. You can change any
+        single date from its row.
+      </p>
+      <ReminderPicker idBase="rem-default" value={current} onChange={setDays} disabled={busy || !canEdit} />
+      {current.length >= REMINDER_LIMIT ? <p className="muted rem-hint">That is the most you can choose. Switch one off to pick another.</p> : null}
+      {!canEdit ? <p className="muted rem-hint">Owners, admins and members can change these.</p> : null}
+      {problem ? (
+        <p className="formerror" role="alert">
+          {problem}
+        </p>
+      ) : null}
+      {canEdit ? (
+        <div className="rem-acts">
+          <button className="btn btn-sm btn-p" type="button" disabled={busy || !dirty} onClick={() => void save(current)} data-testid="reminder-defaults-save">
+            {busy ? 'Saving' : 'Save reminders'}
+          </button>
+          {saved.source === 'organisation' && !dirty ? (
+            <button className="btn btn-sm btn-g" type="button" disabled={busy} onClick={() => void save(null)}>
+              Use Vero&apos;s standard ({STANDARD_DAYS.join(', ')} days)
+            </button>
+          ) : null}
+          {dirty ? (
+            <button className="btn btn-sm btn-g" type="button" disabled={busy} onClick={() => setDays(null)}>
+              Undo changes
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DeadlineRow({ deadline, watching, checkedAt, canMark, onDone, index }: { deadline: Deadline; watching: boolean; checkedAt: string | null; canMark: boolean; onDone: () => void; index: number }) {
+  const [editing, setEditing] = useState(false);
+  const opener = useRef<HTMLButtonElement>(null);
+  const closeEditor = () => {
+    setEditing(false);
+    window.requestAnimationFrame(() => opener.current?.focus());
+  };
   const late = deadline.state === 'overdue';
   const showFix = late && deadline.ruleKey !== null;
   const showDone = canMark && deadline.monitoring === 'reminder';
   const basis = basisWords(deadline.basis);
   const fromRegister = deadline.basis === 'source_date' && checkedAt;
   const status = statusOf(deadline);
+  const reminders = deadline.reminders ?? null;
+  const showReminders = canMark && reminders !== null && deadline.state !== 'done';
   return (
+    <Fragment>
     <tr id={`d-${deadline.id}`} data-testid="deadline-row" data-state={deadline.state} data-rule={deadline.ruleKey ?? ''} style={{ '--r': index } as CSSProperties}>
       <td className="dt">{rowDate(deadline.dueOn)}</td>
       <td>
@@ -96,6 +277,17 @@ function DeadlineRow({ deadline, watching, checkedAt, canMark, onDone, index }: 
           <span className="why" data-testid="deadline-basis">
             {basis}
             {fromRegister ? `, last checked ${dayWords(checkedAt)}` : ''}.
+          </span>
+        ) : null}
+        {deadline.lastFiledOn ? (
+          <span className="why" data-testid="deadline-last-filed" title={deadline.lastFiledNote ?? undefined}>
+            Last filed {longDate(deadline.lastFiledOn)}.{deadline.lastFiledNote ? ` ${deadline.lastFiledNote}` : ''}
+          </span>
+        ) : null}
+        {reminders ? (
+          <span className="why" data-testid="deadline-reminder-line">
+            {reminders.leadDays.length === 0 ? 'No reminders for this date.' : `Reminders: ${leadWords(reminders.leadDays)}.`}
+            {reminders.nextReminderOn ? ` Next one on ${longDate(reminders.nextReminderOn)}.` : ''}
           </span>
         ) : null}
         {deadline.needsReview ? (
@@ -111,18 +303,32 @@ function DeadlineRow({ deadline, watching, checkedAt, canMark, onDone, index }: 
         </span>
       </td>
       <td>
-        {showFix || showDone ? (
+        {showFix || showDone || showReminders ? (
           <div className="dl-acts">
             {showFix ? (
               <TLink className="btn btn-sm btn-p" href={`/issues/${deadline.companyId}/${encodeURIComponent(deadline.ruleKey ?? '')}`}>
                 Fix this
               </TLink>
             ) : null}
+            {showReminders ? (
+              <button className="btn btn-sm btn-g" type="button" ref={opener} aria-expanded={editing} onClick={() => (editing ? closeEditor() : setEditing(true))} data-testid="deadline-reminders-open">
+                <Icon name="bell" />
+                Reminders
+              </button>
+            ) : null}
             {showDone ? <DoneToggle deadline={deadline} undo={false} onChanged={onDone} /> : null}
           </div>
         ) : null}
       </td>
     </tr>
+    {editing ? (
+      <tr className="rem">
+        <td colSpan={5}>
+          <RowReminders deadline={deadline} onClose={closeEditor} onSaved={onDone} />
+        </td>
+      </tr>
+    ) : null}
+    </Fragment>
   );
 }
 
@@ -615,9 +821,17 @@ function DeadlinesBody() {
               <div className="foot2">
                 <Icon name="bell" />
                 <span>
-                  Reminders arrive in <b>What&apos;s new</b> for the owners and admins, 30, 7 and 1 day before each date. Where Vero can read the register, it checks after the date that the filing landed.
+                  Reminders arrive in <b>What&apos;s new</b> for the owners and admins, on the days chosen below. Where Vero can read the register, it checks after the date that the filing landed.
                 </span>
               </div>
+            </Reveal>
+
+            <Reveal as="section" className="mod" i={2} id="reminders">
+              <div className="mh">
+                <h2>Reminders</h2>
+                <span className="sub">When Vero reminds you before a date</span>
+              </div>
+              <ReminderDefaults canEdit={canMark} />
             </Reveal>
           </div>
         )}

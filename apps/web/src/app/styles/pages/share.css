@@ -162,3 +162,22 @@
 [data-theme="dark"] .pg-share .pg::after{background:linear-gradient(transparent,rgba(10,14,48,.95))}
 @media (max-width:560px){.pg-share .pagehead .meta{flex-wrap:wrap;row-gap:4px}.pg-share .pagehead .meta>span{white-space:nowrap}.pg-share .mh{flex-wrap:wrap;row-gap:2px}}
 @media (prefers-reduced-motion:reduce){.pg-share .cf,.pg-share .copyrow .cp.ok .i{animation:none}}
+
+/* link names and views */
+.pg-share .next .mk .input{height:42px;font-size:14px}
+.pg-share .next .hint3{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--ink-3);line-height:1.45}
+.pg-share .lt .nmrow{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px}
+.pg-share .lt .nmrow b{overflow-wrap:anywhere}
+.pg-share .lt .rnopen{border:0;background:none;padding:6px 4px;margin:-6px 0;border-radius:8px;font:inherit;font-size:12.5px;font-weight:700;color:var(--sky-2);cursor:pointer;transition:background .15s,color .15s}
+.pg-share .lt .rnopen:hover{background:var(--hover);color:var(--ink)}
+.pg-share .lt .rnopen:focus-visible{outline:2px solid var(--sky-2);outline-offset:2px}
+.pg-share .lt .rn{display:flex;flex-direction:column;gap:8px;max-width:340px}
+.pg-share .lt .rn .input{height:40px;font-size:14px}
+.pg-share .lt .rnb{display:flex;gap:8px}
+.pg-share .lt .rn .probl{font-size:13px}
+.pg-share .lt tr.exp .nm small{color:var(--ink-3)}
+@media (max-width:960px){
+  .pg-share .lt .rnopen{min-height:40px;padding:0 8px;margin:-8px 0}
+  .pg-share .lt .rn{max-width:none}
+  .pg-share .lt .rnb .btn{min-height:40px}
+}

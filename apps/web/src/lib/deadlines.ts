@@ -325,3 +325,40 @@ export function calendarFile(deadlines: readonly Deadline[], now: Date = new Dat
     });
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vero//Deadlines//EN', 'CALSCALE:GREGORIAN', ...events, 'END:VCALENDAR', ''].join('\r\n');
 }
+
+/** The days offered as reminder choices. A team can keep up to 6 (the API's limit), so a stored day outside this list is shown too. */
+export const REMINDER_CHOICES: readonly number[] = [30, 14, 7, 3, 1, 0];
+export const REMINDER_LIMIT = 6;
+export const STANDARD_DAYS: readonly number[] = [30, 7, 1];
+
+/** The choices to show: the usual ones, plus any day already saved that isn't among them, largest first. */
+export function reminderOptions(saved: readonly number[]): number[] {
+  return [...new Set([...REMINDER_CHOICES, ...saved])].sort((a, b) => b - a);
+}
+
+export function leadLabel(days: number): string {
+  if (days === 0) return 'On the day';
+  return days === 1 ? '1 day before' : `${days} days before`;
+}
+
+/** "30, 7 and 1 days before", "On the day", or "No reminders". */
+export function leadWords(days: readonly number[]): string {
+  const before = [...days].filter((day) => day > 0).sort((a, b) => b - a);
+  const onTheDay = days.includes(0);
+  if (before.length === 0) return onTheDay ? 'On the day' : 'No reminders';
+  const head = before.length === 1 ? String(before[0]) : `${before.slice(0, -1).join(', ')} and ${before[before.length - 1]}`;
+  const tail = before[before.length - 1] === 1 ? 'day' : 'days';
+  return `${head} ${tail} before${onTheDay ? ', and on the day' : ''}`;
+}
+
+export function sameDays(left: readonly number[], right: readonly number[]): boolean {
+  const a = [...left].sort((x, y) => y - x);
+  const b = [...right].sort((x, y) => y - x);
+  return a.length === b.length && a.every((day, index) => day === b[index]);
+}
+
+export function reminderSourceWords(source: 'deadline' | 'organisation' | 'standard'): string {
+  if (source === 'deadline') return 'Set for this date';
+  if (source === 'organisation') return "Your team's choice";
+  return "Vero's standard";
+}

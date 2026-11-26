@@ -172,3 +172,37 @@
   .pg-deadlines .acts .btn{height:40px}
 }
 @media (prefers-reduced-motion:reduce){.pg-deadlines .swipe .i,.pg-deadlines .ev2,.pg-deadlines .next .art .ring{animation:none}}
+
+/* reminders: the team's days, and one date's own */
+.pg-deadlines .rem-defaults{padding:6px 22px 22px}
+.pg-deadlines .rem-lead{font-size:13.5px;line-height:1.55;margin:0 0 14px;color:var(--ink-2);font-weight:600}
+.pg-deadlines .rem-lead b{color:var(--ink);font-weight:700}
+.pg-deadlines .rem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.pg-deadlines .rem-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:600;text-align:left;cursor:pointer;transition:border-color .2s var(--ease),background .2s var(--ease),color .2s var(--ease)}
+.pg-deadlines .rem-opt:hover:not(:disabled){border-color:var(--sky-2);background:var(--hover)}
+.pg-deadlines .rem-opt:focus-visible{outline:2px solid var(--sky-2);outline-offset:2px}
+.pg-deadlines .rem-opt[aria-checked="true"]{border-color:var(--navy);color:var(--ink)}
+.pg-deadlines .rem-opt:disabled{opacity:.55;cursor:not-allowed}
+.pg-deadlines .rem-opt .sw{position:relative;flex:none;width:40px;height:24px;border-radius:999px;background:#D7DCE8;transition:background .25s var(--ease)}
+.pg-deadlines .rem-opt .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(11,14,58,.25);transition:transform .3s var(--ease)}
+.pg-deadlines .rem-opt[aria-checked="true"] .sw{background:#000066}
+.pg-deadlines .rem-opt[aria-checked="true"] .sw::after{transform:translateX(16px)}
+.pg-deadlines .rem-hint{font-size:12.5px;margin:10px 0 0}
+.pg-deadlines .rem-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+.pg-deadlines .rem-defaults .formerror,.pg-deadlines .rem-panel .formerror{display:block;margin-top:10px}
+.pg-deadlines .dlt tr.rem td{padding:0;border-bottom:1px solid var(--line-2);background:var(--soft)}
+.pg-deadlines .rem-panel{padding:16px 22px 20px;outline:0;animation:dl-pop .3s var(--ease) both}
+.pg-deadlines .rem-panel .rem-lead{margin-bottom:12px}
+@media (max-width:960px){
+  .pg-deadlines .dlt tr.rem:not(.gh){display:block;padding:0}
+  .pg-deadlines .dlt tr.rem:not(.gh) td{display:block}
+  .pg-deadlines .rem-panel{padding:14px 16px 18px}
+  .pg-deadlines .rem-defaults{padding:6px 16px 20px}
+}
+@media (max-width:560px){
+  .pg-deadlines .rem-grid{grid-template-columns:1fr}
+  .pg-deadlines .rem-acts .btn{min-height:40px}
+}
+@media (prefers-reduced-motion:reduce){.pg-deadlines .rem-panel{animation:none}.pg-deadlines .rem-opt .sw,.pg-deadlines .rem-opt .sw::after{transition:none}}
+[data-theme="dark"] .pg-deadlines .rem-opt .sw{background:rgba(255,255,255,.22)}
+[data-theme="dark"] .pg-deadlines .rem-opt[aria-checked="true"] .sw{background:#0182FA}

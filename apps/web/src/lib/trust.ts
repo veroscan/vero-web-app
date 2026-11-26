@@ -117,3 +117,24 @@ export function checkedWords(howWeKnow: string): string {
 export function checkedStatus(howWeKnow: string): { word: string; tone: Tone } {
   return /^(Not checked|No certificate)/.test(howWeKnow) ? { word: 'Not checked', tone: 'watch' } : { word: 'Checked', tone: 'good' };
 }
+
+/** "just now", "5 minutes ago", "3 hours ago", "yesterday", "12 days ago", then the date. */
+export function sinceWords(iso: string, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return minutes === 1 ? 'a minute ago' : `${minutes} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours === 1 ? 'an hour ago' : `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'yesterday';
+  if (days < 60) return `${days} days ago`;
+  return `on ${longDate(iso)}`;
+}
+
+/** What a link's views say. Nothing at all when the API sent no count, rather than a made-up zero. */
+export function viewsWords(viewCount: number | undefined, lastViewedAt: string | null | undefined, now: Date = new Date()): string | null {
+  if (viewCount === undefined) return null;
+  if (viewCount === 0 || !lastViewedAt) return 'Not opened yet';
+  const when = sinceWords(lastViewedAt, now);
+  return viewCount === 1 ? `Opened once, ${when}` : `Opened ${viewCount} times, last ${when}`;
+}

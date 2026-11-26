@@ -13,6 +13,7 @@ import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api, asApiError, isRedirecting } from '@/lib/api';
 import { useResource } from '@/lib/useResource';
+import { nextCheckWords, urgentWords } from '@/lib/watching';
 import '@/app/styles/pages/watchlist.css';
 
 const NONE: readonly never[] = [];
@@ -86,8 +87,13 @@ export default function FollowedCompanyPage() {
   const params = useParams<{ companyId: string }>();
   const companyId = params.companyId;
   const resource = useResource(async () => {
-    const [company, overview] = await Promise.all([api.companies.get({ params: { companyId } }), api.results.overview({ params: { companyId }, query: { scope: 'company' } })]);
-    return { company, overview };
+    const [company, overview, list] = await Promise.all([
+      api.companies.get({ params: { companyId } }),
+      api.results.overview({ params: { companyId }, query: { scope: 'company' } }),
+      // Only adds the urgent count and the next re-check. The page stands without it.
+      api.watchlist.list().catch(() => null),
+    ]);
+    return { company, overview, list };
   }, [companyId]);
   const data = resource.data;
   const crumb = (
@@ -117,6 +123,10 @@ export default function FollowedCompanyPage() {
     );
   }
   const followed = data.company.relationship === 'follow';
+  const item = data.list?.companies.find((entry) => entry.companyId === companyId);
+  const urgent = urgentWords(item?.urgentGapCount);
+  const next = item ? nextCheckWords(data.list?.monitoring, item.nextScanDueAt) : null;
+  const off = data.list?.monitoring?.on === false;
   return (
     <OverviewBody
       company={data.company}
@@ -126,7 +136,20 @@ export default function FollowedCompanyPage() {
       onScanned={resource.reload}
       crumb={crumb}
       back={{ href: '/watchlist', label: 'Watchlist' }}
-      {...(followed ? { actions: <StopFollowing companyId={companyId} name={data.company.legalName} /> } : {})}
+      {...(followed
+        ? {
+            actions: (
+              <>
+                {urgent || next || off ? (
+                  <p className="wl-watch" data-testid="watch-status">
+                    {urgent ? <b className={urgent.tone === 'urgent' ? 'wl-bad' : undefined}>{urgent.text}.</b> : null} {next ? `${next}.` : off ? 'Automatic re-checks are off.' : ''}
+                  </p>
+                ) : null}
+                <StopFollowing companyId={companyId} name={data.company.legalName} />
+              </>
+            ),
+          }
+        : {})}
       areaHref={(layer) => `/areas/${layer}?company=${companyId}`}
     />
   );

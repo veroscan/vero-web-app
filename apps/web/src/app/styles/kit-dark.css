@@ -61,6 +61,8 @@
 [data-theme="dark"] .pg-deadlines .yr .blk i.now{background:rgba(79,168,255,.32)}
 [data-theme="dark"] .pg-deadlines .ev2 i{border:3px solid rgba(150,170,255,.14);box-shadow:0 0 0 1px var(--line),0 4px 10px -4px rgba(0,0,12,0.90)}
 @media (max-width:560px){[data-theme="dark"] .pg-deadlines .tln .co{box-shadow:8px 0 10px -8px rgba(0,0,12,0.43)}}
+[data-theme="dark"] .pg-deadlines .rem-opt .sw{background:rgba(150,170,255,.07)}
+[data-theme="dark"] .pg-deadlines .rem-opt .sw::after{background:var(--panel);box-shadow:0 1px 3px rgba(0,0,12,0.60)}
 /* from pages\docflow.css */
 [data-theme="dark"] .pg-docflow .drop{border:1.5px dashed rgba(150,170,255,.14);background:linear-gradient(180deg,rgba(61,123,255,.16),rgba(61,123,255,.16))}
 [data-theme="dark"] .pg-docflow .drop:hover,[data-theme="dark"] .pg-docflow .drop.over{background:rgba(61,123,255,.16)}
@@ -126,6 +128,7 @@
 [data-theme="dark"] .pg-scan .lv tr.now td{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .ar .tr i{background:var(--panel)}
 [data-theme="dark"] .pg-scan .ar .tr i.watch{background:rgba(150,170,255,.07)}
+[data-theme="dark"] .pg-scan .next .stopask .btn.btn-danger{border:1px solid rgba(150,170,255,.14)}
 /* from pages\scorechart.css */
 [data-theme="dark"] .vchart:focus-visible{outline:2px solid rgba(150,170,255,.14)}
 [data-theme="dark"] .vchart .tip{background:var(--panel);color:var(--ink-2)}

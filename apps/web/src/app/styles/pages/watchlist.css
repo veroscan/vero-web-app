@@ -120,3 +120,15 @@
 @media (prefers-reduced-motion:reduce){
   .pg-wl .wl-ask,.wl-confirm{animation:none}
 }
+
+/* urgent count and the next re-check */
+.pg-wl .wl-monitor{margin:0 0 20px}
+.pg-wl .wt .co small.wl-urg{display:block;margin-top:2px;font-weight:700}
+.pg-wl .wt .co small.wl-urg[data-tone="urgent"]{color:var(--urgent)}
+.pg-wl .wt .co small.wl-urg[data-tone="good"]{color:var(--good)}
+.pg-wl .wt td.ls small.wl-next{display:block;margin-top:2px;font-size:12.5px;font-weight:600;color:var(--ink-3);white-space:normal}
+/* followed company page: the plain line beside Stop following, on navy */
+.wl-watch{font-size:13px;font-weight:600;line-height:1.5;color:rgba(255,255,255,.78);max-width:300px;text-align:right}
+.wl-watch b{color:#fff;font-weight:700}
+.wl-watch .wl-bad{color:#FFB3B5}
+@media (max-width:960px){.wl-watch{text-align:left;max-width:none;width:100%}}

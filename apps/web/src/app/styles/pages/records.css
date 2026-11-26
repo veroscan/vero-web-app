@@ -133,3 +133,24 @@
   .pg-records .rec dd .go{min-height:32px}
 }
 @media (prefers-reduced-motion:reduce){.pg-records .sk,.pg-records .cos>a,.pg-records .cos .seal{animation:none}}
+
+/* what changed on the register */
+.pg-records .chg-wrap{padding:4px 22px 22px}
+.pg-records .chg{list-style:none;margin:6px 0 0;padding:0}
+.pg-records .chg li{display:grid;grid-template-columns:200px 1fr 190px;gap:8px 24px;align-items:start;padding:15px 0;border-top:1px solid var(--line-2);font-size:14px}
+.pg-records .chg li:first-child{border-top:1px solid var(--line)}
+.pg-records .chg .fld{font-weight:700;overflow-wrap:anywhere}
+.pg-records .chg .mv{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-weight:600;line-height:1.5;min-width:0}
+.pg-records .chg .mv .was{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--ink-4);overflow-wrap:anywhere}
+.pg-records .chg .mv .now{color:var(--ink);overflow-wrap:anywhere}
+.pg-records .chg .mv .i{width:14px;height:14px;color:var(--ink-4);flex:none}
+.pg-records .chg .mv .withheld{color:var(--ink-2);font-weight:600}
+.pg-records .chg .when{font-weight:700;font-variant-numeric:tabular-nums}
+.pg-records .chg .when small,.pg-records .chg .fld small{display:block;color:var(--ink-3);font-size:12.5px;font-weight:600;line-height:1.45;margin-top:2px}
+.pg-records .chg-empty{padding:8px 22px 26px;color:var(--ink-3);font-size:14px;font-weight:600;line-height:1.55;max-width:620px}
+.pg-records .chg-empty b{display:block;color:var(--ink);font-weight:700;margin-bottom:2px}
+@media (max-width:960px){
+  .pg-records .chg-wrap,.pg-records .chg-empty{padding-left:16px;padding-right:16px}
+  .pg-records .chg li{grid-template-columns:1fr;gap:4px}
+}
+.pg-records .after .mod+.mod,.pg-records .after .notes+.mod+.mod{margin-top:20px}

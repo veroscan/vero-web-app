@@ -17,7 +17,7 @@
 .pg-hist .hs-co button{white-space:nowrap}
 /* scan again card */
 .pg-hist .next .art2{position:absolute;right:16px;top:14px;width:112px;height:100px}
-.pg-hist .next h3{padding-right:110px}
+.pg-hist .next h3,.pg-hist .next h3+p{padding-right:110px}
 .pg-hist .next .meta2{margin-top:auto;padding-top:18px;display:flex;flex-direction:column}
 .pg-hist .next .meta2 div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line-2);font-size:13px;font-weight:600;color:var(--ink-3)}
 .pg-hist .next .meta2 b{color:var(--ink);font-weight:700}
@@ -98,7 +98,8 @@
   .pg-hist .chart-legend{padding-left:22px}
   .pg-hist .pagehead .acts .btn{flex:1;justify-content:center}
   .pg-hist .hs-co{width:100%}
-  .pg-hist .hs-earlier{height:40px;flex:1;justify-content:center}
+  .pg-hist .vmore{flex-wrap:wrap;gap:10px 12px}
+  .pg-hist .hs-earlier{height:40px;flex:1 1 100%;justify-content:center}
   .pg-hist .db{padding:22px 20px}
   .pg-hist .hs-mv .pixel{font-size:36px}
 }

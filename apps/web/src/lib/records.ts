@@ -312,3 +312,18 @@ export function recordRows(records: CompanyRecordsResponse, context: RowContext 
   }
   return rows;
 }
+
+/** What one register change says in words: nothing before, nothing now, or old to new. Names are never shown, only that they changed. */
+export function changeValueWords(value: string | null, side: 'before' | 'after'): string {
+  if (value !== null && value.trim() !== '') return value;
+  return side === 'before' ? 'Not on the register before' : 'No longer on the register';
+}
+
+/** "3 days ago" for the change log, then the date once it is older than a month. */
+export function changedWhenWords(iso: string, now: Date = new Date()): string {
+  const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);
+  if (days < 1) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 31) return `${days} days ago`;
+  return DAY.format(new Date(iso));
+}

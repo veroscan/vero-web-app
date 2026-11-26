@@ -224,3 +224,16 @@
   .pg-settings .lb2 .onw{font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){.pg-settings .cf,.pg-settings .tmload span{animation:none}.pg-settings .opt2:hover{transform:none}}
+
+/* email choices and where you're signed in */
+.pg-settings .nm2 .switch{display:inline-block;vertical-align:middle}
+.pg-settings .nm2 .switch:focus-visible{outline:2px solid var(--sky-2);outline-offset:3px}
+.pg-settings .nm2 .switch:disabled{opacity:.55;cursor:default}
+.pg-settings .foot4.bad{color:var(--urgent)}
+.pg-settings .foot4.plain{border-top:0;padding-top:0;margin-top:-10px}
+.pg-settings .rw.sess b .here{display:inline;margin-left:10px;color:var(--good)}
+.pg-settings .foot5{padding:12px 0 6px;font-size:12.5px;font-weight:600;color:var(--ink-3);line-height:1.5;border-top:1px solid var(--line-2)}
+@media (max-width:560px){.pg-settings .rw.sess b .here{display:block;margin-left:0}}
+.pg-settings .more-sessions{display:block;margin:10px 0 4px;padding:8px 0;min-height:40px;background:none;border:0;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-align:left}
+[data-theme="dark"] .pg-settings .nm2 .switch{background:rgba(255,255,255,.22)}
+[data-theme="dark"] .pg-settings .nm2 .switch[aria-checked="true"]{background:#0182FA}

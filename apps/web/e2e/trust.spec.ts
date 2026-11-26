@@ -258,7 +258,7 @@ test('settings: your name, your companies, and the sections all reach somewhere 
   await expect(page.getByTestId('settings-company')).toHaveAttribute('href', `/company/${companyId}`);
   await expect(page.getByTestId('settings-plan')).toHaveAttribute('href', '/plan');
   await expect(page.getByText('Your plan', { exact: true }).locator('..')).toContainText('Free');
-  await expect(page.getByTestId('settings-notifications')).toContainText("You can't choose between them");
+  await expect(page.getByTestId('settings-notifications')).toContainText('Switch one on and it is emailed to you');
 
   await page.getByLabel('Your name').fill('Amara Okafor');
   await page.getByRole('button', { name: 'Save your name' }).click();

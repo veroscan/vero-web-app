@@ -2,7 +2,7 @@
 
 import '@/app/styles/pages/finding.css';
 import '@/app/styles/pages/docflow.css';
-import type { IssueSummary, VaultResponse } from '@vero/shared';
+import type { IssueActivity, IssueSummary, VaultResponse } from '@vero/shared';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ErrorState, Loading, PlanLink, Redline, SampleNote } from '@/components/Bits';
@@ -17,7 +17,7 @@ import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { isInPlace, midSentence, slotColour } from '@/lib/documents';
-import { countryShort, plural, POINTS_HELD_WORDS, shortDate } from '@/lib/format';
+import { countryShort, dateTimeWords, plural, POINTS_HELD_WORDS, shortDate } from '@/lib/format';
 import { FINDING_WORDS, findingSource, findingStatus, issueKey, issuePath, knowWords, withoutReferrals } from '@/lib/issues';
 import { useResource } from '@/lib/useResource';
 
@@ -33,6 +33,16 @@ const SLOT_WORDS: Record<string, string> = {
   needs_confirmation: 'Read, waiting for you to confirm',
   read: 'On file and read',
   not_accepted: 'A copy is on file but does not count yet',
+};
+
+/** What happened, in a few plain words. The sentence under it comes from the API. */
+const ACTIVITY_WORDS: Record<IssueActivity['kind'], string> = {
+  opened: 'Found by a scan',
+  cleared: 'Cleared',
+  reopened: 'Came back',
+  document_added: 'Document added',
+  declared_missing: 'Marked as not available',
+  declaration_withdrawn: 'Taken back',
 };
 
 function ScoreImpact({ from, to, capped }: { from: number; to: number; capped: boolean }) {
@@ -278,6 +288,14 @@ export default function IssuePage() {
                 <b>{source.label}</b>
               </div>
             ) : null}
+            {issue.lastCheckedAt ? (
+              <div data-testid="last-checked">
+                <span>Last checked</span>
+                <b>
+                  <time dateTime={issue.lastCheckedAt}>{dateTimeWords(issue.lastCheckedAt)}</time>
+                </b>
+              </div>
+            ) : null}
             <div>
               <span>Company</span>
               <b>
@@ -453,8 +471,34 @@ export default function IssuePage() {
               </div>
             </Reveal>
 
+            <Reveal as="section" className="mod" i={2}>
+              <div className="mh">
+                <h2>Activity</h2>
+                <span className="sub">Newest first</span>
+              </div>
+              {(issue.activity ?? []).length > 0 ? (
+                <ol className="tl" data-testid="finding-activity">
+                  {[...(issue.activity ?? [])]
+                    .sort((a, b) => b.at.localeCompare(a.at))
+                    .map((entry) => (
+                      <li key={`${entry.kind}-${entry.at}`} className={`k-${entry.kind}`}>
+                        <b>{ACTIVITY_WORDS[entry.kind]}</b>
+                        <small>
+                          <time dateTime={entry.at}>{dateTimeWords(entry.at)}</time>
+                        </small>
+                        {entry.text ? <p>{entry.text}</p> : null}
+                      </li>
+                    ))}
+                </ol>
+              ) : (
+                <p className="fine" data-testid="finding-activity-empty">
+                  Nothing yet. When a scan finds, clears or re-opens this, or a document is added, it shows here.
+                </p>
+              )}
+            </Reveal>
+
             {issue.law.length > 0 || issue.regulator ? (
-              <Reveal as="section" className="mod" i={2}>
+              <Reveal as="section" className="mod" i={3}>
                 <div className="mh">
                   <h2>Sources</h2>
                 </div>
@@ -480,7 +524,7 @@ export default function IssuePage() {
               </p>
             )}
 
-            <Reveal as="section" className="mod" i={3}>
+            <Reveal as="section" className="mod" i={4}>
               <div className="mh">
                 <h2>Related</h2>
               </div>

@@ -112,7 +112,7 @@ function AreaHero({ area, companyId, scope, rank, heldByUrgent, readOnly, back }
       {first ? (
         <NextCard
           title={first.headline}
-          body={`${first.severityWord}, ${first.companyName}.${first.declaredMissing ? " You told us you don't have this." : ''}`}
+          body={`${first.severityWord}, ${first.companyName.replace(/\.$/, '')}.${first.declaredMissing ? " You told us you don't have this." : ''}`}
           href={issuePath(first)}
           projection={projection}
           note={first.pointsHeldByUrgent && !projection ? <span data-testid="points-held">{POINTS_HELD_WORDS}</span> : null}

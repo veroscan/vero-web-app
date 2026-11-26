@@ -4,7 +4,7 @@
    light, the card to follow another, then every company with its latest change. Followed companies
    are public data only and read only (owner's decision, 19 Nov 2026). */
 
-import type { WatchlistItem } from '@vero/shared';
+import type { WatchlistItem, WatchlistMonitoring } from '@vero/shared';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading } from '@/components/Bits';
@@ -18,6 +18,7 @@ import { useToast } from '@/components/Toast';
 import { api, asApiError, isRedirecting } from '@/lib/api';
 import { plural } from '@/lib/format';
 import { countryLong } from '@/lib/records';
+import { monitoringLine, nextCheckWords, urgentWords } from '@/lib/watching';
 import { useResource } from '@/lib/useResource';
 import '@/app/styles/pages/watchlist.css';
 
@@ -38,6 +39,8 @@ interface Entry {
   mine: boolean;
   href: string;
   change: WatchlistItem['lastChange'];
+  urgent: number | null;
+  nextDue: string | null;
 }
 
 const pct = (value: number) => Math.max(0, Math.min(100, ((value - 40) / 60) * 100));
@@ -152,6 +155,25 @@ function Unfollow({ entry, onDone }: { entry: Entry; onDone: () => void }) {
   );
 }
 
+function Urgent({ count }: { count: number | null }) {
+  const words = urgentWords(count);
+  if (!words) return null;
+  return (
+    <small className="wl-urg" data-tone={words.tone} data-testid="watchlist-urgent">
+      {words.text}
+    </small>
+  );
+}
+
+function NextCheck({ monitoring, dueAt }: { monitoring: WatchlistMonitoring | undefined; dueAt: string | null }) {
+  const words = nextCheckWords(monitoring, dueAt);
+  return words ? (
+    <small className="wl-next" data-testid="watchlist-next-check">
+      {words}
+    </small>
+  ) : null;
+}
+
 export default function WatchlistPage() {
   const session = useSession();
   const router = useRouter();
@@ -178,6 +200,8 @@ export default function WatchlistPage() {
       mine: false,
       href: `/watchlist/${item.companyId}`,
       change: item.lastChange,
+      urgent: item.urgentGapCount ?? null,
+      nextDue: item.nextScanDueAt ?? null,
     }));
     const mine: Entry[] =
       root && overview && session.hasResult
@@ -199,6 +223,8 @@ export default function WatchlistPage() {
               mine: true,
               href: '/',
               change: overview.whatChanged,
+              urgent: null,
+              nextDue: null,
             },
           ]
         : [];
@@ -220,6 +246,8 @@ export default function WatchlistPage() {
     .filter((entry) => entry.change)
     .sort((a, b) => new Date(b.change?.at ?? 0).getTime() - new Date(a.change?.at ?? 0).getTime())
     .slice(0, 5);
+  const monitoring = data?.monitoring;
+  const watching = monitoringLine(monitoring);
   const used = data?.used ?? 0;
   const limit = data?.limit ?? 0;
   const full = data !== undefined && used >= limit;
@@ -237,6 +265,7 @@ export default function WatchlistPage() {
             </h1>
             <div className="meta">
               {data ? <span>{limit > 0 ? `${used} of ${limit} followed` : 'Following is part of a paid plan'}</span> : null}
+              {watching ? <span data-testid="watchlist-monitoring-meta">{watching.title}</span> : null}
               <span>Read only: nothing to upload or answer</span>
             </div>
           </div>
@@ -308,7 +337,7 @@ export default function WatchlistPage() {
               </svg>
               <div className="k">Add to your watchlist</div>
               <h3>Follow a company</h3>
-              <p>Vero scans its public records now, keeps checking them, and shows here when something changes.</p>
+              <p>{monitoring?.on === false ? 'Vero scans its public records now and shows here when something changes.' : 'Vero scans its public records now, keeps checking them, and shows here when something changes.'}</p>
               <div className="hint">Any country. Each company shows its coverage, full, registry or international, so you know how much was checked.</div>
               {limit > 0 ? (
                 <div className="slots">
@@ -341,6 +370,12 @@ export default function WatchlistPage() {
       </Hero>
       {data ? (
         <After>
+          {watching ? (
+            <p className={`note wl-monitor${monitoring?.on ? '' : ' warn'}`} data-testid="watchlist-monitoring">
+              <span className="b">{watching.title}</span>
+              <span>{watching.body}</span>
+            </p>
+          ) : null}
           <Reveal as="section" className="mod r2" i={0}>
             <div className="mh">
               <h2>Companies</h2>
@@ -378,6 +413,7 @@ export default function WatchlistPage() {
                         </TLink>
                       </b>
                       <small>{entry.sub}</small>
+                      {entry.mine ? null : <Urgent count={entry.urgent} />}
                     </td>
                     <td className="src2 cv" title={entry.levelTitle ?? undefined}>
                       {entry.level ?? countryLong(entry.country)}
@@ -388,6 +424,7 @@ export default function WatchlistPage() {
                     </td>
                     <td className="muted ls" data-label="Last scan">
                       {entry.scanning ? 'Scanning now' : entry.lastScan ? scanWhen(entry.lastScan) : 'Not yet'}
+                      {entry.mine || entry.scanning ? null : <NextCheck monitoring={monitoring} dueAt={entry.nextDue} />}
                     </td>
                     <td className="ac">{entry.mine ? <span className="muted">Yours</span> : <Unfollow entry={entry} onDone={list.reload} />}</td>
                   </tr>
@@ -408,7 +445,7 @@ export default function WatchlistPage() {
                 <span className="sub">The newest change on each company</span>
               </div>
               {changes.length === 0 ? (
-                <p className="vempty">Nothing has changed yet. Changes show here as Vero re-checks each company.</p>
+                <p className="vempty">{monitoring?.on === false ? 'Nothing has changed yet. Automatic re-checks are off, so a change shows here only after a new scan.' : 'Nothing has changed yet. Changes show here as Vero re-checks each company.'}</p>
               ) : (
                 <div className="chl rows-in">
                   {changes.map((entry, index) => {

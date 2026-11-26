@@ -14,7 +14,7 @@ import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { entitlementsOf, roleCan } from '@/lib/entitlements';
 import { coverageWords, longDate, plural, scoreWords, shortDate } from '@/lib/format';
-import { badgeRows, earnedBadge, shareUrl, verifiedUrl } from '@/lib/trust';
+import { badgeRows, earnedBadge, shareUrl, verifiedUrl, viewsWords } from '@/lib/trust';
 import { useResource } from '@/lib/useResource';
 
 const LINK_DAYS = [7, 30, 90] as const;
@@ -199,14 +199,17 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [fresh, setFresh] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const nameId = useId();
   const until = shortDate(new Date(Date.now() + days * 86_400_000).toISOString());
 
   const create = async () => {
     setBusy(true);
     setProblem(null);
     try {
-      const made = await api.shares.create({ params: { companyId }, body: { expiresInDays: days } });
+      const made = await api.shares.create({ params: { companyId }, body: { expiresInDays: days, ...(name.trim() ? { name: name.trim() } : {}) } });
       setFresh(shareUrl(made.token, window.location.origin));
+      setName('');
       onMade();
     } catch (error) {
       setProblem(asApiError(error).message);
@@ -218,6 +221,11 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
     <div className="mod next mk">
       <div className="k">New link</div>
       <h3>Make a link to your public page</h3>
+      <label className="lbl3" htmlFor={nameId}>
+        Name<span>Optional</span>
+      </label>
+      <input id={nameId} className="input" type="text" maxLength={80} value={name} placeholder="For example: Seed investors" autoComplete="off" disabled={!canMake || busy} onChange={(event) => setName(event.target.value)} data-testid="share-name" />
+      <p className="hint3">Only your team sees the name. It helps you tell links apart.</p>
       <div className="lbl3">Who can view</div>
       <p className="who2">Anyone with the link. It can&apos;t be limited to named people yet.</p>
       <div className="lbl3">
@@ -247,6 +255,100 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
           Only an owner or admin can make a public link.
         </p>
       )}
+    </div>
+  );
+}
+
+/** A link's name, with a rename in place. Enter saves, Escape cancels, an empty name takes the name away. */
+function LinkName({ link, canRename, onChanged }: { link: ShareLink; canRename: boolean; onChanged: () => void }) {
+  const toast = useToast();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(link.name ?? '');
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const field = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLButtonElement>(null);
+  const was = useRef(false);
+  const id = useId();
+  useEffect(() => {
+    if (editing) field.current?.select();
+    else if (was.current) opener.current?.focus();
+    was.current = editing;
+  }, [editing]);
+
+  const save = async () => {
+    const next = value.trim();
+    if (next === (link.name ?? '')) {
+      setEditing(false);
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    try {
+      await api.shares.rename({ params: { shareId: link.id }, body: { name: next === '' ? null : next } });
+      toast(next === '' ? 'Name removed.' : 'Link renamed.');
+      setEditing(false);
+      onChanged();
+    } catch (failure) {
+      setProblem(asApiError(failure).message);
+    }
+    setBusy(false);
+  };
+
+  if (editing) {
+    return (
+      <form
+        className="rn"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && !busy) {
+            event.stopPropagation();
+            setValue(link.name ?? '');
+            setProblem(null);
+            setEditing(false);
+          }
+        }}
+      >
+        <label className="sr-only" htmlFor={id}>
+          Name for this link
+        </label>
+        <input ref={field} id={id} className="input" type="text" maxLength={80} value={value} placeholder="Name this link" autoComplete="off" disabled={busy} onChange={(event) => setValue(event.target.value)} data-testid="share-rename-input" />
+        <span className="rnb">
+          <button className="btn btn-sm btn-p" type="submit" disabled={busy} data-testid="share-rename-save">
+            {busy ? 'Saving' : 'Save'}
+          </button>
+          <button
+            className="btn btn-sm btn-g"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setValue(link.name ?? '');
+              setProblem(null);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </span>
+        {problem ? (
+          <span className="probl" role="alert">
+            {problem}
+          </span>
+        ) : null}
+      </form>
+    );
+  }
+  return (
+    <div className="nmrow">
+      <b>{link.name ?? 'Public page'}</b>
+      {canRename ? (
+        <button ref={opener} className="rnopen" type="button" aria-label={link.name ? `Rename ${link.name}` : 'Name this link'} onClick={() => setEditing(true)} data-testid="share-rename">
+          {link.name ? 'Rename' : 'Add a name'}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -315,8 +417,8 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
             {[...live, ...ended].map((link, index) => (
               <tr key={link.id} className={link.active ? undefined : 'exp'} data-testid={link.active ? 'share-row' : 'share-ended'} style={{ '--r': index } as CSSProperties}>
                 <td className="nm">
-                  <b>Public page</b>
-                  <small>Shown once when it was made</small>
+                  <LinkName key={`${link.id}-${link.name ?? ''}`} link={link} canRename={link.active && canManage} onChanged={onChanged} />
+                  <small data-testid="share-views">{viewsWords(link.viewCount, link.lastViewedAt) ?? 'Public page'}</small>
                 </td>
                 <td className="who">Anyone with the link</td>
                 <td className="muted made">
@@ -352,7 +454,7 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
       )}
       <p className="foot3">
         {allEnded.length > ENDED_SHOWN ? `Showing the ${ENDED_SHOWN} most recent of ${allEnded.length} ended links. ` : ''}
-        Vero doesn&apos;t count views of a link yet, and keeps no record of who opened it.
+        Views count opens of the public link. Opens by people signed in to your team aren&apos;t counted, and Vero keeps nothing about who opened it.
       </p>
     </Reveal>
   );

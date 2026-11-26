@@ -55,6 +55,25 @@ export function agoWords(value: string | null, now: Date = new Date()): string {
   return `on ${shortDate(value ?? '')}`;
 }
 
+const STAMP = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+
+/** 24 Nov, 05:58 in the reader's own time zone. Anything we can't read as a date is shown as it came. */
+export function dateTimeWords(value: string): string {
+  const date = parse(value);
+  return date ? STAMP.format(date).replace(',', '').replace(/^(\d+ \w+) (\d)/, '$1, $2') : value;
+}
+
+/** "About 2 minutes left, based on your last 4 scans." Only for a real estimate. */
+export function etaWords(seconds: number, basedOn: number | null): string {
+  let left: string;
+  if (seconds < 45) left = 'Less than a minute left';
+  else if (seconds < 90) left = 'About a minute left';
+  else if (seconds < 90 * 60) left = `About ${Math.round(seconds / 60)} minutes left`;
+  else left = `About ${Math.round(seconds / 3600)} hours left`;
+  if (!basedOn) return left;
+  return `${left}, based on ${basedOn === 1 ? 'your last scan' : `your last ${basedOn} scans`}`;
+}
+
 /** What a score rests on. Nothing at all rather than a made-up number when the API has none. */
 export function coverageWords(coverage: Coverage | null | undefined): string | null {
   if (!coverage || coverage.total === 0) return null;

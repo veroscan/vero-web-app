@@ -3,18 +3,18 @@
 import '@/app/styles/pages/scan.css';
 import type { Company, Scan, ScanSource } from '@vero/shared';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { ErrorState, Loading, SampleNote } from '@/components/Bits';
 import { Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
 import { After, Hero } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { api, asApiError, isRedirecting, type ApiError } from '@/lib/api';
-import { agoWords, plural, sentence } from '@/lib/format';
+import { agoWords, etaWords, plural, sentence } from '@/lib/format';
 import { prefersCalm } from '@/lib/motion';
 import { sourceStatus, sourceWorking, type Tone } from '@/lib/words';
 
-const FINISHED = new Set<Scan['status']>(['partial', 'completed', 'failed']);
+const FINISHED = new Set<Scan['status']>(['partial', 'completed', 'failed', 'cancelled']);
 /** How long a check stays on the paper before its result lands, and how long the result shows. */
 const READ_MS = 900;
 const LAND_MS = 520;
@@ -79,7 +79,7 @@ function useScans(only: string | null, scanId: string | null) {
         if (scanId && attempt === 0 && company.id === only) return api.scans.get({ params: { scanId } });
         const { scans: list } = await api.scans.list({ params: { companyId: company.id } });
         const latest = list.find((scan) => scan.kind === 'full');
-        const usable = latest && latest.status !== 'failed' ? latest : null;
+        const usable = latest && latest.status !== 'failed' && latest.status !== 'cancelled' ? latest : null;
         return usable ?? api.scans.create({ params: { companyId: company.id } });
       }),
     ).then(
@@ -115,7 +115,34 @@ function useScans(only: string | null, scanId: string | null) {
     setScans({});
     setAttempt((value) => value + 1);
   };
-  return { scans: list, error, retry, companies };
+  const update = (fresh: Scan[]) => setScans((current) => ({ ...current, ...Object.fromEntries(fresh.map((scan) => [scan.id, scan])) }));
+  return { scans: list, error, retry, update, companies };
+}
+
+type Stop = 'idle' | 'asking' | 'stopping';
+
+/** Real steps done across every scan on this screen, and an estimate only when each one has one. */
+function sumProgress(scans: Scan[]) {
+  let done = 0;
+  let total = 0;
+  let known = scans.length > 0;
+  for (const scan of scans) {
+    if (scan.progress) {
+      done += scan.progress.stepsDone;
+      total += scan.progress.stepsTotal;
+    } else known = false;
+  }
+  const open = scans.filter((scan) => !FINISHED.has(scan.status));
+  const etas = open.map((scan) => scan.progress?.etaSeconds ?? null);
+  const basis = open.map((scan) => scan.progress?.etaBasedOnScans ?? null);
+  const hasEta = open.length > 0 && etas.every((value) => value !== null);
+  return {
+    known,
+    done,
+    total,
+    etaSeconds: hasEta ? Math.max(...etas) : null,
+    basedOn: hasEta ? Math.min(...(basis as number[])) : null,
+  };
 }
 
 function Sheet({ row, landed }: { row: Row; landed: boolean }) {
@@ -149,7 +176,11 @@ function Scanning() {
   const router = useRouter();
   const params = useSearchParams();
   const only = params.get('company');
-  const { scans, error, retry, companies } = useScans(only, params.get('scan'));
+  const { scans, error, retry, update, companies } = useScans(only, params.get('scan'));
+  const [stop, setStop] = useState<Stop>('idle');
+  const [stopNote, setStopNote] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const stopButton = useRef<HTMLButtonElement>(null);
+  const keepButton = useRef<HTMLButtonElement>(null);
   const [revealed, setRevealed] = useState(0);
   const [landed, setLanded] = useState(false);
   const followed = only !== null && companies[0]?.relationship === 'follow';
@@ -188,6 +219,8 @@ function Scanning() {
   const allFinished = scans.length > 0 && scans.every((scan) => FINISHED.has(scan.status));
   const showDone = allFinished && revealed >= answered;
   const anyFailed = scans.some((scan) => scan.status === 'failed');
+  const anyCancelled = scans.some((scan) => scan.status === 'cancelled');
+  const progress = sumProgress(scans);
   const anyPartial = scans.some((scan) => scan.status === 'partial');
   const sample = rows.some((row) => row.sampleData);
   const name = companies[0]?.legalName ?? session.root?.legalName ?? 'the company';
@@ -200,6 +233,49 @@ function Scanning() {
     if (allFinished) session.refresh().catch(() => undefined);
     // Once, when the scan ends, so the result is there for the next screen.
   }, [allFinished]);
+
+  useEffect(() => {
+    if (stop === 'asking') keepButton.current?.focus();
+  }, [stop]);
+
+  const closeAsk = () => {
+    setStop('idle');
+    requestAnimationFrame(() => stopButton.current?.focus());
+  };
+  const askKeys = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeAsk();
+    }
+  };
+  const stopScans = async () => {
+    if (stop === 'stopping') return;
+    setStop('stopping');
+    setStopNote(null);
+    const open = scans.filter((scan) => !FINISHED.has(scan.status));
+    const results = await Promise.allSettled(open.map((scan) => api.scans.cancel({ params: { scanId: scan.id } })));
+    const fresh: Scan[] = [];
+    let finishedFirst = false;
+    let failed = false;
+    for (const [at, result] of results.entries()) {
+      if (result.status === 'fulfilled') fresh.push(result.value);
+      else if (isRedirecting(result.reason)) return;
+      else if (asApiError(result.reason).status === 409) {
+        // It finished while the question was open. Show what it became.
+        finishedFirst = true;
+        const id = (open[at] as Scan).id;
+        try {
+          fresh.push(await api.scans.get({ params: { scanId: id } }));
+        } catch {
+          failed = true;
+        }
+      } else failed = true;
+    }
+    update(fresh);
+    setStop('idle');
+    if (failed) setStopNote({ tone: 'error', text: "We couldn't stop the scan. Please try again." });
+    else if (finishedFirst && !fresh.some((scan) => scan.status === 'cancelled')) setStopNote({ tone: 'info', text: 'That scan had just finished, so there was nothing to stop.' });
+  };
 
   if (error) {
     return (
@@ -215,6 +291,42 @@ function Scanning() {
       <div className="pg-scan">
         <Hero>
           <Loading what="Starting the scan" />
+        </Hero>
+      </div>
+    );
+  }
+  if (allFinished && anyCancelled) {
+    return (
+      <div className="pg-scan" data-testid="scan-cancelled">
+        <Hero>
+          <div className="pagehead">
+            <div>
+              <div className="mono kick">
+                <Scramble text="Live scan" /> · <b>Stopped</b>
+              </div>
+              <h1 className="disp">
+                <Words text="You stopped this scan" />
+              </h1>
+              <div className="meta">
+                <span>Nothing was scored from it, and nothing about {name} has changed.</span>
+              </div>
+              {progress.known && progress.total > 0 ? (
+                <div className="meta">
+                  <span>
+                    {progress.done} of {plural(progress.total, 'step', 'steps')} had been done when it stopped.
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            <div className="acts">
+              <button className="btn btn-p" type="button" onClick={retry}>
+                Start again
+              </button>
+              <TLink className="btn btn-g" href="/scan">
+                Back to Scan
+              </TLink>
+            </div>
+          </div>
         </Hero>
       </div>
     );
@@ -368,9 +480,9 @@ function Scanning() {
           <div className="mod next">
             <div className="k">Checks</div>
             <div className="cnt" data-testid="scan-count">
-              <span className="pixel">{showDone ? rows.length : revealed}</span>
+              <span className="pixel">{progress.known ? progress.done : showDone ? rows.length : revealed}</span>
               <span>
-                of <span className="pixel">{rows.length}</span> {rows.length === 1 ? 'source' : 'sources'} read
+                of <span className="pixel">{progress.known ? progress.total : rows.length}</span> {(progress.known ? progress.total : rows.length) === 1 ? 'step' : 'steps'} done
               </span>
             </div>
             <div className="pb" aria-hidden="true">
@@ -399,6 +511,11 @@ function Scanning() {
                 ))
               )}
             </div>
+            {!showDone && progress.etaSeconds !== null ? (
+              <p className="est" data-testid="scan-eta">
+                {etaWords(progress.etaSeconds, progress.basedOn)}.
+              </p>
+            ) : null}
             <div className="eta">
               {showDone
                 ? partial
@@ -406,9 +523,11 @@ function Scanning() {
                   : 'Finished. Vero reads these again on a schedule.'
                 : left === 0
                   ? 'Every check is in. Putting the result together.'
-                  : emailed
-                  ? `${plural(left, 'check', 'checks')} left. You can leave this page. Vero emails you when it's done.`
-                  : `${plural(left, 'check', 'checks')} left. You can leave this page. The result shows under What's new.`}
+                  : progress.known && progress.done >= progress.total
+                    ? 'Every step is done. Vero is showing you what it found.'
+                    : emailed
+                      ? `${plural(progress.known ? progress.total - progress.done : left, 'step', 'steps')} left. You can leave this page. Vero emails you when it's done.`
+                      : `${plural(progress.known ? progress.total - progress.done : left, 'step', 'steps')} left. You can leave this page. The result shows under What's new.`}
             </div>
             {showDone ? (
               <TLink className="btn ready" href={resultHref}>
@@ -419,6 +538,33 @@ function Scanning() {
                 See your result
               </span>
             )}
+            {stopNote ? (
+              <p className={`stopnote ${stopNote.tone}`} role={stopNote.tone === 'error' ? 'alert' : 'status'}>
+                {stopNote.text}
+              </p>
+            ) : null}
+            {!allFinished ? (
+              stop === 'idle' ? (
+                <div className="alt">
+                  <button ref={stopButton} type="button" className="stopbtn" data-testid="scan-stop" onClick={() => setStop('asking')}>
+                    Stop this scan
+                  </button>
+                </div>
+              ) : (
+                <div className="stopask" role="group" aria-labelledby="stop-q" onKeyDown={askKeys} data-testid="scan-stop-confirm">
+                  <b id="stop-q">Stop this scan?</b>
+                  <span>It ends at the next step and nothing is scored from it. You can start it again whenever you like.</span>
+                  <div className="row">
+                    <button ref={keepButton} type="button" className="btn btn-g btn-sm" onClick={closeAsk} disabled={stop === 'stopping'}>
+                      Keep scanning
+                    </button>
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => void stopScans()} disabled={stop === 'stopping'} aria-busy={stop === 'stopping'}>
+                      {stop === 'stopping' ? 'Stopping…' : 'Stop the scan'}
+                    </button>
+                  </div>
+                </div>
+              )
+            ) : null}
           </div>
         </section>
       </Hero>

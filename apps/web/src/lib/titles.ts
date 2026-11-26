@@ -31,12 +31,12 @@ const TITLES: ReadonlyArray<readonly [RegExp, string]> = [
   [/^\/sign-in\/verify/, 'Signing you in'],
   [/^\/sign-in/, 'Sign in'],
   [/^\/sign-up/, 'Create your account'],
-  [/^\/invitations/, 'Join your team'],
+  [/^\/invitations/, 'Join a team'],
   [/^\/legal\//, 'Legal'],
   [/^\/r\//, 'Shared report'],
-  [/^\/verified\//, 'Verified company'],
+  [/^\/verified\//, 'Verified badge'],
   [/^\/review\//, 'Review desk'],
-  [/^\/admin/, 'Admin'],
+  [/^\/admin/, 'Rule packs and admin'],
 ];
 
 /** "Findings | Vero", or plain "Vero" for a path with no name of its own. */

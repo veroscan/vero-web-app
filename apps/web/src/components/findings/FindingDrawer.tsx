@@ -10,6 +10,7 @@ import { useSession } from '@/components/Session';
 import { TLink } from '@/components/TLink';
 import { api, asApiError, isRedirecting } from '@/lib/api';
 import { midSentence } from '@/lib/documents';
+import { dateTimeWords } from '@/lib/format';
 import { FINDING_COLOUR, FINDING_WORDS, findingStatus, issuePath, knowWords, withoutReferrals } from '@/lib/issues';
 
 export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; onClose: () => void }) {
@@ -194,6 +195,11 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
                   ) : null}
                 </>
               )}
+              {detail?.lastCheckedAt ? (
+                <p className="muted" style={{ marginTop: 18, fontSize: 13, fontWeight: 600 }} data-testid="drawer-last-checked">
+                  Last checked <time dateTime={detail.lastCheckedAt}>{dateTimeWords(detail.lastCheckedAt)}</time>
+                </p>
+              ) : null}
             </>
           ) : null}
         </div>

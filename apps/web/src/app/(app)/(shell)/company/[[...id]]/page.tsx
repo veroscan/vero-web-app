@@ -15,7 +15,7 @@ import { api, asApiError } from '@/lib/api';
 import { CERTIFICATE_SLOT, isInPlace } from '@/lib/documents';
 import { entitlementsOf, roleCan } from '@/lib/entitlements';
 import { agoWords, plural } from '@/lib/format';
-import { CAC_STATUS_SLOT, checkedWords, countryLong, recordRows, splitStatusNote, type FactRow } from '@/lib/records';
+import { CAC_STATUS_SLOT, changedWhenWords, changeValueWords, checkedWords, countryLong, recordRows, splitStatusNote, type FactRow } from '@/lib/records';
 import { useResource } from '@/lib/useResource';
 import { registerFor, sourceStatus, type Tone } from '@/lib/words';
 
@@ -264,6 +264,66 @@ function useAllRecords(companies: Company[]) {
   }, [companies.map((company) => company.id).join()]);
 }
 
+/** What scans found different on the register, newest first. */
+function RegisterChanges({ companyId }: { companyId: string }) {
+  const resource = useResource(() => api.records.changes({ params: { companyId } }), [companyId]);
+  const data = resource.data && resource.data.companyId === companyId ? resource.data : undefined;
+  return (
+    <Reveal as="section" className="mod" i={1} data-testid="records-changes">
+      <div className="mh">
+        <h2>What changed</h2>
+        <span className="sub">Differences Vero found on the register, newest first</span>
+      </div>
+      {resource.error && !data ? (
+        <ErrorState error={resource.error} onRetry={resource.reload} title="We couldn't load the changes" />
+      ) : !data ? (
+        <div className="chg-wrap" role="status" aria-label="Getting the changes">
+          <span className="sk ln3" />
+        </div>
+      ) : data.changes.length === 0 ? (
+        <div className="chg-empty" data-testid="records-changes-empty">
+          <b>No changes since Vero started watching</b>A change shows up here when a check finds the register says something different from the check before.
+        </div>
+      ) : (
+        <div className="chg-wrap">
+          {data.sampleData ? <SampleNote /> : null}
+          <ol className="chg rows-in" data-testid="records-changes-list">
+            {data.changes.map((change, index) => (
+              <li key={change.id} data-testid="record-change" style={{ '--r': index } as CSSProperties}>
+                <div className="fld">{change.label}</div>
+                <div className="mv">
+                  {change.detailWithheld ? (
+                    <span className="withheld">Changed. Vero records that names changed, not the names themselves.</span>
+                  ) : (
+                    <>
+                      <span className="was">
+                        <span className="sr-only">Before: </span>
+                        {changeValueWords(change.oldValue, 'before')}
+                      </span>
+                      <Icon name="arrow" />
+                      <span className="now">
+                        <span className="sr-only">Now: </span>
+                        {changeValueWords(change.newValue, 'after')}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="when">
+                  <time dateTime={change.changedAt} title={checkedWords(change.changedAt)}>
+                    {changedWhenWords(change.changedAt)}
+                  </time>
+                  <small>{change.source ? `From ${change.source}` : 'Source not recorded'}</small>
+                  {change.sampleData ? <small>Sample data</small> : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </Reveal>
+  );
+}
+
 export default function CompanyRecordsPage() {
   const { id } = useParams<{ id?: string[] }>();
   if (id && id.length > 1) notFound();
@@ -496,10 +556,11 @@ export default function CompanyRecordsPage() {
                   <span>{records.countryCoverage.sentence}</span>
                 </div>
               ) : null}
-              <p className="changesnote">Vero shows each register as it stands. A history of changes on the register isn&apos;t kept yet.</p>
             </aside>
           </div>
         </Reveal>
+
+        <RegisterChanges companyId={records.companyId} />
       </After>
     </div>
   );

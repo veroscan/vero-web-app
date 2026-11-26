@@ -28,6 +28,13 @@ const LEVEL_WORDS = {
   international: 'International coverage.',
 } as const;
 
+/** How a register's own status word reads: in good standing, gone, or something we don't judge. */
+function statusTone(status: string): 'good' | 'urgent' | 'plain' {
+  if (/dissolv|struck|strike|liquidat|closed|removed|deregist|cancel|ceased|wound up/i.test(status)) return 'urgent';
+  if (/^(active|live|registered|current|good standing|in business|existing)\b/i.test(status.trim())) return 'good';
+  return 'plain';
+}
+
 /** The coverage line under the search box: what a scan can check there, before anything is searched. */
 export function CoverageLine({ country }: { country: string | null }) {
   if (!country) {
@@ -411,6 +418,7 @@ export function Finder(props: FinderProps) {
                                   <Highlight text={candidate.name} query={trimmed} />
                                 </b>
                                 <small>
+                                  {candidate.status ? <span className={`cst ${statusTone(candidate.status)}`}>{candidate.status}</span> : null}
                                   {kind}
                                   {candidate.registrationNumber ? <span className="mnum"> · {candidate.registrationNumber}</span> : null}
                                 </small>
