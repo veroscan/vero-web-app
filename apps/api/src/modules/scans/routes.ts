@@ -1,13 +1,14 @@
-import { contract, type Scan, type ScanSource } from '@vero/shared';
-import { desc, eq } from 'drizzle-orm';
+import { contract, type Scan, type ScanProgress, type ScanSource } from '@vero/shared';
+import { and, desc, eq, isNotNull, ne } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { schema, type Tx } from '../../db';
 import type { AppDeps } from '../../deps';
 import { errors } from '../../http/errors';
 import { defineRoute } from '../../http/route';
+import { enforceWriteLimit } from '../../http/write-limit';
 import { writeAudit } from '../audit/service';
 import { isDown, latestSources, requireCompany, type SourceRow } from './facts';
-import { startFullScan, type ScanRow } from './pipeline';
+import { cancelScan, startFullScan, type ScanRow } from './pipeline';
 
 const { scan, sourceResult } = schema;
 
@@ -78,6 +79,42 @@ function nameOf(deps: AppDeps, connectorId: string): string {
   return deps.connectors.find((connector) => connector.id === connectorId)?.sourceName ?? connectorId;
 }
 
+/** Fewer finished scans than this and we don't guess how long one takes. */
+export const ETA_MIN_SCANS = 3;
+const ETA_SCANS_CONSIDERED = 10;
+
+/** The middle of some durations. */
+export function medianOf(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? (sorted[mid] as number) : ((sorted[mid - 1] as number) + (sorted[mid] as number)) / 2;
+}
+
+/**
+ * Steps done of total, from the sources really asked. The estimate is the middle of how long this
+ * company's own earlier full scans really took (start to finish), less the time already spent. With
+ * too few earlier scans, or one that hasn't started, it is null: we don't make a number up.
+ */
+async function progressOf(tx: Tx, row: ScanRow, sources: readonly ScanSource[], now: Date): Promise<ScanProgress> {
+  const progress: ScanProgress = {
+    stepsDone: sources.filter((source) => source.state !== 'waiting').length,
+    stepsTotal: sources.length,
+    etaSeconds: null,
+    etaBasedOnScans: null,
+  };
+  if (row.status !== 'running' || row.kind !== 'full' || !row.startedAt) return progress;
+  const past = await tx
+    .select({ startedAt: scan.startedAt, completedAt: scan.completedAt })
+    .from(scan)
+    .where(and(eq(scan.companyId, row.companyId), eq(scan.kind, 'full'), isNotNull(scan.finalisedSeq), isNotNull(scan.startedAt), isNotNull(scan.completedAt), ne(scan.id, row.id)))
+    .orderBy(desc(scan.completedAt))
+    .limit(ETA_SCANS_CONSIDERED);
+  const seconds = past.flatMap((item) => (item.startedAt && item.completedAt ? [(item.completedAt.getTime() - item.startedAt.getTime()) / 1000] : [])).filter((value) => value >= 0);
+  if (seconds.length < ETA_MIN_SCANS) return progress;
+  const spent = (now.getTime() - row.startedAt.getTime()) / 1000;
+  return { ...progress, etaSeconds: Math.max(0, Math.round(medianOf(seconds) - spent)), etaBasedOnScans: seconds.length };
+}
+
 export async function scanDto(deps: AppDeps, tx: Tx, row: ScanRow): Promise<Scan> {
   // A re-score runs no sources, so it reports the newest answer from each.
   const rows =
@@ -102,6 +139,8 @@ export async function scanDto(deps: AppDeps, tx: Tx, row: ScanRow): Promise<Scan
     sources,
     rulePackVersions: row.rulePackVersions as Record<string, string>,
     pollAfterMs: moving ? POLL_AFTER_MS : 0,
+    progress: await progressOf(tx, row, sources, deps.now()),
+    cancelledAt: row.cancelledAt?.toISOString() ?? null,
   };
 }
 
@@ -130,6 +169,15 @@ export function registerScanRoutes(app: FastifyInstance, deps: AppDeps): void {
       return { scans };
     }),
   );
+
+  defineRoute(app, deps, contract.scans.cancel, { auth: 'org', permission: 'scans.write' }, async ({ org, session, params, meta }) => {
+    await enforceWriteLimit(deps, 'scan-cancel', session.userId);
+    const { row, changed } = await cancelScan(deps, org.organisationId, params.scanId);
+    return deps.db.withOrg(org.organisationId, async (tx) => {
+      if (changed) await writeAudit(tx, { organisationId: org.organisationId, actorId: session.userId, action: 'scan.cancelled', target: row.id, meta });
+      return scanDto(deps, tx, row);
+    });
+  });
 
   defineRoute(app, deps, contract.scans.get, { auth: 'org', permission: 'companies.read' }, async ({ org, params }) =>
     deps.db.withOrg(org.organisationId, async (tx) => {

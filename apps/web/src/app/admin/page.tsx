@@ -5,6 +5,7 @@ import { PLAN_NAMES } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { Chevron, ErrorState, Loading } from '@/components/Bits';
+import { Select } from '@/components/Select';
 import { isRefused, StaffPage, StaffRefused } from '@/components/StaffBar';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
@@ -28,6 +29,7 @@ function ApprovePack({ pack, onDone }: { pack: RulePack; onDone: () => void }) {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (busy || !sure || name.trim().length < 2) return;
     setBusy(true);
     setProblem(null);
     try {
@@ -75,7 +77,8 @@ function ApprovePack({ pack, onDone }: { pack: RulePack; onDone: () => void }) {
         </p>
       ) : null}
       <div className="btns">
-        <button className="btn btn-p btn-sm" type="submit" disabled={busy || !sure || name.trim().length < 2} data-testid="approve-confirm">
+        <button className="btn btn-p btn-sm" type="submit" disabled={busy || !sure || name.trim().length < 2} aria-busy={busy || undefined} data-testid="approve-confirm">
+          {busy ? <span className="spin" aria-hidden="true" /> : null}
           {busy ? 'Approving' : `Approve ${label}`}
         </button>
         <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => setAsking(false)}>
@@ -94,11 +97,14 @@ function PlanSetter({ org, onDone }: { org: AdminUser['organisations'][number]; 
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const save = async () => {
-    if (!plan) return;
+    if (!plan || busy) return;
     setBusy(true);
     setProblem(null);
     try {
-      await api.admin.setPlan({ params: { organisationId: org.id }, body: { plan } });
+      await api.admin.setPlan({
+        params: { organisationId: org.id },
+        body: { plan },
+      });
       toast(`${org.name} is now on ${PLAN_NAMES[plan]}. They've been told.`);
       setPlan('');
       onDone();
@@ -120,16 +126,20 @@ function PlanSetter({ org, onDone }: { org: AdminUser['organisations'][number]; 
         <label className="sr-only" htmlFor={`plan-${org.id}`}>
           Plan for {org.name}
         </label>
-        <select className="input" id={`plan-${org.id}`} value={plan} onChange={(event) => setPlan(event.target.value as PlanCode | '')}>
-          <option value="">Move to a plan</option>
-          {PLAN_CODES.map((code) => (
-            <option key={code} value={code}>
-              {PLAN_NAMES[code]}
-            </option>
-          ))}
-        </select>
-        <button className="btn btn-g btn-sm" type="button" disabled={busy || !plan} onClick={() => void save()}>
-          Set plan
+        <Select
+          id={`plan-${org.id}`}
+          ariaLabel={`Plan for ${org.name}`}
+          placeholder="Move to a plan"
+          value={plan}
+          onChange={(next) => setPlan(next as PlanCode)}
+          options={PLAN_CODES.map((code) => ({
+            value: code,
+            label: PLAN_NAMES[code],
+          }))}
+        />
+        <button className="btn btn-g btn-sm" type="button" disabled={busy || !plan} aria-busy={busy || undefined} onClick={() => void save()}>
+          {busy ? <span className="spin" aria-hidden="true" /> : null}
+          {busy ? 'Saving' : 'Set plan'}
         </button>
       </span>
       {problem ? (
@@ -172,12 +182,26 @@ function UserRow({ person, onDone }: { person: AdminUser; onDone: () => void }) 
       </summary>
       <div className="sbody">
         <div className="field staffpick">
-          <label htmlFor={`staff-${person.id}`}>Staff access</label>
-          <select className="input" id={`staff-${person.id}`} value={person.staffRole ?? 'none'} disabled={busy} onChange={(event) => void change(event.target.value as StaffRole | 'none')}>
-            <option value="none">Not staff</option>
-            <option value="lawyer">Lawyer: reads and decides reviews</option>
-            <option value="admin">Admin: all of this screen as well</option>
-          </select>
+          <label htmlFor={`staff-${person.id}`}>Staff access{busy ? ' (saving)' : ''}</label>
+          <Select
+            id={`staff-${person.id}`}
+            value={person.staffRole ?? 'none'}
+            disabled={busy}
+            onChange={(next) => void change(next as StaffRole | 'none')}
+            options={[
+              { value: 'none', label: 'Not staff' },
+              {
+                value: 'lawyer',
+                label: 'Lawyer',
+                hint: 'Reads and decides reviews',
+              },
+              {
+                value: 'admin',
+                label: 'Admin',
+                hint: 'All of this screen as well',
+              },
+            ]}
+          />
         </div>
         {problem ? (
           <p className="formerror" role="alert">
@@ -210,14 +234,14 @@ function AdminBody() {
   if (isRefused(resource.error)) return <StaffRefused adminOnly />;
   if (resource.error && !data) {
     return (
-      <div className="pg-staff">
+      <div className="pg-staff wait">
         <ErrorState error={resource.error} onRetry={resource.reload} />
       </div>
     );
   }
   if (!data) {
     return (
-      <div className="pg-staff">
+      <div className="pg-staff wait">
         <Loading what="Getting rule packs and data" />
       </div>
     );
@@ -387,7 +411,8 @@ function Waitlist() {
           </div>
         </div>
       ) : !list ? (
-        <div className="sbody">
+        <div className="sbody" role="status" aria-label="Getting the waitlist">
+          <div className="skel" style={{ height: 44 }} />
           <div className="skel" style={{ height: 44 }} />
           <div className="skel" style={{ height: 44 }} />
         </div>
@@ -397,7 +422,7 @@ function Waitlist() {
         </p>
       ) : (
         <>
-          <table className="wl-table" style={{ marginTop: 12 }}>
+          <table className="wl-table">
             <thead>
               <tr>
                 <th>Person</th>
@@ -409,16 +434,18 @@ function Waitlist() {
             <tbody>
               {list.entries.map((entry) => (
                 <tr key={entry.id} data-testid="waitlist-entry">
-                  <td>
+                  <td data-th="Person">
                     <b>{entry.name}</b>
                     <small>{entry.email}</small>
                   </td>
-                  <td>
+                  <td data-th="Company">
                     {entry.company ?? <span className="muted">Not given</span>}
                     {entry.need || entry.budget ? <small>{[entry.need, entry.budget].filter(Boolean).join(' · ')}</small> : null}
                   </td>
-                  <td className="msg">{entry.message ?? <span className="muted">Nothing</span>}</td>
-                  <td className="when">
+                  <td className="msg" data-th="What they said">
+                    {entry.message ?? <span className="muted">Nothing</span>}
+                  </td>
+                  <td className="when" data-th="Joined">
                     {longDate(entry.createdAt)}
                     {entry.submissions > 1 ? <small>Asked {entry.submissions} times</small> : null}
                     {entry.invitedAt ? <small className="good">Invited {longDate(entry.invitedAt)}</small> : null}
@@ -452,7 +479,13 @@ function Waitlist() {
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<Loading what="Getting rule packs and data" />}>
+    <Suspense
+      fallback={
+        <div className="pg-staff wait">
+          <Loading what="Getting rule packs and data" />
+        </div>
+      }
+    >
       <AdminBody />
     </Suspense>
   );

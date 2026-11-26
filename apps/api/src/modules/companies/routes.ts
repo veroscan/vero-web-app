@@ -9,7 +9,7 @@ import { defineRoute, type RequestMeta } from '../../http/route';
 import { writeAudit } from '../audit/service';
 import { coverageFor } from '../scans/facts';
 import { requestRescore } from '../scans/pipeline';
-import { companyHistory } from './history';
+import { companyHistory, scoreHistory } from './history';
 import { isOwned, relationshipOf, requireOwned } from './ownership';
 import { registerRegistryRoutes } from './registry';
 
@@ -237,6 +237,10 @@ export function registerCompanyRoutes(app: FastifyInstance, deps: AppDeps): void
 
   defineRoute(app, deps, contract.companies.history, { auth: 'org', permission: 'results.read' }, async ({ org, params }) =>
     deps.db.withOrg(org.organisationId, (tx) => companyHistory(deps, tx, org.organisationId, params.companyId)),
+  );
+
+  defineRoute(app, deps, contract.companies.scoreHistory, { auth: 'org', permission: 'results.read' }, async ({ org, params, query }) =>
+    deps.db.withOrg(org.organisationId, (tx) => scoreHistory(deps, tx, org.organisationId, params.companyId, query.scope)),
   );
 
   defineRoute(app, deps, contract.companies.related, { auth: 'org', permission: 'companies.read' }, async ({ org, params }) =>

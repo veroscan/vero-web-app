@@ -1,4 +1,4 @@
-import type { MeResponse, SignInResponse, User } from '@vero/shared';
+import type { MeResponse, SessionInfo, SignInResponse, User } from '@vero/shared';
 import { and, asc, eq, gt, isNull, lt, ne, or } from 'drizzle-orm';
 import { enterOrg, enterUser, schema, type Tx } from '../../db';
 import type { AppDeps } from '../../deps';
@@ -12,6 +12,7 @@ import {
   parseInvitationToken,
 } from '../organisations/service';
 import { createSession, type SessionContext } from './session';
+import { deviceLabel } from './devices';
 import { clearRecoveryCodes, replaceRecoveryCodes } from './recovery';
 import { matchTotpStep, newTotpSecret, totpUri } from './totp';
 
@@ -224,6 +225,46 @@ export async function logoutEverywhere(deps: AppDeps, session: SessionContext, m
       metadata: { sessions: revoked.length },
       meta,
     });
+  });
+}
+
+// ---- Sessions ----
+
+/** Where this person is signed in now: this session first, then the most recently used. No address or location. */
+export async function listSessions(deps: AppDeps, session: SessionContext): Promise<SessionInfo[]> {
+  const now = deps.now();
+  const rows = await deps.db.withSystem((tx) =>
+    tx
+      .select({ id: schema.session.id, createdAt: schema.session.createdAt, lastSeenAt: schema.session.lastSeenAt, userAgent: schema.session.userAgent, expiresAt: schema.session.expiresAt })
+      .from(schema.session)
+      .where(and(eq(schema.session.userId, session.userId), isNull(schema.session.revokedAt), gt(schema.session.expiresAt, now))),
+  );
+  return rows
+    .map((row) => ({
+      id: row.id,
+      createdAt: row.createdAt.toISOString(),
+      lastUsedAt: row.lastSeenAt.toISOString(),
+      device: deviceLabel(row.userAgent),
+      current: row.id === session.sessionId,
+      expiresAt: row.expiresAt.toISOString(),
+    }))
+    .sort((a, b) => Number(b.current) - Number(a.current) || b.lastUsedAt.localeCompare(a.lastUsedAt) || a.id.localeCompare(b.id));
+}
+
+/** Signs one of this person's other sessions out. Someone else's session is "not found", like one that doesn't exist. */
+export async function revokeSession(deps: AppDeps, session: SessionContext, sessionId: string, meta: RequestMeta): Promise<void> {
+  if (sessionId === session.sessionId) {
+    throw errors.invalidState("That's the session you're using now. To end it, sign out.");
+  }
+  const now = deps.now();
+  await deps.db.withSystem(async (tx) => {
+    const revoked = await tx
+      .update(schema.session)
+      .set({ revokedAt: now })
+      .where(and(eq(schema.session.id, sessionId), eq(schema.session.userId, session.userId), isNull(schema.session.revokedAt), gt(schema.session.expiresAt, now)))
+      .returning({ id: schema.session.id });
+    if (revoked.length === 0) throw errors.notFound('That session');
+    await writeAudit(tx, { organisationId: session.activeOrganisationId, actorId: session.userId, action: 'auth.session_revoked', target: sessionId, meta });
   });
 }
 

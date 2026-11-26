@@ -6,7 +6,7 @@
 
 import type { WatchlistItem } from '@vero/shared';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
@@ -15,7 +15,7 @@ import { useSession } from '@/components/Session';
 import { After, Hero } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
-import { api, asApiError } from '@/lib/api';
+import { api, asApiError, isRedirecting } from '@/lib/api';
 import { plural } from '@/lib/format';
 import { countryLong } from '@/lib/records';
 import { useResource } from '@/lib/useResource';
@@ -77,15 +77,47 @@ function Bars({ entries }: { entries: Entry[] }) {
 
 type Sort = 'score' | 'name' | 'change';
 
+/** "Stop following", asked twice in place: its scans go with it, so the second press is the one that counts. */
 function Unfollow({ entry, onDone }: { entry: Entry; onDone: () => void }) {
   const toast = useToast();
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const opener = useRef<HTMLButtonElement>(null);
+  const keep = useRef<HTMLButtonElement>(null);
+  const wasAsking = useRef(false);
+
+  // Focus follows the question: to "Keep" when it opens, back to the button when it closes.
+  useEffect(() => {
+    if (asking) keep.current?.focus();
+    else if (wasAsking.current) opener.current?.focus();
+    wasAsking.current = asking;
+  }, [asking]);
+
+  const stop = () => {
+    if (busy) return;
+    setBusy(true);
+    api.watchlist.remove({ params: { companyId: entry.id } }).then(
+      () => {
+        window.dispatchEvent(new Event('vero:watchlist'));
+        toast(`You've stopped following ${entry.name}.`);
+        onDone();
+      },
+      (failure: unknown) => {
+        setBusy(false);
+        if (isRedirecting(failure)) return;
+        toast(asApiError(failure).message);
+        setAsking(false);
+      },
+    );
+  };
+
   if (!asking) {
     return (
       <button
+        ref={opener}
         type="button"
         className="wl-act"
+        aria-label={`Stop following ${entry.name}`}
         onClick={(event) => {
           event.stopPropagation();
           setAsking(true);
@@ -97,31 +129,23 @@ function Unfollow({ entry, onDone }: { entry: Entry; onDone: () => void }) {
     );
   }
   return (
-    <span className="wl-ask" onClick={(event) => event.stopPropagation()}>
+    <span
+      className="wl-ask"
+      role="group"
+      aria-label={`Stop following ${entry.name}?`}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !busy) {
+          event.stopPropagation();
+          setAsking(false);
+        }
+      }}
+    >
       <span>Its scans go too.</span>
-      <button
-        type="button"
-        className="wl-act wl-yes"
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void (async () => {
-            try {
-              await api.watchlist.remove({ params: { companyId: entry.id } });
-              window.dispatchEvent(new Event('vero:watchlist'));
-              toast(`You've stopped following ${entry.name}.`);
-              onDone();
-            } catch (error) {
-              toast(asApiError(error).message);
-              setBusy(false);
-              setAsking(false);
-            }
-          })();
-        }}
-      >
-        Stop
+      <button type="button" className="wl-act wl-yes" disabled={busy} aria-busy={busy} onClick={stop} data-testid="unfollow-confirm">
+        {busy ? 'Stopping' : 'Stop'}
       </button>
-      <button type="button" className="wl-act" disabled={busy} onClick={() => setAsking(false)}>
+      <button ref={keep} type="button" className="wl-act" disabled={busy} onClick={() => setAsking(false)}>
         Keep
       </button>
     </span>
@@ -185,6 +209,7 @@ export default function WatchlistPage() {
 
   const followed = entries.filter((entry) => !entry.mine);
   const scored = followed.filter((entry) => entry.value !== null);
+  const unscored = followed.filter((entry) => entry.value === null);
   const average = scored.length > 0 ? Math.round(scored.reduce((sum, entry) => sum + (entry.value ?? 0), 0) / scored.length) : null;
   const underCap = scored.filter((entry) => (entry.value ?? 101) <= URGENT_CAP).length;
   const counted = (data?.companies ?? []).reduce((sum, item) => sum + (item.coverage?.counted ?? 0), 0);
@@ -264,6 +289,12 @@ export default function WatchlistPage() {
                   </>
                 ) : null}
                 {followed.length === 0 ? <p className="wl-none">Follow a company and its score sits here beside yours, against the cap of {URGENT_CAP} that any urgent gap holds a score at.</p> : null}
+                {unscored.length > 0 ? (
+                  <p className="wl-wait" data-testid="watchlist-unscored">
+                    <b>{unscored.length === followed.length && followed.length > 1 ? 'None of the companies you follow has a score yet.' : `${plural(unscored.length, 'company', 'companies')} you follow ${unscored.length === 1 ? 'has' : 'have'} no score yet.`}</b>{' '}
+                    {unscored.some((entry) => entry.scanning) ? 'Vero is scanning now. ' : ''}A score shows here once Vero can check enough of the public record.
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="mod next">
@@ -330,11 +361,11 @@ export default function WatchlistPage() {
               <thead>
                 <tr>
                   <th style={{ width: '30%' }}>Company</th>
-                  <th className="opt">Coverage</th>
+                  <th>Coverage</th>
                   <th>Score</th>
                   <th>Last change</th>
-                  <th className="opt">Last scan</th>
-                  <th className="opt" style={{ width: 150 }} aria-label="Actions" />
+                  <th>Last scan</th>
+                  <th style={{ width: 170 }} aria-label="Actions" />
                 </tr>
               </thead>
               <tbody className="rows-in">
@@ -348,15 +379,17 @@ export default function WatchlistPage() {
                       </b>
                       <small>{entry.sub}</small>
                     </td>
-                    <td className="src2 opt" title={entry.levelTitle ?? undefined}>
+                    <td className="src2 cv" title={entry.levelTitle ?? undefined}>
                       {entry.level ?? countryLong(entry.country)}
                     </td>
-                    <td>{entry.score.kind === 'none' ? <span className="muted">{entry.scanning ? 'Scanning' : 'Not yet'}</span> : <PixelScore score={entry.score} className={`sc${(entry.value ?? 101) <= URGENT_CAP ? ' low' : ''}`} />}</td>
-                    <td>{entry.change ? <Change before={entry.before} after={entry.after} /> : <span className="vchg no">None yet</span>}</td>
-                    <td className="muted opt" style={{ whiteSpace: 'nowrap' }}>
+                    <td className="scc">{entry.score.kind === 'none' ? <span className="muted">{entry.scanning ? 'Scanning' : 'Not yet'}</span> : <PixelScore score={entry.score} className={`sc${(entry.value ?? 101) <= URGENT_CAP ? ' low' : ''}`} />}</td>
+                    <td className="ch" data-label="Last change">
+                      {entry.change ? <Change before={entry.before} after={entry.after} /> : <span className="vchg no">None yet</span>}
+                    </td>
+                    <td className="muted ls" data-label="Last scan">
                       {entry.scanning ? 'Scanning now' : entry.lastScan ? scanWhen(entry.lastScan) : 'Not yet'}
                     </td>
-                    <td className="opt">{entry.mine ? <span className="muted">Yours</span> : <Unfollow entry={entry} onDone={list.reload} />}</td>
+                    <td className="ac">{entry.mine ? <span className="muted">Yours</span> : <Unfollow entry={entry} onDone={list.reload} />}</td>
                   </tr>
                 ))}
               </tbody>

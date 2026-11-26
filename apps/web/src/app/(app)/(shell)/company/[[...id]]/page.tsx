@@ -237,6 +237,26 @@ function CountryBand({ records, statusReportFiled, canUpload, rows }: { records:
   return null;
 }
 
+/** A row of companies in a narrow box: fades at the edge while there is more to the side. */
+function useMoreToTheSide() {
+  // Kept in state, not a ref: the row only exists once the records have loaded.
+  const [element, box] = useState<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    if (!element) return;
+    const read = () => setMore(element.scrollWidth - element.clientWidth - element.scrollLeft > 8);
+    read();
+    element.addEventListener('scroll', read, { passive: true });
+    const observer = new ResizeObserver(read);
+    observer.observe(element);
+    return () => {
+      element.removeEventListener('scroll', read);
+      observer.disconnect();
+    };
+  }, [element]);
+  return { box, more };
+}
+
 function useAllRecords(companies: Company[]) {
   return useResource(async () => {
     const answers = await Promise.all(companies.map((company) => api.records.get({ params: { companyId: company.id } }).catch(() => null)));
@@ -263,12 +283,14 @@ export default function CompanyRecordsPage() {
     return { records, issues: issues?.issues ?? [], vault };
   }, [companyId]);
   const everyone = useAllRecords(own);
+  const side = useMoreToTheSide();
 
   const data = resource.data;
   const stale = data && data.records.companyId !== companyId;
   const rows = useMemo(() => (data ? recordRows(data.records, { issues: data.issues, canUpload: entitlements.vault }) : []), [data, entitlements.vault]);
   const all = useMemo(() => {
-    const list = everyone.data ?? [];
+    // If the other companies' records can't be had, the open company still gets its headline.
+    const list = everyone.data && everyone.data.length > 0 ? everyone.data : data && !stale && !everyone.loading ? [data.records] : [];
     // The open company's records are the freshest copy; the hero uses them too.
     return data && !stale ? list.map((item) => (item.companyId === data.records.companyId ? data.records : item)) : list;
   }, [everyone.data, data, stale]);
@@ -352,7 +374,7 @@ export default function CompanyRecordsPage() {
               <div className="verdict">{verdictOf(standings.map((item) => item.standing))}</div>
               <div className="lm">What each register says, word for word.</div>
             </div>
-            <div className="cos" data-lenis-prevent-horizontal="">
+            <div className={`cos${side.more ? ' more' : ''}`} ref={side.box} data-lenis-prevent-horizontal="">
               {standings.map(({ records: item, standing }) => (
                 <TLink key={item.companyId} href={`/company/${item.companyId}`} className={item.companyId === records.companyId ? 'on' : undefined} aria-current={item.companyId === records.companyId ? 'page' : undefined}>
                   <RegisterArt tone={standing.tone} />
@@ -372,7 +394,20 @@ export default function CompanyRecordsPage() {
               ))}
             </div>
           </section>
-        ) : null}
+        ) : (
+          <section className="mod health rs2 wait" role="status" aria-label="Getting each register's status">
+            <div className="l">
+              <div className="mh" style={{ padding: 0 }}>
+                <h2>Registry status</h2>
+              </div>
+              <span className="sk big3" />
+              <span className="sk ln3" />
+            </div>
+            <div className="cos">
+              <span className="sk col3" />
+            </div>
+          </section>
+        )}
       </Hero>
 
       <After>
@@ -392,7 +427,10 @@ export default function CompanyRecordsPage() {
             <nav className="tabs" aria-label="Companies">
               {session.companies.map((company) => (
                 <TLink key={company.id} className={`tab${company.id === records.companyId ? ' on' : ''}`} href={`/company/${company.id}`} aria-current={company.id === records.companyId ? 'page' : undefined}>
-                  {company.legalName} <small>{countryLong(company.incorporationCountry)}</small>
+                  <span className="tn" title={company.legalName}>
+                    {company.legalName}
+                  </span>{' '}
+                  <small>{countryLong(company.incorporationCountry)}</small>
                 </TLink>
               ))}
             </nav>

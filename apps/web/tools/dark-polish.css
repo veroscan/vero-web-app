@@ -33,6 +33,8 @@ th{color:var(--ink-3)!important}
 tbody tr:hover,tr.f:hover{background:var(--hover)}
 input,select,textarea{color:var(--ink);background-color:rgba(150,170,255,.06)}
 input::placeholder{color:var(--ink-4)}
+/* bare inputs that sit inside a styled row keep the row's own background */
+.cmd .q input,.sel-find input{background-color:transparent}
 .drawer,.cmd{background:#05073F!important;border:1px solid var(--line)}
 .pixel{text-shadow:0 0 24px rgba(120,160,255,.25)}
 .tab.on{color:#fff!important}

@@ -2,13 +2,14 @@
 
 import '@/app/styles/pages/scan.css';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { Suspense, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { SampleNote } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
 import { After, Hero } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
+import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { confirmHref, manualHref } from '@/lib/candidate';
 import { useResource } from '@/lib/useResource';
@@ -58,6 +59,14 @@ function NotFound() {
   const [lookupNote, setLookupNote] = useState('');
   const [lookupBusy, setLookupBusy] = useState(false);
   const [lookupProblem, setLookupProblem] = useState<string | null>(null);
+  const toast = useToast();
+  const numberBox = useRef<HTMLInputElement>(null);
+  const lookupForm = useRef<HTMLFormElement>(null);
+  const askButton = useRef<HTMLDivElement>(null);
+  // The form opens under the row that asked for it, with the keyboard already in its first box.
+  useEffect(() => {
+    if (asking) lookupForm.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: false });
+  }, [asking]);
   const requests = useResource(() => api.registry.lookupRequests(), []);
   const country = isCountry(rawCountry) ? rawCountry : null;
   const adding = params.get('add') === '1' && session.root !== null;
@@ -86,6 +95,13 @@ function NotFound() {
 
   const search = async (event: FormEvent) => {
     event.preventDefault();
+    if (busy) return;
+    const value = number.trim();
+    if (!value || !new RegExp(`^(?:${register.numberPattern})$`).test(value)) {
+      setProblem(value ? register.numberMessage : `Type the ${register.numberLabel.toLowerCase()} first.`);
+      numberBox.current?.focus();
+      return;
+    }
     setBusy(true);
     setProblem(null);
     try {
@@ -126,6 +142,12 @@ function NotFound() {
 
   const askPerson = async (event: FormEvent) => {
     event.preventDefault();
+    if (lookupBusy) return;
+    if (!lookupName.trim()) {
+      setLookupProblem('Enter the company name.');
+      lookupForm.current?.querySelector<HTMLInputElement>('input')?.focus();
+      return;
+    }
     setLookupBusy(true);
     setLookupProblem(null);
     try {
@@ -139,6 +161,8 @@ function NotFound() {
       });
       setAsking(false);
       requests.reload();
+      toast('Sent. A person will look it up.');
+      askButton.current?.querySelector<HTMLButtonElement>('button')?.focus();
     } catch (error) {
       setLookupProblem(asApiError(error).message);
     } finally {
@@ -158,25 +182,23 @@ function NotFound() {
           <h1>
             <Words key={title} text={title} />
           </h1>
-          <p className="lede">That&apos;s usually a small spelling difference, or the company is registered under another name. It doesn&apos;t mean your company isn&apos;t registered.</p>
-          <form className="sbox" onSubmit={(event) => void search(event)}>
+          <p className="lede">That&apos;s usually a small spelling difference, or the company is registered under another name. It doesn&apos;t mean {follow ? 'the' : 'your'} company isn&apos;t registered.</p>
+          <form className={`sbox one${problem ? ' bad' : ''}`} role="search" noValidate onSubmit={(event) => void search(event)}>
             <Icon name="search" />
             <label className="sr-only" htmlFor="num">
               Try your {register.numberLabel.toLowerCase()}
             </label>
-            <input id="num" type="text" required pattern={register.numberPattern} title={register.numberMessage} placeholder={register.numberExample ? `Try the ${register.numberLabel.toLowerCase()}, like ${register.numberExample}` : `Try the ${register.numberLabel.toLowerCase()}`} autoComplete="off" value={number} onChange={(event) => setNumber(event.target.value)} />
-            <button className="go" type="submit" disabled={busy}>
+            <input ref={numberBox} id="num" type="text" enterKeyHint="search" autoCapitalize="characters" autoCorrect="off" spellCheck={false} aria-describedby={problem ? 'num-problem' : undefined} aria-invalid={problem ? true : undefined} placeholder={register.numberExample ? `Try the ${register.numberLabel.toLowerCase()}, like ${register.numberExample}` : `Try the ${register.numberLabel.toLowerCase()}`} autoComplete="off" value={number} onChange={(event) => { setNumber(event.target.value); setProblem(null); }} />
+            <button className="go" type="submit" aria-busy={busy || undefined}>
               {busy ? 'Searching' : 'Search'}
             </button>
           </form>
-          <p className="where">
-            {register.numberWhere} {number && !new RegExp(`^(?:${register.numberPattern})$`).test(number) ? <span className="lvw">{register.numberMessage}</span> : null}
-          </p>
           {problem ? (
-            <p className="formerror" role="alert" style={{ color: '#FFA3A6', marginTop: 10 }}>
+            <p className="serr" id="num-problem" role="alert">
               {problem}
             </p>
           ) : null}
+          <p className="where">{register.numberWhere}</p>
           {sample ? <SampleNote /> : null}
         </div>
       </Hero>
@@ -191,30 +213,53 @@ function NotFound() {
               <Way title="It's registered in another country" text="Go back and choose the country where it's registered" act="Change" href={searchHref} />
               {follow ? null : <Way title="We haven't registered yet" text="You can still get a score, and Vero shows you what to set up first" act="Continue" onClick={() => void notRegistered()} />}
               <Way title="I'll enter the details myself" text="Vero says these came from you, and checks them when it can" act="Enter them" href={manualHref(country, query, adding, follow)} />
-              <Way title="I'm sure it's registered" text="Tell us the details and a person will look it up" act="Ask us" onClick={() => setAsking((value) => !value)} expanded={asking} />
+              <div ref={askButton}>
+                <Way title="I'm sure it's registered" text="Tell us the details and a person will look it up" act={asking ? 'Close' : 'Ask us'} onClick={() => setAsking((value) => !value)} expanded={asking} />
+              </div>
             </div>
             {asking ? (
-              <form className="lookupf" onSubmit={(event) => void askPerson(event)} data-testid="lookup-form">
+              <form
+                ref={lookupForm}
+                className="lookupf"
+                noValidate
+                onSubmit={(event) => void askPerson(event)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Escape') return;
+                  setAsking(false);
+                  askButton.current?.querySelector<HTMLButtonElement>('button')?.focus();
+                }}
+                data-testid="lookup-form"
+              >
                 <div className="field">
                   <label htmlFor="lookup-name">Company name</label>
-                  <input id="lookup-name" type="text" required value={lookupName} onChange={(event) => setLookupName(event.target.value)} />
+                  <input className="input" id="lookup-name" type="text" autoComplete="organization" value={lookupName} onChange={(event) => { setLookupName(event.target.value); setLookupProblem(null); }} />
                 </div>
                 <div className="field">
                   <label htmlFor="lookup-number">{register.numberLabel} (optional)</label>
-                  <input id="lookup-number" type="text" autoComplete="off" value={lookupNumber} onChange={(event) => setLookupNumber(event.target.value)} />
+                  <input className="input" id="lookup-number" type="text" autoComplete="off" value={lookupNumber} onChange={(event) => setLookupNumber(event.target.value)} />
                 </div>
                 <div className="field">
                   <label htmlFor="lookup-note">Anything that would help (optional)</label>
-                  <textarea id="lookup-note" rows={3} value={lookupNote} onChange={(event) => setLookupNote(event.target.value)} />
+                  <textarea className="input" id="lookup-note" rows={3} maxLength={1000} value={lookupNote} onChange={(event) => setLookupNote(event.target.value)} />
                 </div>
                 {lookupProblem ? (
                   <p className="formerror" role="alert">
                     {lookupProblem}
                   </p>
                 ) : null}
-                <div>
-                  <button className="btn btn-p" type="submit" disabled={lookupBusy}>
+                <div className="lookupa">
+                  <button className="btn btn-p" type="submit" aria-busy={lookupBusy || undefined}>
                     {lookupBusy ? 'Sending' : 'Ask a person to look it up'}
+                  </button>
+                  <button
+                    className="btn btn-g"
+                    type="button"
+                    onClick={() => {
+                      setAsking(false);
+                      askButton.current?.querySelector<HTMLButtonElement>('button')?.focus();
+                    }}
+                  >
+                    Cancel
                   </button>
                 </div>
               </form>

@@ -159,6 +159,7 @@ async function findCompanyNumber(ref: CompanyRef, http: Http, headers: Record<st
   const scored = items.map((item) => ({
     number: asString(item['company_number']) ?? '',
     name: asString(item['title']) ?? '',
+    status: asString(item['company_status']) ?? undefined,
     similarity: nameSimilarity(ref.name, asString(item['title']) ?? ''),
   })).filter((c) => c.number !== '');
 
@@ -170,7 +171,7 @@ async function findCompanyNumber(ref: CompanyRef, http: Http, headers: Record<st
       status: 'ambiguous', sourceUrl: url, raw: response.text,
       matchConfidence: Math.max(...close.map((c) => c.similarity)),
       message: 'A few companies at Companies House could be yours. Pick the right one.',
-      candidates: close.map((c) => ({ name: c.name, identifier: c.number })),
+      candidates: close.map((c) => ({ name: c.name, identifier: c.number, ...(c.status ? { status: c.status } : {}) })),
     };
   }
   return {

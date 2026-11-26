@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Empty, ErrorState, Loading } from '@/components/Bits';
+import { Select } from '@/components/Select';
 import { isRefused, StaffPage, StaffRefused } from '@/components/StaffBar';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
@@ -11,19 +12,35 @@ import { useResource } from '@/lib/useResource';
 
 type WorkStatus = NonNullable<(typeof WORK_STATUSES)[string]>[number]['value'];
 
-function WorkRow({ item, onChanged }: { item: { id: string; kind: string; title: string; body: string | null; read: boolean; createdAt: string }; onChanged: () => void }) {
+function WorkRow({
+  item,
+  onChanged,
+}: {
+  item: {
+    id: string;
+    kind: string;
+    title: string;
+    body: string | null;
+    read: boolean;
+    createdAt: string;
+  };
+  onChanged: () => void;
+}) {
   const toast = useToast();
   const [status, setStatus] = useState<WorkStatus | ''>('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const update = async () => {
-    if (!status) return;
+    if (!status || busy) return;
     setBusy(true);
     setProblem(null);
     try {
       const trimmed = note.trim();
-      await api.review.updateWork({ params: { workId: item.id }, body: { status, ...(trimmed ? { note: trimmed } : {}) } });
+      await api.review.updateWork({
+        params: { workId: item.id },
+        body: { status, ...(trimmed ? { note: trimmed } : {}) },
+      });
       toast('Updated. The client has been told.');
       setStatus('');
       setNote('');
@@ -39,32 +56,35 @@ function WorkRow({ item, onChanged }: { item: { id: string; kind: string; title:
         <span className="meta">
           {WORK_KIND_WORDS[item.kind] ?? item.kind} · {longDate(item.createdAt)}
         </span>
-        <b style={{ marginTop: 4 }}>{item.title}</b>
+        <b>{item.title}</b>
         {item.body ? <small>{item.body}</small> : null}
       </div>
       <span className={`st ${item.read ? 'none' : 'watch'}`}>{item.read ? 'Updated before' : 'New'}</span>
       <div className="workform">
         <div className="field">
           <label htmlFor={`status-${item.id}`}>Set it to</label>
-          <select className="input" id={`status-${item.id}`} value={status} onChange={(event) => setStatus(event.target.value as WorkStatus)}>
-            <option value="">Choose one</option>
-            {(WORK_STATUSES[item.kind] ?? []).map((choice) => (
-              <option key={choice.value} value={choice.value}>
-                {choice.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            id={`status-${item.id}`}
+            value={status}
+            onChange={(next) => setStatus(next as WorkStatus)}
+            placeholder="Choose one"
+            options={(WORK_STATUSES[item.kind] ?? []).map((choice) => ({
+              value: choice.value,
+              label: choice.label,
+            }))}
+          />
         </div>
         <div className="field">
           <label htmlFor={`worknote-${item.id}`}>Note for the record (optional)</label>
           <input className="input" id={`worknote-${item.id}`} type="text" maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />
         </div>
-        <button className="btn btn-p" type="button" disabled={busy || !status} onClick={() => void update()}>
+        <button className="btn btn-p" type="button" disabled={busy || !status} aria-busy={busy || undefined} onClick={() => void update()}>
+          {busy ? <span className="spin" aria-hidden="true" /> : null}
           {busy ? 'Saving' : 'Update'}
         </button>
       </div>
       {problem ? (
-        <p className="formerror" role="alert" style={{ gridColumn: '1 / -1' }}>
+        <p className="formerror" role="alert">
           {problem}
         </p>
       ) : null}
@@ -79,14 +99,14 @@ export default function StaffWorkPage() {
   if (isRefused(resource.error)) return <StaffRefused />;
   if (resource.error && !items) {
     return (
-      <div className="pg-staff">
+      <div className="pg-staff wait">
         <ErrorState error={resource.error} onRetry={resource.reload} />
       </div>
     );
   }
   if (!items) {
     return (
-      <div className="pg-staff">
+      <div className="pg-staff wait">
         <Loading what="Getting company look-ups" />
       </div>
     );
@@ -120,6 +140,7 @@ export default function StaffWorkPage() {
               {items.map((item) => (
                 <WorkRow key={item.id} item={item} onChanged={resource.reload} />
               ))}
+              {items.length >= 100 ? <p className="listend">These are the newest 100. Older ones are not shown here.</p> : null}
             </div>
           )}
         </div>

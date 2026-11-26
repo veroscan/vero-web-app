@@ -52,3 +52,15 @@
   .pg-add td .st2{white-space:nowrap}
 }
 .pg-add .rej .seen2 span{flex:none}.pg-add .rej .seen2 b{text-align:right}
+/* polish, 23 Nov: keyboard and quiet states */
+.pg-add .rr:focus-visible{outline-offset:-3px;border-radius:12px}
+.pg-add .rr:disabled{opacity:.55}
+.pg-add .rr:disabled:hover{background:none}
+.pg-add .rr.sel:disabled:hover{background:var(--sel)}
+.pg-add .rr b,.pg-add .conn b,.pg-add .rej .seen2 b{overflow-wrap:anywhere}
+.pg-add .pagehead h1{overflow-wrap:anywhere}
+@media (max-width:560px){
+  .pg-add .pagehead .acts .btn{flex:1 1 auto;justify-content:center}
+  .pg-add .rr{padding:14px 18px}
+  .pg-add .lockb .btn{flex:1 1 auto;justify-content:center}
+}

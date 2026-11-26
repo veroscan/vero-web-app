@@ -66,3 +66,20 @@
 .pg-notifications .after .btn-g{border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .pg-notifications .after .btn-g:hover:not(:disabled){border-color:var(--ink-4)}
 @media (max-width:560px){.pg-notifications .pagehead .meta{flex-wrap:wrap;row-gap:4px}.pg-notifications .pagehead .meta>span{white-space:nowrap}.pg-notifications .mh{flex-wrap:wrap;row-gap:2px}}
+
+/* long words and names wrap inside the row */
+.pg-notifications .nt b,.pg-notifications .nt .p,.pg-notifications .dr p,.pg-notifications .next h3{overflow-wrap:anywhere}
+.pg-notifications .dr>div:first-child{min-width:0}
+.pg-notifications .nt:active{background:var(--sel)}
+.pg-notifications .nt.new .tm em{display:flex;align-items:center;gap:6px}
+.pg-notifications .nt.new .tm em::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sky-2);flex:none}
+.pg-notifications .nt:not(.new) b{font-weight:600;color:var(--ink-2)}
+.pg-notifications .tabs .tab:focus-visible{outline:2px solid var(--sky-2);outline-offset:-2px;border-radius:8px}
+.pg-notifications .endl .btn:disabled{opacity:.6;cursor:default}
+@media (max-width:560px){
+  .pg-notifications .tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent)}
+  .pg-notifications .tabs::after{content:"";flex:none;width:28px}
+  .pg-notifications .tabs .tab{min-height:40px}
+  .pg-notifications .endl .btn,.pg-notifications .acts .btn{height:40px}
+  .pg-notifications .nt.new .tm em{display:inline-flex}
+}

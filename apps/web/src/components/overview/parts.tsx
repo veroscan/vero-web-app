@@ -253,6 +253,37 @@ export function NextCard({
   );
 }
 
+/** Rows on their way: the shape of a list while it loads, with the words for screen readers. */
+export function SkeletonRows({ what, rows = 4 }: { what: string; rows?: number }) {
+  return (
+    <div className="vskel" role="status">
+      <span className="sr-only">{what}</span>
+      {Array.from({ length: rows }, (_, index) => (
+        <div key={index} aria-hidden="true">
+          <span>
+            <i className="skel" style={{ width: `${62 - ((index * 13) % 30)}%` }} />
+            <i className="skel" style={{ width: `${34 - ((index * 7) % 14)}%` }} />
+          </span>
+          <i className="skel" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A list that didn't load: plain words and a way to ask again, inside its own panel. */
+export function ListError({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <p className="vempty" role="alert">
+      <b>We couldn&apos;t load {what}.</b>
+      It may be the connection. Nothing has been lost.{' '}
+      <button type="button" className="link" onClick={onRetry}>
+        Try again
+      </button>
+    </p>
+  );
+}
+
 const FINISHED = new Set<Scan['status']>(['partial', 'completed', 'failed']);
 
 export interface Rescan {

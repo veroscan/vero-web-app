@@ -97,3 +97,39 @@
 .pg-records .after .btn-g{border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .pg-records .after .btn-g:hover:not(:disabled){border-color:var(--ink-4)}
 @media (max-width:560px){.pg-records .pagehead .meta{flex-wrap:wrap;row-gap:4px}.pg-records .pagehead .meta>span{white-space:nowrap}.pg-records .mh{flex-wrap:wrap;row-gap:2px}}
+
+/* while each register's status is on its way, the card holds its place */
+.pg-records .rs2.wait{min-height:300px}
+.pg-records .rs2.wait .cos{display:block;padding:22px 24px 24px 0}
+.pg-records .sk{display:block;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.18),rgba(255,255,255,.08));background-size:200% 100%;animation:rec-shim 1.4s linear infinite}
+.pg-records .sk.big3{width:150px;height:84px;margin-top:18px}
+.pg-records .sk.ln3{width:200px;height:16px;margin-top:18px}
+.pg-records .sk.col3{height:100%;min-height:200px}
+@keyframes rec-shim{to{background-position:-200% 0}}
+/* long names */
+.pg-records .cos b,.pg-records .cos .sw2,.pg-records .cos .fx{overflow-wrap:anywhere}
+.pg-records .tabs .tab{display:inline-flex;align-items:baseline;gap:6px;flex:none}
+.pg-records .tabs .tab .tn{display:inline-block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.pg-records .tabs .tab:focus-visible,.pg-records .rec dd .go:focus-visible{outline:2px solid var(--sky-2);outline-offset:-2px;border-radius:8px}
+.pg-records .cos>a:focus-visible{outline:2px solid #fff;outline-offset:-2px;border-radius:12px;opacity:1}
+.pg-records .lg li>div{min-width:0}
+.pg-records .lg li b,.pg-records .lg li small{overflow-wrap:anywhere}
+.pg-records .src3 b{overflow-wrap:anywhere}
+.pg-records .cos.more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent)}
+@media (max-width:960px){
+  .pg-records .rs2.wait .cos{padding:8px 24px 24px}
+  .pg-records .sk.col3{min-height:150px}
+  .pg-records .cos{scroll-snap-type:x proximity;scrollbar-width:none}
+  .pg-records .cos::-webkit-scrollbar{display:none}
+  .pg-records .cos>a{scroll-snap-align:start}
+  .pg-records .acts .btn{height:40px}
+}
+@media (max-width:560px){
+  .pg-records .tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent)}
+  .pg-records .tabs::after{content:"";flex:none;width:28px}
+  .pg-records .tabs .tab{min-height:40px}
+  .pg-records .tabs .tab .tn{max-width:190px}
+  .pg-records .src3 .btn,.pg-records .xn .btn{height:40px}
+  .pg-records .rec dd .go{min-height:32px}
+}
+@media (prefers-reduced-motion:reduce){.pg-records .sk,.pg-records .cos>a,.pg-records .cos .seal{animation:none}}

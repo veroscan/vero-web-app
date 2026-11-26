@@ -100,11 +100,19 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
     <>
       <div className="cmdscrim" onMouseDown={onClose} aria-hidden="true" />
       <div className="cmd" role="dialog" aria-modal="true" aria-label="Search">
-        <input
-          ref={input}
-          type="text"
-          placeholder="Search findings, documents and deadlines"
-          aria-label="Search"
+        <div className="q">
+          <Icon name="search" />
+          <input
+            ref={input}
+            type="text"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="cmd-list"
+            aria-activedescendant={results[selected] ? `cmd-${results[selected].key}` : undefined}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Search findings, documents and deadlines"
+            aria-label="Search"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -117,8 +125,14 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
               setSelected((value) => (value + (event.key === 'ArrowDown' ? 1 : results.length - 1)) % results.length);
             }
             if (event.key === 'Enter') go(results[selected]);
+            // Focus stays in the box: the arrows move through the list, so Tab has nowhere better to go.
+            if (event.key === 'Tab') event.preventDefault();
           }}
-        />
+          />
+          <button className="esc" type="button" onClick={onClose} aria-label="Close search">
+            Esc
+          </button>
+        </div>
         <div className="g" data-lenis-prevent="">
           <div className="gh">{trimmed.length < 2 ? 'Jump to' : 'Results'}</div>
           {problem ? (
@@ -128,11 +142,15 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
           ) : results.length === 0 ? (
             <p className="empty">{found ? 'Nothing matches that.' : 'Searching.'}</p>
           ) : (
-            <ul style={{ listStyle: 'none' }}>
+            <ul style={{ listStyle: 'none' }} id="cmd-list" role="listbox" aria-label={trimmed.length < 2 ? 'Jump to' : 'Results'}>
               {results.map((result, index) => (
-                <li key={result.key}>
+                <li key={result.key} role="presentation">
                   <a
                     href={result.href}
+                    id={`cmd-${result.key}`}
+                    role="option"
+                    aria-selected={index === selected}
+                    tabIndex={-1}
                     className={`it${index === selected ? ' on' : ''}`}
                     onMouseEnter={() => setSelected(index)}
                     onClick={(event) => {

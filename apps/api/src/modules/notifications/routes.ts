@@ -5,6 +5,9 @@ import { schema } from '../../db';
 import type { AppDeps } from '../../deps';
 import { errors } from '../../http/errors';
 import { defineRoute } from '../../http/route';
+import { enforceWriteLimit } from '../../http/write-limit';
+import { writeAudit } from '../audit/service';
+import { loadPreferences, savePreferences } from './service';
 
 const { notification } = schema;
 
@@ -21,6 +24,20 @@ function toDto(row: typeof notification.$inferSelect): Notification {
 }
 
 export function registerNotificationRoutes(app: FastifyInstance, deps: AppDeps): void {
+  // Registered before the routes with an id in the path. These are the person's own choices, in this organisation.
+  defineRoute(app, deps, contract.notifications.preferences, { auth: 'org', permission: 'notifications.read' }, async ({ org, session }) =>
+    deps.db.withOrg(org.organisationId, (tx) => loadPreferences(tx, session.userId)),
+  );
+
+  defineRoute(app, deps, contract.notifications.updatePreferences, { auth: 'org', permission: 'notifications.read' }, async ({ org, session, body, meta }) => {
+    await enforceWriteLimit(deps, 'notification-preferences', session.userId);
+    return deps.db.withOrg(org.organisationId, async (tx) => {
+      const saved = await savePreferences(tx, org.organisationId, session.userId, body.email);
+      await writeAudit(tx, { organisationId: org.organisationId, actorId: session.userId, action: 'notifications.email_preferences_set', metadata: { email: saved.email }, meta });
+      return saved;
+    });
+  });
+
   defineRoute(
     app,
     deps,

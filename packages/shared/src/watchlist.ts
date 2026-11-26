@@ -10,6 +10,17 @@ import { coverageSchema, scoreViewSchema, statusWordSchema } from './product';
  * Anyone can follow any company. Only the team that owns a company can add evidence for it.
  */
 
+export const watchlistMonitoringSchema = z.object({
+  on: z.boolean(),
+  /** not_switched_on: regular re-checks aren't running yet. plan: this plan has none. sample: a sample organisation. */
+  reason: z.enum(['on', 'not_switched_on', 'plan', 'sample']),
+  /** How often each company is re-checked, in days. Null when off. */
+  everyDays: z.number().int().nullable(),
+  /** The same, in plain words for the screen. */
+  note: z.string(),
+});
+export type WatchlistMonitoring = z.infer<typeof watchlistMonitoringSchema>;
+
 export const watchlistItemSchema = z.object({
   companyId: uuidSchema,
   legalName: z.string(),
@@ -27,6 +38,14 @@ export const watchlistItemSchema = z.object({
   /** The newest scan that changed something, or null. */
   lastChange: changeSummarySchema.nullable(),
   followedAt: isoDateTimeSchema,
+  /** Open urgent issues in the newest result. A count only. Null before the first result. Always sent. */
+  urgentGapCount: z.number().int().min(0).nullable().optional(),
+  /**
+   * When the next regular re-check is due, from the monitoring schedule. Null when monitoring is
+   * off (see `monitoring` on the list) or no full scan has finished yet. It is when the company
+   * becomes due, not a promise of the minute: re-checks run hourly, under a daily cap. Always sent.
+   */
+  nextScanDueAt: isoDateTimeSchema.nullable().optional(),
 });
 export type WatchlistItem = z.infer<typeof watchlistItemSchema>;
 
@@ -35,6 +54,8 @@ export const watchlistResponseSchema = z.object({
   /** Companies followed now, and how many the plan allows. */
   used: z.number().int(),
   limit: z.number().int(),
+  /** Whether followed companies are re-checked on our own, and if not, why. Always sent. */
+  monitoring: watchlistMonitoringSchema.optional(),
 });
 export type WatchlistResponse = z.infer<typeof watchlistResponseSchema>;
 
@@ -94,3 +115,30 @@ export const companyHistoryResponseSchema = z.object({
   scans: z.array(companyHistoryItemSchema),
 });
 export type CompanyHistoryResponse = z.infer<typeof companyHistoryResponseSchema>;
+
+// ---- Score history, for one company or its group ----
+
+export const scoreHistoryQuerySchema = z.object({
+  /** "group" adds the related companies to this one, scored together as the overview does. */
+  scope: z.enum(['company', 'group'], { error: 'Scope must be company or group.' }).default('company'),
+});
+
+export const scoreHistoryPointSchema = z.object({
+  /** The finished scan that produced this point, and whose company it was. */
+  scanId: uuidSchema,
+  companyId: uuidSchema,
+  at: isoDateTimeSchema,
+  /** Exact or a range, by plan. For a group: every company's newest result at that moment, scored together. */
+  score: scoreViewSchema,
+  statusWord: statusWordSchema.nullable(),
+  coverage: coverageSchema.nullable(),
+});
+export type ScoreHistoryPoint = z.infer<typeof scoreHistoryPointSchema>;
+
+export const scoreHistoryResponseSchema = z.object({
+  companyId: uuidSchema,
+  scope: z.enum(['company', 'group']),
+  /** Oldest first. Empty before the first scan finishes. */
+  points: z.array(scoreHistoryPointSchema),
+});
+export type ScoreHistoryResponse = z.infer<typeof scoreHistoryResponseSchema>;

@@ -37,6 +37,7 @@ import { isOwned } from '../companies/ownership';
 import { whatChangedSinceLastLook } from '../monitoring/summary';
 import { planOf, requireEntitlement } from '../plans/service';
 import { proofFor } from '../vault/service';
+import { issueHistory } from './activity';
 import { coverageFor, isDown, latestSources, requireCompany, type CompanyRow } from '../scans/facts';
 import type { FindingDetail } from '../scans/pipeline';
 
@@ -399,8 +400,11 @@ export async function buildIssueDetail(deps: AppDeps, tx: Tx, organisationId: st
   const showPoints = set.entitlements.priorityList;
   const points = showPoints ? pointsForFinding(item.rule_id, set.findings) : null;
   const from = set.score.overall;
+  const history = await issueHistory(tx, item.company, ruleKey);
   return {
     ...summary(item, points, set.score.open_critical > 0),
+    lastCheckedAt: history.lastCheckedAt,
+    activity: history.activity,
     missing: item.row.whatIsMissing ?? '',
     why: item.row.whyItMatters ?? '',
     ifLeft: item.row.ifLeft ?? '',

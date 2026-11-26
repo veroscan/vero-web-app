@@ -2,7 +2,7 @@
 
 import '@/app/styles/pages/plan.css';
 import type { Plan } from '@vero/shared';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
@@ -32,40 +32,51 @@ function Cell({ plan, cell }: { plan: Plan; cell: CompareCell }) {
   );
 }
 
-/** Stripe's own checkout. The plan changes only when Stripe tells us the payment went through. */
-function CheckoutButton({ plan, primary }: { plan: Plan; primary: boolean }) {
+/** What the screen says wherever paying would start, while the API has payments switched off. */
+const BILLING_OFF = "Billing isn't switched on yet, so you can't pay for a plan here today. Until it is, our team changes plans by hand, and the change shows on this page.";
+
+/**
+ * Stripe's own checkout. The plan changes only when Stripe tells us the payment went through.
+ * While payments are off the API answers plainly that they are, and the button shows those words.
+ */
+function CheckoutButton({ plan, primary, billingOn, onOff }: { plan: Plan; primary: boolean; billingOn: boolean; onOff: () => void }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   if (plan.code === 'free') return null;
   const code = plan.code;
   const start = () => {
+    if (busy) return;
     setBusy(true);
     setProblem(null);
     api.billing.checkout({ body: { plan: code } }).then(
       ({ url }) => window.location.assign(url),
       (error: unknown) => {
-        setProblem(asApiError(error).message);
+        const failure = asApiError(error);
+        if (failure.code === 'payments_off') onOff();
+        setProblem(failure.message);
         setBusy(false);
       },
     );
   };
   return (
     <>
-      <button className={`btn ${primary ? 'btn-p' : 'btn-g'}`} type="button" disabled={busy} onClick={start} data-testid={`checkout-${code}`}>
+      <button className={`btn ${primary ? 'btn-p' : 'btn-g'}`} type="button" disabled={busy} onClick={start} data-testid={`checkout-${code}`} aria-describedby={billingOn ? undefined : 'billing-off'}>
         {busy ? 'Opening checkout' : `Move to ${plan.name}`}
       </button>
       {problem ? (
         <p className="probl" role="alert">
           {problem}
         </p>
-      ) : null}
+      ) : billingOn ? null : (
+        <span className="offw">Billing isn&apos;t on yet</span>
+      )}
     </>
   );
 }
 
-function PlanAction({ plan, current, hasResult, primary }: { plan: Plan; current: boolean; hasResult: boolean; primary: boolean }) {
+function PlanAction({ plan, current, hasResult, primary, billingOn, onOff }: { plan: Plan; current: boolean; hasResult: boolean; primary: boolean; billingOn: boolean; onOff: () => void }) {
   if (current) return <span className="curb">Your plan</span>;
-  if (plan.code === 'free') return <span className="curb quiet">Manage it in billing</span>;
+  if (plan.code === 'free') return <span className="curb quiet">{billingOn ? 'Manage it in billing' : 'Ask our team to move you'}</span>;
   if (!hasResult) {
     return (
       <TLink className={`btn ${primary ? 'btn-p' : 'btn-g'}`} href="/onboarding/company">
@@ -73,20 +84,43 @@ function PlanAction({ plan, current, hasResult, primary }: { plan: Plan; current
       </TLink>
     );
   }
-  return <CheckoutButton plan={plan} primary={primary} />;
+  return <CheckoutButton plan={plan} primary={primary} billingOn={billingOn} onOff={onOff} />;
+}
+
+/** A wide table in a narrow box: says so while there is more to the side, and stops saying it at the end. */
+function useMoreToTheSide() {
+  // Kept in state, not a ref: the box only exists once the plans have loaded.
+  const [element, box] = useState<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    if (!element) return;
+    const read = () => setMore(element.scrollWidth - element.clientWidth - element.scrollLeft > 8);
+    read();
+    element.addEventListener('scroll', read, { passive: true });
+    const observer = new ResizeObserver(read);
+    observer.observe(element);
+    return () => {
+      element.removeEventListener('scroll', read);
+      observer.disconnect();
+    };
+  }, [element]);
+  return { box, more };
 }
 
 /** Stripe's billing portal: invoices, the card on file and cancelling all live there. */
-function PortalButton({ className }: { className: string }) {
+function PortalButton({ className, onOff }: { className: string; onOff: () => void }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const open = () => {
+    if (busy) return;
     setBusy(true);
     setProblem(null);
     api.billing.portal().then(
       ({ url }) => window.location.assign(url),
       (error: unknown) => {
-        setProblem(asApiError(error).message);
+        const failure = asApiError(error);
+        if (failure.code === 'payments_off') onOff();
+        setProblem(failure.message);
         setBusy(false);
       },
     );
@@ -123,6 +157,8 @@ export default function PlanPage() {
   const resource = useResource(() => api.plans.list(), []);
   const members = useResource(() => api.members.list().catch(() => null), []);
   const data = resource.data;
+  const [saidOff, setSaidOff] = useState(false);
+  const side = useMoreToTheSide();
 
   if (resource.loading && !data) {
     return (
@@ -152,6 +188,10 @@ export default function PlanPage() {
   const people = members.data?.members.length ?? null;
   const price = priceWords(current ?? { code: 'free', priceMinor: null, currency: null });
   const priceLine = price === 'Not set yet' ? 'Price not set yet' : price;
+  // Prices come from Stripe. Until the API sends one for a paid plan, payments aren't switched on;
+  // the API also says so itself the moment anyone tries to pay.
+  const billingOn = !saidOff && data.plans.some((plan) => plan.code !== 'free' && plan.priceMinor !== null);
+  const sayOff = () => setSaidOff(true);
 
   return (
     <div className="pg-plan" data-testid="plan-page" data-current={data.current}>
@@ -167,7 +207,7 @@ export default function PlanPage() {
             <div className="meta">
               <span>{currentName} plan</span>
               <span>{priceLine}</span>
-              <span>Payments through Stripe</span>
+              <span>{billingOn ? 'Payments through Stripe' : "Billing isn't switched on yet"}</span>
             </div>
           </div>
           <div className="acts">
@@ -227,7 +267,7 @@ export default function PlanPage() {
             <div className="price">
               {currentName} <small>{priceLine}</small>
             </div>
-            <p>{PLAN_CHANGE.body}</p>
+            <p>{billingOn ? "Payments go through Stripe's own checkout, and your plan changes once Stripe confirms the payment." : BILLING_OFF}</p>
             {showScore ? (
               <div className="rows2" data-testid="plan-score">
                 <div className="row2">
@@ -236,18 +276,24 @@ export default function PlanPage() {
                 </div>
                 <div className="row2">
                   <span>Billing</span>
-                  <b>{paid ? 'Stripe' : 'Nothing to pay'}</b>
+                  <b>{!paid ? 'Nothing to pay' : billingOn ? 'Stripe' : 'Set by our team'}</b>
                 </div>
               </div>
             ) : (
               <div className="rows2">
                 <div className="row2">
                   <span>Billing</span>
-                  <b>{paid ? 'Stripe' : 'Nothing to pay'}</b>
+                  <b>{!paid ? 'Nothing to pay' : billingOn ? 'Stripe' : 'Set by our team'}</b>
                 </div>
               </div>
             )}
-            {paid && canBill ? <PortalButton className="btn" /> : <a className="btn" href="#plans">Compare plans</a>}
+            {paid && canBill && billingOn ? (
+              <PortalButton className="btn" onOff={sayOff} />
+            ) : (
+              <a className="btn" href="#plans">
+                Compare plans
+              </a>
+            )}
           </div>
         </section>
       </Hero>
@@ -258,7 +304,19 @@ export default function PlanPage() {
             <h2>Plans</h2>
             <span className="sub">Every plan reads the same official registers</span>
           </div>
-          <div className="cmpwrap" data-lenis-prevent-horizontal="">
+          {billingOn ? null : (
+            <p className="offnote" id="billing-off" data-testid="billing-off">
+              <Icon name="card" />
+              <span>
+                <b>Billing isn&apos;t switched on yet.</b> You can&apos;t pay for a plan here today. Until it is, our team changes plans by hand, and the change shows on this page.
+              </span>
+            </p>
+          )}
+          <p className={`swipe${side.more ? '' : ' end'}`} aria-hidden="true">
+            Swipe sideways to compare the plans
+            <Icon name="arrow" />
+          </p>
+          <div className={`cmpwrap${side.more ? ' more' : ''}`} ref={side.box} data-lenis-prevent-horizontal="" tabIndex={0} role="region" aria-label="Plans compared">
             <table className="cmp">
               <colgroup>
                 <col style={{ width: '34%' }} />
@@ -306,7 +364,11 @@ export default function PlanPage() {
                   <td />
                   {data.plans.map((plan) => (
                     <td key={plan.code} className={plan.code === data.current ? 'cur' : undefined}>
-                      {canBill || plan.code === data.current ? <PlanAction plan={plan} current={plan.code === data.current} hasResult={session.hasResult} primary={plan.code === 'growth'} /> : <span className="curb quiet">Ask an owner</span>}
+                      {canBill || plan.code === data.current ? (
+                        <PlanAction plan={plan} current={plan.code === data.current} hasResult={session.hasResult} primary={plan.code === 'growth'} billingOn={billingOn} onOff={sayOff} />
+                      ) : (
+                        <span className="curb quiet">Ask an owner</span>
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -318,7 +380,7 @@ export default function PlanPage() {
         <Reveal as="section" className="mod billing" i={1}>
           <div className="mh">
             <h2>Invoices and payment</h2>
-            <span className="sub">Kept by Stripe</span>
+            <span className="sub">{billingOn ? 'Kept by Stripe' : 'Nothing here until billing is switched on'}</span>
           </div>
           <div className="bdl">
             <div>
@@ -330,13 +392,20 @@ export default function PlanPage() {
             </div>
             <div>
               <span>Invoices, card and cancelling</span>
-              <b>{paid ? 'In the Stripe billing page' : 'Nothing to bill on Free'}</b>
+              <b>{!billingOn ? 'Not available yet' : paid ? 'In the Stripe billing page' : 'Nothing to bill on Free'}</b>
             </div>
           </div>
-          {paid && canBill ? (
+          {!billingOn ? (
+            <div className="cancel" data-testid="billing-off-invoices">
+              <span>
+                {paid ? `Your ${currentName} plan was set by our team, so there is no card on file and no invoice to show. ` : ''}
+                Billing isn&apos;t switched on yet. When it is, payments will go through Stripe, and invoices and your card will open from here.
+              </span>
+            </div>
+          ) : paid && canBill ? (
             <div className="cancel">
               <span>Invoices, the card on file and cancelling are all on Stripe&apos;s billing page. If you cancel, your scan history stays.</span>
-              <PortalButton className="btn btn-g btn-sm" />
+              <PortalButton className="btn btn-g btn-sm" onOff={sayOff} />
             </div>
           ) : (
             <div className="cancel">

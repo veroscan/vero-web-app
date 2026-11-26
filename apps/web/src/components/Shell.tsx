@@ -25,6 +25,7 @@ interface NavItem {
 
 function navItems(open: number): NavItem[] {
   return [
+    { href: '/scan', icon: 'scan', label: 'Scan', match: (p) => p.startsWith('/scan') || p.startsWith('/onboarding') || p.startsWith('/first-result') },
     { href: '/', icon: 'home', label: 'Overview', match: (p) => p === '/' || p.startsWith('/areas') },
     { href: '/issues', icon: 'flag', label: 'Findings', match: (p) => p.startsWith('/issues'), count: open },
     { href: '/documents', icon: 'doc', label: 'Documents', match: (p) => p.startsWith('/documents') },
@@ -42,9 +43,24 @@ function useDismiss(open: boolean, close: () => void) {
     const onDown = (event: MouseEvent) => {
       if (!box.current?.contains(event.target as Node)) close();
     };
+    const items = (): HTMLElement[] => Array.from(box.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close();
+      if (event.key === 'Escape') {
+        close();
+        // Back to the button that opened it, so the keyboard doesn't lose its place.
+        box.current?.querySelector<HTMLElement>('[aria-haspopup]')?.focus();
+        return;
+      }
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') return;
+      const list = items();
+      if (list.length === 0) return;
+      event.preventDefault();
+      const at = list.indexOf(document.activeElement as HTMLElement);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? list.length - 1 : event.key === 'ArrowDown' ? (at + 1) % list.length : (at - 1 + list.length) % list.length;
+      list[next]?.focus();
     };
+    // Opened from the keyboard, the first choice takes focus. A mouse click leaves focus on the button.
+    if (box.current?.querySelector('[aria-haspopup]:focus-visible')) items()[0]?.focus();
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -187,6 +203,9 @@ export function Sidebar() {
   const items = navItems(open);
   return (
     <aside className="side v3" id="side" aria-label="Main">
+      <button className="side-x" type="button" aria-label="Close the menu" onClick={() => window.dispatchEvent(new Event('vero:nav-close'))}>
+        <Icon name="x" />
+      </button>
       <TLink href="/" aria-label="Vero, overview">
         <img className="logo light-only" src="/brand/wordmark-dark.svg" alt="" />
         <img className="logo dark-only" src="/brand/wordmark-light.svg" alt="" />
@@ -195,7 +214,7 @@ export function Sidebar() {
       <nav className="nv">
         {items.map((item) => {
           const on = item.match(pathname);
-          const locked = !ready && item.href !== '/';
+          const locked = !ready && item.href !== '/' && item.href !== '/scan';
           return (
             <TLink key={item.href} className={on ? 'on' : undefined} href={locked ? '/' : item.href} aria-current={on ? 'page' : undefined} aria-disabled={locked || undefined} title={locked ? 'After your first scan' : undefined}>
               <Icon name={item.icon} />
@@ -241,9 +260,14 @@ export function Sidebar() {
 /** The top bar. On a page with a hero it sits on the atmosphere. */
 export function TopBar({ crumb }: { crumb?: ReactNode }) {
   const session = useSession();
+  // "Ctrl K" on the server and on Windows and Linux; the Mac key once the browser says it is a Mac.
+  const [shortcut, setShortcut] = useState('Ctrl K');
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/i.test(navigator.platform)) setShortcut('\u2318 K');
+  }, []);
   return (
     <header className="bar" id="bar">
-      <button className="mbar" type="button" aria-label="Open the menu" onClick={() => document.body.classList.add('navo')}>
+      <button className="mbar" type="button" aria-label="Open the menu" aria-controls="side" onClick={() => window.dispatchEvent(new Event('vero:nav-open'))}>
         <Icon name="menu" />
       </button>
       {crumb ? <div className="crumb">{crumb}</div> : null}
@@ -251,7 +275,7 @@ export function TopBar({ crumb }: { crumb?: ReactNode }) {
       <button className="search" type="button" id="openCmd" onClick={() => window.dispatchEvent(new Event('vero:search'))}>
         <Icon name="search" />
         <span style={{ whiteSpace: 'nowrap' }}>Search Vero</span>
-        <kbd>Ctrl K</kbd>
+        <kbd>{shortcut}</kbd>
       </button>
       <TLink className="ibtn hide-s" href="/notifications" aria-label={session.unread > 0 ? `What's new, ${session.unread} unread` : "What's new"} data-testid="bell">
         <Icon name="bell" />
@@ -317,6 +341,49 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // The phone menu: opens from the top bar, closes on Escape, the scrim, the close button or a page change.
+  useEffect(() => {
+    let opener: HTMLElement | null = null;
+    const side = (): HTMLElement | null => document.getElementById('side');
+    const close = (refocus: boolean): void => {
+      if (!document.body.classList.contains('navo')) return;
+      document.body.classList.remove('navo');
+      if (refocus) opener?.focus();
+    };
+    const open = (): void => {
+      opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.body.classList.add('navo');
+      side()?.querySelector<HTMLElement>('.side-x')?.focus();
+    };
+    const onClose = (): void => close(true);
+    const onKey = (event: KeyboardEvent): void => {
+      if (!document.body.classList.contains('navo')) return;
+      if (event.key === 'Escape') close(true);
+      // Tab stays inside the open menu.
+      if (event.key === 'Tab') {
+        const stops = Array.from(side()?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])') ?? []).filter((el) => el.offsetParent !== null);
+        const first = stops[0];
+        const last = stops[stops.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('vero:nav-open', open);
+    window.addEventListener('vero:nav-close', onClose);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('vero:nav-open', open);
+      window.removeEventListener('vero:nav-close', onClose);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
   useEffect(() => {
     document.body.classList.remove('navo', 'open');
   }, [pathname]);
@@ -329,7 +396,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <div className="navscrim" aria-hidden="true" onClick={() => document.body.classList.remove('navo')} />
+      <div className="navscrim" aria-hidden="true" onClick={() => window.dispatchEvent(new Event('vero:nav-close'))} />
       {searching ? <SearchPalette onClose={() => setSearching(false)} /> : null}
     </div>
   );

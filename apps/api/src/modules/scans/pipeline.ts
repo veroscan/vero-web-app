@@ -18,15 +18,19 @@ import {
   type Outcome,
   type PackSelection,
   type SourceState,
+  statusWord,
 } from '@vero/rules';
 import { PLAN_ENTITLEMENTS } from '@vero/shared';
 import { and, desc, eq, inArray, isNotNull, lte, sql } from 'drizzle-orm';
 import { schema, type Tx } from '../../db';
 import type { AppDeps } from '../../deps';
+import { errors } from '../../http/errors';
 import { writeAudit } from '../audit/service';
 import { recordMonitoringChanges, snapshotBefore } from '../monitoring/changes';
-import { notifyOrganisation } from '../notifications/service';
+import { snapshotView } from '../monitoring/summary';
+import { emailWanted, notifyOrganisation, sendNoticeEmails, type NoticeEmail } from '../notifications/service';
 import { planOf } from '../plans/service';
+import { heldRegistryFacts, recordRegistryChanges, statusChangesIn } from '../records/changes';
 import {
   applySourceFacts,
   connectorsForSelection,
@@ -133,6 +137,44 @@ export async function startFullScan(
     await deps.queue.enqueue('scan.run', { organisationId, scanId });
   }
   return scanId;
+}
+
+/**
+ * Stops a full scan that is queued or running. Marked cancelled at once; a running one stops at its next
+ * step (see `wasCancelled`), and finalising refuses anything that isn't running, so no findings or
+ * score are ever written for it. Asking again for a scan already cancelled changes nothing.
+ */
+export async function cancelScan(deps: AppDeps, organisationId: string, scanId: string): Promise<{ row: ScanRow; changed: boolean }> {
+  const outcome = await deps.db.withOrg(organisationId, async (tx) => {
+    const [row] = await tx.select().from(scan).where(eq(scan.id, scanId)).for('update');
+    if (!row) throw errors.notFound('That scan');
+    if (row.status === 'cancelled') return { row, changed: false };
+    if (row.kind !== 'full') throw errors.invalidState("A re-score can't be cancelled. It only re-reads what we already have, and finishes in moments.");
+    if (row.status !== 'queued' && row.status !== 'running') throw errors.invalidState('That scan has already finished, so there is nothing to cancel.');
+    const now = deps.now();
+    const [stopped] = await tx
+      .update(scan)
+      .set({ status: 'cancelled', cancelledAt: now, completedAt: now, leaseUntil: null })
+      .where(eq(scan.id, row.id))
+      .returning();
+    if (!stopped) throw errors.internal();
+    return { row: stopped, changed: true };
+  });
+  if (outcome.changed) {
+    await deps.db.withSystem((tx) =>
+      tx
+        .update(companySweep)
+        .set({ scanInFlightId: null, scanInFlightUntil: null })
+        .where(and(eq(companySweep.companyId, outcome.row.companyId), eq(companySweep.scanInFlightId, outcome.row.id))),
+    );
+  }
+  return outcome;
+}
+
+/** Read fresh each time, so a cancel from another request takes effect at the next step. */
+async function wasCancelled(deps: AppDeps, row: ScanRow): Promise<boolean> {
+  const [current] = await deps.db.withOrg(row.organisationId, (tx) => tx.select({ status: scan.status }).from(scan).where(eq(scan.id, row.id)));
+  return current?.status === 'cancelled';
 }
 
 /**
@@ -494,6 +536,8 @@ async function runSources(deps: AppDeps, row: ScanRow): Promise<void> {
   const monitoring = row.trigger === 'monitoring';
 
   const ask = async (connector: Connector, identifiers: Identifiers): Promise<void> => {
+    // A cancelled scan asks nothing more, and keeps nothing a source answers after the stop.
+    if (await wasCancelled(deps, row)) return;
     const ref = companyRef(company, website, connector, { identifiers });
     if (monitoring && PAID_VENDORS.has(connector.id) && !(await monitoringMayAskVendor(deps, scope, connector, ref))) {
       // Not asked, and nothing paid: the answer from before stands, and this scan doesn't list it.
@@ -503,6 +547,7 @@ async function runSources(deps: AppDeps, row: ScanRow): Promise<void> {
       return;
     }
     const result = await lookupForCompany(deps, scope, connector, ref);
+    if (await wasCancelled(deps, row)) return;
     // Written as each source answers, so the scanning screen can show it straight away.
     await deps.db.withOrg(row.organisationId, (tx) =>
       tx
@@ -518,7 +563,7 @@ async function runSources(deps: AppDeps, row: ScanRow): Promise<void> {
   const second = pending.filter((connector) => STAGE_TWO.has(connector.id));
   const told = resolveIdentifiers(answers, []);
   await Promise.all(first.map((connector) => ask(connector, told)));
-  if (second.length === 0) return;
+  if (second.length === 0 || (await wasCancelled(deps, row))) return;
 
   // Stage two: what stage one found, plus what the company told us, then all at once again.
   const identifiers = await deps.db.withOrg(row.organisationId, async (tx) => resolveIdentifiers(answers, await latestSources(tx, row.companyId)));
@@ -681,6 +726,26 @@ interface FinaliseOutcome {
   anySourceDown: boolean;
   /** Who to email, when this result is one people are waiting for. */
   mail: { to: string[]; subject: string; text: string } | null;
+  /** Emails owed for notifications made with this result. Sent after it commits. */
+  notices: NoticeEmail[];
+}
+
+/**
+ * Words for the alert about a followed company whose score band or register status changed.
+ * The band is the word people see (Healthy, Needs work, At risk), so it gives away no exact
+ * number on a plan that only sees a range.
+ */
+export function watchlistNotice(
+  companyName: string,
+  band: { before: string; after: string } | null,
+  statusChanges: readonly { who: string; before: string; after: string }[],
+): { title: string; body: string } {
+  const lines: string[] = [];
+  if (band) lines.push(`${companyName} is now "${band.after}". It was "${band.before}".`);
+  for (const change of statusChanges) lines.push(`${change.who} now shows the company status as "${change.after}". It was "${change.before}".`);
+  lines.push(`Open ${companyName} to see what changed.`);
+  const title = band && statusChanges.length > 0 ? `${companyName} has changed` : band ? `${companyName} is now ${band.after}` : `${companyName}'s status has changed`;
+  return { title, body: lines.join(' ') };
 }
 
 /** The result people were told we'd email about: a scan they started, or a source coming back. */
@@ -714,7 +779,11 @@ async function finalise(deps: AppDeps, row: ScanRow): Promise<FinaliseOutcome | 
     // A monitoring scan is compared with the result before it, so read that before rewriting anything.
     const before = row.trigger === 'monitoring' ? await snapshotBefore(tx, company.id, row.id) : null;
 
+    // What the register said before this result, read before its facts are replaced.
+    const registerBefore = await heldRegistryFacts(tx, company.id);
     await applySourceFacts(tx, company, sources);
+    // Every difference from what was held is kept as the company's change history.
+    const registerChanges = await recordRegistryChanges(tx, { organisationId: row.organisationId, companyId: company.id, scanId: row.id, before: registerBefore, now });
     await rebuildAnswerFacts(tx, company, now);
     await rebuildVaultFacts(tx, company);
 
@@ -806,7 +875,7 @@ async function finalise(deps: AppDeps, row: ScanRow): Promise<FinaliseOutcome | 
     const findingIds = new Map(inserted.map((item) => [item.key, item.id]));
 
     const [previous] = await tx
-      .select({ overall: scoreSnapshot.overall, freeRange: scoreSnapshot.freeRange })
+      .select()
       .from(scoreSnapshot)
       .where(eq(scoreSnapshot.companyId, company.id))
       .orderBy(desc(scoreSnapshot.createdAt), desc(scoreSnapshot.id))
@@ -866,9 +935,11 @@ async function finalise(deps: AppDeps, row: ScanRow): Promise<FinaliseOutcome | 
     // A followed company isn't the reader's own: name it instead of saying "your".
     const followed = company.relationship === 'follow';
     const whose = followed ? `${company.legalName}'s` : 'Your';
+    const notices: NoticeEmail[] = [];
+    let told = false;
     if (before) {
       // Monitoring tells people only about a meaningful change, never every small movement.
-      await recordMonitoringChanges(tx, {
+      const recorded = await recordMonitoringChanges(tx, {
         organisationId: row.organisationId,
         scanId: row.id,
         company,
@@ -877,6 +948,24 @@ async function finalise(deps: AppDeps, row: ScanRow): Promise<FinaliseOutcome | 
         scoreAfter: score.overall,
         exactScore: exact,
       });
+      told = recorded.reasons.length > 0;
+    }
+    if (followed && previous && !told) {
+      // The watchlist alert: the followed company's band moved, or its register status changed.
+      const wordBefore = snapshotView(previous, exact).statusWord;
+      const wordNow = exact
+        ? score.overall === null ? null : statusWord(score.overall, score.coverage)
+        : range ? statusWord(Math.round((range.low + range.high) / 2), range.coverage) : null;
+      const band = wordBefore !== null && wordNow !== null && wordBefore !== wordNow ? { before: wordBefore, after: wordNow } : null;
+      const statusChanges = statusChangesIn(registerChanges);
+      if (band || statusChanges.length > 0) {
+        const notice = watchlistNotice(company.legalName, band, statusChanges);
+        notices.push(...(await notifyOrganisation(tx, row.organisationId, { kind: 'score', title: notice.title, body: notice.body, link, dedupeKey: `watch:${row.id}` })));
+        told = true;
+      }
+    }
+    if (before || told) {
+      // Already said, or a monitoring scan with nothing worth saying.
     } else if (!previous) {
       await notifyOrganisation(tx, row.organisationId, {
         kind: 'score',
@@ -914,17 +1003,20 @@ async function finalise(deps: AppDeps, row: ScanRow): Promise<FinaliseOutcome | 
       organisationId: row.organisationId,
       action: 'scan.finalised',
       target: row.id,
-      metadata: { kind: row.kind, trigger: row.trigger, method: score.method_version, packs: selection.used, partial: anySourceDown },
+      metadata: { kind: row.kind, trigger: row.trigger, method: score.method_version, packs: selection.used, partial: anySourceDown, registerChanges: registerChanges.length },
     });
     const wanted = mailFor(row, company, anySourceDown, deps.config.webBaseUrl);
-    const people = wanted
+    const leads = wanted
       ? await tx
-          .select({ email: schema.user.email })
+          .select({ id: schema.user.id, email: schema.user.email })
           .from(schema.membership)
           .innerJoin(schema.user, eq(schema.user.id, schema.membership.userId))
           .where(inArray(schema.membership.role, ['owner', 'admin']))
       : [];
-    return { anySourceDown, mail: wanted ? { ...wanted, to: people.map((person) => person.email) } : null };
+    // The result email is a "score" email: someone who switched those off still gets the in-app notification.
+    const allowed = await emailWanted(tx, leads.map((person) => person.id), 'score');
+    const people = leads.filter((person) => allowed.has(person.id));
+    return { anySourceDown, mail: wanted ? { ...wanted, to: people.map((person) => person.email) } : null, notices };
   });
 }
 
@@ -991,6 +1083,7 @@ export async function runScan(deps: AppDeps, payload: { organisationId: string; 
     if (result) {
       await afterFinalise(deps, row, result.anySourceDown);
       if (result.mail) await sendResultMail(deps, row.organisationId, result.mail);
+      await sendNoticeEmails(deps, result.notices);
     }
   } catch (error) {
     // Let the next attempt take over straight away.

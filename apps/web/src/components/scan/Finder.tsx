@@ -3,14 +3,15 @@
    Used by /onboarding/company (your own company) and /scan (any company). Real register answers only. */
 import { COUNTRIES, countryCoverage, type RegistrySearchResponse } from '@vero/shared';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { SampleNote } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { Reveal, Scramble, Words } from '@/components/Motion';
+import { Select, type SelectOption } from '@/components/Select';
 import { After, Hero } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { api, asApiError, isRedirecting } from '@/lib/api';
-import { entityWords, shortDate } from '@/lib/format';
+import { entityWords } from '@/lib/format';
 import { FEATURED_COUNTRIES, isCountry, registerFor } from '@/lib/words';
 
 export type Candidate = RegistrySearchResponse['candidates'][number];
@@ -21,7 +22,11 @@ export interface Picked {
   found: RegistrySearchResponse;
 }
 
-const LEVEL_WORDS = { full: 'Full coverage.', registry: 'Registry coverage.', international: 'International coverage.' } as const;
+const LEVEL_WORDS = {
+  full: 'Full coverage.',
+  registry: 'Registry coverage.',
+  international: 'International coverage.',
+} as const;
 
 /** The coverage line under the search box: what a scan can check there, before anything is searched. */
 export function CoverageLine({ country }: { country: string | null }) {
@@ -52,7 +57,29 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
+/** A company can be decades old, so the date it was formed always carries its year: 27 Nov 1947. */
+const FORMED = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+function formedWords(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : FORMED.format(date);
+}
+
 const OTHERS = COUNTRIES.filter((item) => !(FEATURED_COUNTRIES as readonly string[]).includes(item.code));
+/** Countries with their own rule pack first, then every other country by name. */
+const COUNTRY_OPTIONS: SelectOption[] = [
+  ...FEATURED_COUNTRIES.map((code) => ({
+    value: code,
+    label: registerFor(code).label,
+    group: 'Full coverage',
+  })),
+  ...OTHERS.map((item) => ({
+    value: item.code,
+    label: item.name,
+    group: 'Every other country',
+  })),
+];
+
+const CHOOSE_FIRST = 'Choose the country where the company is registered first.';
 
 export interface FinderProps {
   kicker: [string, string];
@@ -68,6 +95,8 @@ export interface FinderProps {
   footExtra?: ReactNode;
   /** Shown above the results, inside the light area (the own or follow choice). */
   above?: ReactNode;
+  /** A company that is only followed has no documents of its own to share, so the footer doesn't promise them. */
+  publicOnly?: boolean;
   children?: ReactNode;
   onCountry?: (country: string | null) => void;
   onQuery?: (query: string) => void;
@@ -85,9 +114,14 @@ export function Finder(props: FinderProps) {
   const [name, setName] = useState(() => params.get('q') ?? '');
   const [found, setFound] = useState<RegistrySearchResponse | null>(null);
   const [searching, setSearching] = useState(false);
+  /** The register search itself failed (the network, or our side). It can be tried again. */
   const [problem, setProblem] = useState<string | null>(null);
+  /** Something is missing from the form. Shown under the search box, next to what needs fixing. */
+  const [formProblem, setFormProblem] = useState<string | null>(null);
   const [now, setNow] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const rows = useRef<HTMLTableSectionElement>(null);
+  const searchedIn = useRef(country);
   const trimmed = name.trim();
 
   useEffect(() => {
@@ -97,10 +131,27 @@ export function Finder(props: FinderProps) {
     props.onQuery?.(trimmed);
   }, [trimmed]);
 
+  // The address follows the search, so a refresh or the back button returns to the same results.
   useEffect(() => {
-    setFound(null);
+    const timer = setTimeout(() => {
+      const next = new URLSearchParams(window.location.search);
+      if (country) next.set('country', country);
+      else next.delete('country');
+      if (trimmed) next.set('q', trimmed);
+      else next.delete('q');
+      const query = next.toString();
+      const address = `${window.location.pathname}${query ? `?${query}` : ''}`;
+      if (address !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(null, '', address);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [country, trimmed]);
+
+  useEffect(() => {
     setProblem(null);
     onPick?.(null);
+    // Matches from another country never stay on screen. Matches for the last few letters do, dimmed, until the new ones land.
+    if (searchedIn.current !== country || !country || trimmed.length < 2) setFound(null);
+    searchedIn.current = country;
     if (!country || trimmed.length < 2) {
       setSearching(false);
       return;
@@ -117,6 +168,7 @@ export function Finder(props: FinderProps) {
           },
           (error: unknown) => {
             if (!current || isRedirecting(error)) return;
+            setFound(null);
             setProblem(asApiError(error).message);
             setSearching(false);
           },
@@ -130,17 +182,31 @@ export function Finder(props: FinderProps) {
     };
   }, [country, trimmed, now]);
 
+  const chooseCountry = (code: string) => {
+    setCountry(code);
+    setFormProblem(null);
+    // The list hands focus back to its button. The next thing to do is type the name.
+    requestAnimationFrame(() => input.current?.focus({ preventScroll: true }));
+  };
+
+  const needCountry = () => {
+    setFormProblem(CHOOSE_FIRST);
+    document.getElementById('country')?.focus();
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!country) {
-      setProblem('Choose the country where the company is registered first.');
+      needCountry();
       return;
     }
     if (trimmed.length < 2) {
-      setProblem('Type at least two characters of the name or number.');
+      setFormProblem('Type at least two characters of the name or number.');
       input.current?.focus();
       return;
     }
+    setFormProblem(null);
+    if (searching) return;
     if (found?.outcome === 'not_found') {
       router.push(notFoundHref(country, trimmed, found.sourceName));
       return;
@@ -150,19 +216,50 @@ export function Finder(props: FinderProps) {
 
   const byHand = () => {
     if (!country) {
-      setProblem('Choose the country where the company is registered first.');
+      needCountry();
       return;
     }
     router.push(manualHref(country, trimmed));
   };
 
+  const clear = () => {
+    setName('');
+    setFormProblem(null);
+    input.current?.focus();
+  };
+
+  /** Down from the search box into the matches, and up and down between them. */
+  const picks = () => Array.from(rows.current?.querySelectorAll<HTMLElement>('.pick') ?? []);
+  const onInputKey = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      const first = picks()[0];
+      if (first) {
+        event.preventDefault();
+        first.focus();
+      }
+    } else if (event.key === 'Escape' && name) {
+      event.preventDefault();
+      clear();
+    }
+  };
+  const onRowsKey = (event: KeyboardEvent<HTMLTableSectionElement>) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    const list = picks();
+    const at = list.indexOf(document.activeElement as HTMLElement);
+    if (at < 0) return;
+    event.preventDefault();
+    if (event.key === 'ArrowUp' && at === 0) input.current?.focus();
+    else list[at + (event.key === 'ArrowDown' ? 1 : -1)]?.focus();
+  };
+
   const candidates = country && found ? found.candidates : [];
   const register = country ? registerFor(country) : null;
+  const typed = trimmed.length >= 2;
   const state = searching ? 'Searching' : candidates.length > 0 ? `${candidates.length} ${candidates.length === 1 ? 'match' : 'matches'}` : '';
-  const forWords = !country
-    ? 'Choose a country to start'
-    : searching
-      ? `Searching ${register?.register ?? 'the register'}`
+  const forWords = searching
+    ? `Searching ${register?.register ?? 'the register'}`
+    : problem
+      ? 'The search didn’t go through'
       : found && candidates.length > 0
         ? `${candidates.length} found for “${trimmed}” at ${found.sourceName}`
         : found
@@ -178,38 +275,27 @@ export function Finder(props: FinderProps) {
     else onPick?.(item);
   };
 
+  const showTable = candidates.length > 0 || searching;
   return (
     <>
       <Hero>
         <div className="find">
           <div className="mono kick">
-            <Scramble text={props.kicker[0]} /> · <b><Scramble text={props.kicker[1]} delay={120} /></b>
+            <Scramble text={props.kicker[0]} />
+            <span className="sep"> · </span>
+            <b>
+              <Scramble text={props.kicker[1]} delay={120} />
+            </b>
           </div>
           <h1>
             <Words text={props.title} />
           </h1>
           <p className="lede">{props.lede}</p>
-          <form className="sbox" role="search" onSubmit={submit}>
+          <form className={`sbox${formProblem ? ' bad' : ''}`} role="search" onSubmit={submit} noValidate>
             <label className="sr-only" htmlFor="country">
               Country of registration
             </label>
-            <select className="cty" id="country" data-testid="country-elsewhere" value={country} onChange={(event) => setCountry(event.target.value)}>
-              <option value="">Choose a country</option>
-              <optgroup label="Full coverage">
-                {FEATURED_COUNTRIES.map((code) => (
-                  <option key={code} value={code}>
-                    {registerFor(code).label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Every other country">
-                {OTHERS.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.name}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+            <Select className="cty" id="country" testId="country-elsewhere" ariaLabel="Country of registration" placeholder="Choose a country" value={country} onChange={chooseCountry} options={COUNTRY_OPTIONS} />
             <Icon name="search" />
             <label className="sr-only" htmlFor="name">
               Company name
@@ -219,182 +305,209 @@ export function Finder(props: FinderProps) {
               id="name"
               type="text"
               autoComplete="organization"
-              placeholder={register?.numberExample ? `Company name, or a number like ${register.numberExample}` : 'Company name or registration number'}
+              autoCapitalize="words"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              aria-describedby={formProblem ? 'find-problem' : undefined}
+              aria-invalid={formProblem ? true : undefined}
+              placeholder="Company name or number"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (formProblem && formProblem !== CHOOSE_FIRST) setFormProblem(null);
+              }}
+              onKeyDown={onInputKey}
             />
-            <span className="sstate" aria-live="polite">
+            {name ? (
+              <button className="clr" type="button" aria-label="Clear the search" onClick={clear}>
+                <Icon name="x" />
+              </button>
+            ) : null}
+            <span className={`sstate${searching ? ' busy' : ''}`} aria-live="polite">
               {state}
             </span>
-            <button className="go" type="submit" disabled={searching}>
+            <button className="go" type="submit" aria-busy={searching || undefined}>
               Search
             </button>
           </form>
+          {formProblem ? (
+            <p className="serr" id="find-problem" role="alert">
+              {formProblem}
+            </p>
+          ) : null}
           <CoverageLine country={country || null} />
           {found?.sampleData ? <SampleNote /> : null}
         </div>
       </Hero>
       <After>
         {props.above}
-        <Reveal as="section" className="mod res" i={0}>
-          <div className="mh">
-            <h2>Registry matches</h2>
-            <span className="sub">{forWords}</span>
-          </div>
-          <div aria-live="polite">
-            {problem ? (
-              <p className="formerror" role="alert" style={{ padding: '14px 22px 0' }}>
-                {problem}
-              </p>
-            ) : null}
-            {found?.outcome === 'source_down' && country ? (
-              <div style={{ padding: '14px 22px 0' }}>
-                <p className="note warn" data-testid="search-source-down">
-                  <span>
-                    <span className="b">We can&apos;t check right now.</span> {found.message}{' '}
-                    <TLink className="link" href={manualHref(country, trimmed)}>
-                      Enter the details yourself
-                    </TLink>
-                  </span>
-                </p>
-              </div>
-            ) : null}
-          </div>
-          <div role={candidates.length > 0 ? 'group' : undefined} aria-label={candidates.length > 0 ? 'Matches' : undefined}>
-            <table>
-              <thead hidden={!searching && candidates.length === 0}>
-                <tr>
-                  <th>Company</th>
-                  <th>Registry</th>
-                  <th>Number</th>
-                  <th>Formed</th>
-                  <th style={{ width: 120 }} />
-                </tr>
-              </thead>
-              <tbody>
-                {searching ? (
-                  [0, 1, 2].map((key) => (
-                    <tr className="busy" key={key}>
-                      <td colSpan={5}>
-                        <div className="skel" />
-                        <div className="skel" />
-                      </td>
-                    </tr>
-                  ))
-                ) : candidates.length > 0 && found ? (
-                  candidates.map((candidate, index) => {
-                    const item: Picked = { country, candidate, found };
-                    const on = picked?.candidate === candidate;
-                    const label = `${candidate.name}, select`;
-                    return (
-                      <tr
-                        key={`${candidate.name}-${candidate.registrationNumber ?? index}`}
-                        className={`m${index === 0 && candidate.matchConfidence >= 0.9 ? ' best' : ''}${on ? ' on' : ''}`}
-                        style={{ animation: `rowin .5s var(--ease) ${index * 70}ms both` }}
-                        onClick={() => choose(item)}
-                      >
-                        <td className="nm">
-                          <b>
-                            <Highlight text={candidate.name} query={trimmed} />
-                          </b>
-                          <small>{[entityWords(candidate.entityType), candidate.registeredAgent ? `agent ${candidate.registeredAgent}` : null].filter(Boolean).join(' · ') || register?.label}</small>
-                        </td>
-                        <td className="src2">{found.sourceName}</td>
-                        <td className="num">{candidate.registrationNumber ?? '-'}</td>
-                        <td className="src2">{candidate.incorporatedOn ? shortDate(candidate.incorporatedOn) : '-'}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          {rowHref ? (
-                            <TLink className="sel" href={rowHref(item)} aria-label={label} onClick={(event) => event.stopPropagation()}>
-                              Select
-                              <Icon name="chev" />
-                            </TLink>
-                          ) : (
-                            <button
-                              className="sel"
-                              type="button"
-                              aria-label={label}
-                              aria-pressed={on}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                choose(item);
-                              }}
-                            >
-                              {on ? 'Selected' : 'Select'}
-                              <Icon name="chev" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr className="empty">
-                    <td colSpan={5}>
-                      {!country ? (
-                        <>
-                          <b>Search company registers in any country</b>
-                          Choose the country, then type a company name or registration number.
-                        </>
-                      ) : !found ? (
-                        <>
-                          <b>Search {register?.register}</b>
-                          Type at least two characters of the company name or its {register?.numberLabel.toLowerCase()}.
-                        </>
-                      ) : found.outcome === 'not_available' ? (
-                        <>
-                          <b>{found.message.split('. ')[0]}.</b>
-                          Enter the company&apos;s details yourself. Vero still checks international rules and sanctions.
-                          <button className="link" type="button" onClick={byHand}>
-                            Enter details by hand
-                          </button>
-                        </>
-                      ) : found.outcome === 'source_down' ? (
-                        <>
-                          <b>The register isn&apos;t answering</b>
-                          Try again in a moment, or enter the details yourself.
-                        </>
-                      ) : (
-                        <span data-testid="search-not-found">
-                          <b>Not found at {found.sourceName}</b>
-                          {found.message}{' '}
-                          <TLink className="link" href={notFoundHref(country, trimmed, found.sourceName)}>
-                            Search another way
-                          </TLink>
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="nc">
-            <p>
-              <b>Can&apos;t find it in a register?</b> Enter the company&apos;s details yourself. Vero still checks international rules and sanctions, its website and the documents you share.
-              {country ? (
-                <>
-                  {' '}
-                  <TLink className="link" href={notFoundHref(country, trimmed, found?.sourceName)}>
-                    Search another way
-                  </TLink>
-                  .
-                </>
+        {country ? (
+          <Reveal as="section" className="mod res" i={0}>
+            <div className="mh">
+              <h2>Registry matches</h2>
+              <span className="sub">{forWords}</span>
+            </div>
+            <div aria-live="polite">
+              {problem ? (
+                <div className="snag" role="alert">
+                  <p>
+                    <b>We couldn&apos;t search just now</b>
+                    {problem}
+                  </p>
+                  <button className="btn btn-g btn-sm" type="button" onClick={() => setNow(Date.now())}>
+                    Try again
+                  </button>
+                </div>
               ) : null}
-              {props.footExtra}
-            </p>
-            <button className="btn btn-g" type="button" onClick={byHand}>
-              Enter details by hand
-            </button>
-          </div>
-        </Reveal>
+              {!searching && found?.outcome === 'source_down' ? (
+                <div className="snag">
+                  <p className="note warn" data-testid="search-source-down">
+                    <span>
+                      <span className="b">We can&apos;t check right now.</span> {found.message}{' '}
+                      <TLink className="link" href={manualHref(country, trimmed)}>
+                        Enter the details yourself
+                      </TLink>
+                    </span>
+                  </p>
+                  <button className="btn btn-g btn-sm" type="button" onClick={() => setNow(Date.now())}>
+                    Try again
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            {showTable ? (
+              <div role={candidates.length > 0 ? 'group' : undefined} aria-label={candidates.length > 0 ? 'Matches' : undefined} aria-busy={searching || undefined}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th className="c-reg">Registry</th>
+                      <th className="c-num">Number</th>
+                      <th className="c-frm">Formed</th>
+                      <th className="c-act">
+                        <span className="sr-only">Choose</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody ref={rows} className={searching && candidates.length > 0 ? 'stale' : undefined} onKeyDown={onRowsKey}>
+                    {candidates.length > 0 && found
+                      ? candidates.map((candidate, index) => {
+                          const item: Picked = { country, candidate, found };
+                          const on = picked?.candidate === candidate;
+                          const label = `${candidate.name}, select`;
+                          const kind = [entityWords(candidate.entityType), candidate.registeredAgent ? `agent ${candidate.registeredAgent}` : null].filter(Boolean).join(' · ') || register?.label;
+                          return (
+                            <tr
+                              key={`${candidate.name}-${candidate.registrationNumber ?? index}`}
+                              className={`m${index === 0 && candidate.matchConfidence >= 0.9 ? ' best' : ''}${on ? ' on' : ''}`}
+                              style={{
+                                animation: `rowin .5s var(--ease) ${Math.min(index, 8) * 60}ms both`,
+                              }}
+                              onClick={() => choose(item)}
+                            >
+                              <td className="nm">
+                                <b>
+                                  <Highlight text={candidate.name} query={trimmed} />
+                                </b>
+                                <small>
+                                  {kind}
+                                  {candidate.registrationNumber ? <span className="mnum"> · {candidate.registrationNumber}</span> : null}
+                                </small>
+                              </td>
+                              <td className="src2 c-reg">{found.sourceName}</td>
+                              <td className={`num c-num${candidate.registrationNumber ? '' : ' nil'}`}>{candidate.registrationNumber ?? 'Not given'}</td>
+                              <td className={`src2 c-frm${candidate.incorporatedOn ? '' : ' nil'}`}>{candidate.incorporatedOn ? formedWords(candidate.incorporatedOn) : 'Not given'}</td>
+                              <td className="c-act">
+                                {rowHref ? (
+                                  <TLink className="pick" href={rowHref(item)} aria-label={label} onClick={(event) => event.stopPropagation()}>
+                                    Select
+                                    <Icon name="chev" />
+                                  </TLink>
+                                ) : (
+                                  <button
+                                    className="pick"
+                                    type="button"
+                                    aria-label={label}
+                                    aria-pressed={on}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      choose(item);
+                                    }}
+                                  >
+                                    {on ? 'Selected' : 'Select'}
+                                    <Icon name="chev" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      : [0, 1, 2].map((key) => (
+                          <tr className="busy" key={key}>
+                            <td colSpan={5}>
+                              <div className="skel" />
+                              <div className="skel" />
+                            </td>
+                          </tr>
+                        ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : problem || found?.outcome === 'source_down' ? null : !found ? (
+              <div className="none">
+                <b>Search {register?.register}</b>
+                {typed ? 'Looking it up.' : `Type at least two characters of the company name or its ${register?.numberLabel.toLowerCase()}.`}
+              </div>
+            ) : found.outcome === 'not_available' ? (
+              <div className="none">
+                <b>{found.message.split('. ')[0]}.</b>
+                Enter the company&apos;s details yourself. Vero still checks international rules and sanctions.
+                <div className="act">
+                  <button className="btn btn-p btn-sm" type="button" onClick={byHand}>
+                    Enter details by hand
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="none" data-testid="search-not-found">
+                <b>Not found at {found.sourceName}</b>
+                {found.message}{' '}
+                <TLink className="link" href={notFoundHref(country, trimmed, found.sourceName)}>
+                  Search another way
+                </TLink>
+              </div>
+            )}
+            <div className="nc">
+              <p>
+                <b>Can&apos;t find it in a register?</b> Enter the company&apos;s details yourself. Vero still checks international rules and sanctions{props.publicOnly ? ' and its website.' : ', its website and the documents you share.'}
+                {found?.outcome === 'not_found' ? null : (
+                  <>
+                    {' '}
+                    <TLink className="link" href={notFoundHref(country, trimmed, found?.sourceName)}>
+                      Search another way
+                    </TLink>
+                    .
+                  </>
+                )}
+                {props.footExtra}
+              </p>
+              {found?.outcome === 'not_available' ? null : (
+                <button className="btn btn-g" type="button" onClick={byHand}>
+                  Enter details by hand
+                </button>
+              )}
+            </div>
+          </Reveal>
+        ) : null}
         {props.children}
       </After>
     </>
   );
 }
 
-/** The four steps after choosing a company, as on the board. */
-export function NextSteps({ follow = false, i = 1 }: { follow?: boolean; i?: number }) {
+/** The steps after choosing a company, as on the board. `wide` lays them side by side when the panel stands alone. */
+export function NextSteps({ follow = false, i = 1, wide = false }: { follow?: boolean; i?: number; wide?: boolean }) {
   const steps: [string, string][] = follow
     ? [
         ['Follow it', 'Public records only. You see its score and what changes, and can’t add evidence for it.'],
@@ -408,21 +521,23 @@ export function NextSteps({ follow = false, i = 1 }: { follow?: boolean; i?: num
         ['Read the first result', 'A score, what is in order, and the one thing to fix first.'],
       ];
   return (
-    <Reveal as="section" className="mod" i={i}>
+    <Reveal as="section" className={`mod stp${wide ? ' wide' : ''}`} i={i}>
       <div className="mh">
         <h2>{follow ? 'After you follow a company' : 'After you select a company'}</h2>
       </div>
-      <div className="steps">
+      <ol className="steps">
         {steps.map(([title, text], index) => (
-          <div className="s" key={title}>
-            <span className="n">{index + 1}</span>
+          <li className="s" key={title}>
+            <span className="n" aria-hidden="true">
+              {index + 1}
+            </span>
             <div>
               <b>{title}</b>
               <small>{text}</small>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </Reveal>
   );
 }

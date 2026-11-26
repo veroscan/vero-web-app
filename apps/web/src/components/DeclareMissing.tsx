@@ -15,7 +15,7 @@ const CHECKS = 40;
  * The two plain choices for a document we haven't seen. Saying "we don't have it" is what
  * turns it into a gap, so the screen says that before it's pressed, and it can be undone.
  */
-export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: () => void }) {
+export function DeclareMissing({ item, onChanged, addLink = true }: { item: Item; onChanged?: () => void; /** Off where the upload sits right above, as on a finding's page. */ addLink?: boolean }) {
   const session = useSession();
   const [stage, setStage] = useState<'idle' | 'saving' | 'scoring'>('idle');
   const [declared, setDeclared] = useState(item.declaredMissing === true);
@@ -65,13 +65,13 @@ export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: ()
 
   if (declared) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declared-missing">
+      <div className="declm" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declared-missing" aria-busy={busy}>
         <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.55, fontWeight: 600 }}>
           <b style={{ color: 'var(--ink)' }}>You told us you don&apos;t have this.</b> It counts as a gap in your score until you add it or undo this.
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => void change(false)}>
-            Undo this
+            {busy ? 'Undoing' : 'Undo this'}
           </button>
         </div>
         {footer}
@@ -80,14 +80,18 @@ export function DeclareMissing({ item, onChanged }: { item: Item; onChanged?: ()
   }
   if (!item.canDeclareMissing) return null;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declare-missing">
-      <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.55, fontWeight: 600 }}>Add it and we&apos;ll read it. If you don&apos;t have it, tell us and it becomes a gap, which may lower your score. You can undo that.</p>
+    <div className="declm" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="declare-missing" aria-busy={busy}>
+      <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.55, fontWeight: 600 }}>
+        {addLink ? "Add it and we'll read it. " : ''}If you don&apos;t have it, tell us and it becomes a gap, which may lower your score. You can undo that.
+      </p>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <TLink className="btn btn-p btn-sm" href={`/documents/add?company=${item.companyId}&rule=${encodeURIComponent(item.ruleKey)}`}>
-          Add the document
-        </TLink>
+        {addLink ? (
+          <TLink className="btn btn-p btn-sm" href={`/documents/add?company=${item.companyId}&rule=${encodeURIComponent(item.ruleKey)}`}>
+            Add the document
+          </TLink>
+        ) : null}
         <button className="btn btn-g btn-sm" type="button" disabled={busy} onClick={() => void change(true)}>
-          We don&apos;t have it
+          {busy ? 'Saving' : "We don't have it"}
         </button>
       </div>
       {footer}

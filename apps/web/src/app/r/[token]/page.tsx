@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { Chevron, ErrorState, Loading, SampleNote } from '@/components/Bits';
 import { MissingPage } from '@/components/MissingPage';
-import { CountUp } from '@/components/Motion';
+import { CountUp, Reveal, Words } from '@/components/Motion';
 import { PublicHero, PublicMessage } from '@/components/PublicBar';
 import { api } from '@/lib/api';
 import { coverageWords, HELD_WORDS, longDate, plural } from '@/lib/format';
@@ -82,7 +82,9 @@ export default function SharedReportPage() {
           ) : null}
           <div className="ph2">
             <div className="k">Company report · read-only</div>
-            <h1 className="disp">{report.companyName}</h1>
+            <h1 className="disp">
+              <Words text={report.companyName} delay={80} />
+            </h1>
             <div className="meta">
               <span>Report from {longDate(report.reportDate)}</span>
               {level ? <span title={report.countryCoverage?.sentence}>{level}</span> : null}
@@ -162,12 +164,13 @@ export default function SharedReportPage() {
 
       <main className="content after wrap">
         <section className="r3b">
-          <div className="mod">
+          <Reveal className="mod">
             <div className="mh">
               <h2>Areas</h2>
               <span className="sub">How each part of the company scores</span>
             </div>
             <div className="ar2">
+              {report.areas.length === 0 ? <p className="ar-none">No areas have been scored yet.</p> : null}
               {report.areas.map((area) => {
                 const small = areaSmall(area);
                 const risky = area.openUrgent > 0;
@@ -181,7 +184,7 @@ export default function SharedReportPage() {
                       <div className="tr">
                         <i className={`grow${risky ? ' risk' : ''}`} style={{ width: `${area.score ?? 0}%` }} />
                       </div>
-                      <span className={`pixel${risky ? ' risk' : ''}`}>{area.score ?? ''}</span>
+                      {area.score === null ? <span className="ns">Not scored</span> : <span className={`pixel${risky ? ' risk' : ''}`}>{area.score}</span>}
                       <Chevron />
                     </summary>
                     <p className="ar-body">{areaOpenWords(area)}</p>
@@ -193,9 +196,9 @@ export default function SharedReportPage() {
                 <p>Each area adds to the overall score. An urgent issue holds the overall score down until it is fixed. Checks that wait on documents nobody has added yet never lower the score.</p>
               </div>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="mod">
+          <Reveal className="mod" i={1}>
             <div className="mh">
               <h2>About this report</h2>
               <span className="sub">What it rests on</span>
@@ -233,7 +236,7 @@ export default function SharedReportPage() {
               ) : null}
             </div>
             <p className="fnote">Evidence, quotes and the documents themselves are never part of a shared report.</p>
-          </div>
+          </Reveal>
         </section>
 
         <footer className="foot2">

@@ -23,14 +23,14 @@ const SCORE_DROP_POINTS = 5;
 const SANCTIONS = 'sanctions.lists';
 
 /** Facts whose value says whether the company is still going. Who says it, in words. */
-const STATUS_FACTS: Readonly<Record<string, string>> = {
+export const STATUS_FACTS: Readonly<Record<string, string>> = {
   'registry.uk.companies_house.status': 'Companies House',
   'registry.ng.cac.status': 'The Corporate Affairs Commission record',
   'registry.us.delaware_vendor.vendor_status': 'Our licensed data provider',
 };
 
 /** Facts that hold people's names. Only the key is stored for these, never the value. */
-const PERSONAL = /\.(officers|pscs|shareholders|registered_agent|contributor_logins)$/;
+export const PERSONAL_FACT = /\.(officers|pscs|shareholders|registered_agent|contributor_logins)$/;
 
 export interface FindingState {
   ruleKey: string;
@@ -93,7 +93,7 @@ export function diffResults(input: DiffInput): ResultDiff {
     const was = before.facts.get(key);
     const now = input.factsAfter.get(key);
     if (same(was, now)) continue;
-    factsChanged.push(PERSONAL.test(key) ? { key } : { key, before: was ?? null, after: now ?? null });
+    factsChanged.push(PERSONAL_FACT.test(key) ? { key } : { key, before: was ?? null, after: now ?? null });
     const who = STATUS_FACTS[key];
     // A status that appears or disappears is a source answering or not, not a change of status.
     if (who && typeof was === 'string' && typeof now === 'string') statusChanges.push({ key, who, before: was, after: now });

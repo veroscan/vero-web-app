@@ -68,3 +68,42 @@
 .pg-plan .after .btn-g{border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .pg-plan .after .btn-g:hover:not(:disabled){border-color:var(--ink-4)}
 @media (max-width:560px){.pg-plan .pagehead .meta{flex-wrap:wrap;row-gap:4px}.pg-plan .pagehead .meta>span{white-space:nowrap}.pg-plan .mh{flex-wrap:wrap;row-gap:2px}}
+
+/* billing not switched on: said once, plainly, above the plans */
+.pg-plan .offnote{display:flex;align-items:flex-start;gap:12px;margin:14px 22px 4px;padding:13px 16px;border-radius:14px;background:#FFF7E8;font-size:13.5px;font-weight:600;color:var(--ink-2);line-height:1.55}
+.pg-plan .offnote b{color:var(--ink)}
+.pg-plan .offnote .i{width:18px;height:18px;flex:none;margin-top:2px;color:var(--warn)}
+.pg-plan .cmp tfoot .offw{display:block;margin-top:8px;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.pg-plan .cmp tfoot .probl{text-align:center}
+.pg-plan .cmp tfoot .btn:disabled{opacity:.6;cursor:default}
+.pg-plan .cmpwrap:focus-visible{outline:2px solid var(--sky-2);outline-offset:-2px;border-radius:14px}
+.pg-plan .cmp td:first-child,.pg-plan .cmp thead th{overflow-wrap:anywhere}
+.pg-plan .next .price{overflow-wrap:anywhere}
+.pg-plan .bdl b{overflow-wrap:anywhere;min-width:0}
+/* a wide table in a narrow box says there is more to the side */
+.pg-plan .swipe{display:none}
+@media (max-width:1000px){
+  .pg-plan .swipe{display:flex;align-items:center;gap:6px;margin:10px 22px 0;font-size:12.5px;font-weight:700;color:var(--sky-2);transition:opacity .25s}
+  .pg-plan .swipe .i{width:14px;height:14px;animation:pl-nudge 1.6s var(--ease) 1s 2 both}
+  .pg-plan .swipe.end{opacity:0}
+  .pg-plan .cmpwrap.more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent)}
+  .pg-plan .cmp thead th:first-child,.pg-plan .cmp tbody td:first-child,.pg-plan .cmp tfoot td:first-child{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:1px 0 0 var(--line-2)}
+  .pg-plan .cmp tbody tr:hover td:first-child{background:var(--panel)}
+}
+@keyframes pl-nudge{0%,100%{transform:none}50%{transform:translateX(5px)}}
+@media (max-width:560px){
+  .pg-plan .cmp{min-width:640px}
+  .pg-plan .cmp col:first-child{width:150px!important}
+  .pg-plan .cmp thead th{padding:18px 14px 16px}
+  .pg-plan .cmp td{padding:12px 14px}
+  .pg-plan .cmp td:first-child,.pg-plan .cmp thead th:first-child{padding-left:16px}
+  .pg-plan .cmp td:first-child small{display:none}
+  .pg-plan .cmp tfoot td{padding:16px 10px 20px}
+  .pg-plan .cmp tfoot .btn{height:40px;padding:0 8px;font-size:13px}
+  .pg-plan .cmp .pd{min-height:0}
+  .pg-plan .offnote{margin:12px 16px 4px}
+  .pg-plan .swipe{margin:10px 16px 0}
+  .pg-plan .next .price small{display:block;margin-top:2px}
+  .pg-plan .cancel .btn{margin-left:0;height:40px}
+}
+@media (prefers-reduced-motion:reduce){.pg-plan .swipe .i{animation:none}}

@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { ErrorState, Loading } from '@/components/Bits';
 import { MissingPage } from '@/components/MissingPage';
+import { Scramble, Words } from '@/components/Motion';
 import { PublicHero, PublicMessage } from '@/components/PublicBar';
 import { V_PATH } from '@/components/VMark';
 import { api } from '@/lib/api';
@@ -68,15 +69,15 @@ export default function VerifiedPage() {
   return (
     <div className="pg-pub">
       <PublicHero size="tall">
-        <main className="content wrap" data-testid="verified-badge" style={{ flex: 1, display: 'flex', alignItems: 'center', width: '100%' }}>
-          <div className="vb" style={{ width: '100%' }}>
+        <main className="content wrap vbwrap" data-testid="verified-badge">
+          <div className="vb">
             <Seal company={badge.companyName} by={badge.reviewedBy} />
             <div>
               <span className="mono kick">
-                Verified badge · <b>Live</b>
+                <Scramble text="Verified badge" /> · <b>Live</b>
               </span>
-              <h1 className="disp" style={{ marginTop: 14 }}>
-                {badge.companyName}
+              <h1 className="disp">
+                <Words text={badge.companyName} delay={80} />
               </h1>
               <p className="lead2">Legal health verified. Checked by {badge.reviewedBy}.</p>
               <div className="glass facts">

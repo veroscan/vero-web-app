@@ -95,3 +95,32 @@
   .pg-docflow.compact .drop .btn{margin-left:60px}
   .pg-docflow .fn .st2{margin-left:0}
 }
+/* polish, 23 Nov: drop zone, date fields, keyboard, calm motion */
+.pg-docflow h3:focus{outline:none}
+.pg-docflow .drop{transition:background .25s,border-color .25s,box-shadow .25s,transform .15s}
+.pg-docflow .drop>*{pointer-events:none}
+.pg-docflow .drop.over{border-style:solid;box-shadow:0 0 0 4px rgba(1,130,250,.14)}
+.pg-docflow .drop:active{transform:scale(.995)}
+.pg-docflow .drop:hover .btn-g{border-color:var(--sky-2)}
+.pg-docflow .fn .nm{min-width:0}
+.pg-docflow .why,.pg-docflow .lead{overflow-wrap:anywhere}
+.pg-docflow .sc{flex-wrap:wrap}
+.pg-docflow .ask .field{max-width:440px}
+/* date fields: the browser's own picker, dressed to sit with the kit in both themes */
+.pg-docflow .input.date{max-width:240px;font-variant-numeric:tabular-nums;cursor:text;-webkit-appearance:none;appearance:none;display:flex;align-items:center}
+.pg-docflow .input.date.empty{color:var(--ink-3)}
+.pg-docflow .input.date::-webkit-datetime-edit{padding:0;line-height:1}
+.pg-docflow .input.date::-webkit-datetime-edit-fields-wrapper{padding:0}
+.pg-docflow .input.date::-webkit-datetime-edit-day-field:focus,.pg-docflow .input.date::-webkit-datetime-edit-month-field:focus,.pg-docflow .input.date::-webkit-datetime-edit-year-field:focus{background:var(--sel);color:var(--ink);border-radius:5px;outline:none}
+.pg-docflow .input.date::-webkit-calendar-picker-indicator{cursor:pointer;width:18px;height:18px;padding:7px;margin:0 -8px 0 8px;border-radius:9px;opacity:.62;transition:opacity .15s,background .15s}
+.pg-docflow .input.date::-webkit-calendar-picker-indicator:hover{opacity:1;background:var(--line)}
+.pg-docflow .acts2 .btn[aria-busy="true"]{opacity:.8}
+@media (max-width:640px){
+  .pg-docflow .input.date{max-width:none}
+  .pg-docflow .acts2 .btn{flex:1 1 auto;justify-content:center}
+  .pg-docflow .prog{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){
+  .pg-docflow>.st-v,.pg-docflow .drop .pg,.pg-docflow .drop.over .pg{animation:none}
+  .pg-docflow .drop,.pg-docflow .bar2 i{transition:none}
+}

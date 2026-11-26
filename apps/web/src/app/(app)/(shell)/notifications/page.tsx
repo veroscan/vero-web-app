@@ -10,6 +10,7 @@ import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
 import { After, Hero, Plain, useWatchlist } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
+import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { leadOverdue } from '@/lib/deadlines';
 import { isThisWeek, longDate, plural, shortDate, whenWords } from '@/lib/format';
@@ -44,7 +45,11 @@ function Row({ item, index, onOpen }: { item: Notification; index: number; onOpe
     <button className={`nt${fresh ? ' new' : ''}`} type="button" onClick={() => onOpen(item)} data-testid="notification" style={{ '--r': index } as CSSProperties}>
       <span className="tm">
         {when === 'Today' || when === 'Yesterday' ? `${when}, ${TIME.format(new Date(item.createdAt))}` : when}
-        {fresh ? <em>New</em> : null}
+        {fresh ? (
+          <em>
+            New<span className="sr-only">, not read yet</span>
+          </em>
+        ) : null}
       </span>
       <span className="tx">
         <span className="ty">{KIND_WORDS[item.kind].row}</span>
@@ -149,6 +154,9 @@ export default function NotificationsPage() {
   const [extra, setExtra] = useState<Notification[]>([]);
   const [cursor, setCursor] = useState<string | null | undefined>(undefined);
   const [problem, setProblem] = useState<string | null>(null);
+  const [marking, setMarking] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const toast = useToast();
   const resource = useResource(() => api.notifications.list({ query: { limit: 30 } }), []);
   const deadlines = useResource(() => api.deadlines.list({ query: {} }).catch(() => null), []);
   const { data, set } = resource;
@@ -187,6 +195,8 @@ export default function NotificationsPage() {
   };
 
   const markAll = async () => {
+    if (marking) return;
+    setMarking(true);
     setProblem(null);
     try {
       await api.notifications.markAllRead();
@@ -194,13 +204,16 @@ export default function NotificationsPage() {
       if (data) set({ ...data, unreadCount: 0, notifications: data.notifications.map((item) => ({ ...item, readAt: item.readAt ?? now })) });
       setExtra((items) => items.map((item) => ({ ...item, readAt: item.readAt ?? now })));
       session.refreshUnread();
+      toast('Everything is marked as read.');
     } catch (error) {
       setProblem(asApiError(error).message);
     }
+    setMarking(false);
   };
 
   const loadMore = async () => {
-    if (!nextCursor) return;
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
     setProblem(null);
     try {
       const page = await api.notifications.list({ query: { limit: 30, cursor: nextCursor } });
@@ -209,6 +222,7 @@ export default function NotificationsPage() {
     } catch (error) {
       setProblem(asApiError(error).message);
     }
+    setLoadingMore(false);
   };
 
   if (resource.loading && !data) {
@@ -263,7 +277,7 @@ export default function NotificationsPage() {
             <TLink className="btn btn-g" href="/settings#notifications">
               Notification settings
             </TLink>
-            <button className="btn btn-g" type="button" disabled={unread === 0} onClick={() => void markAll()}>
+            <button className="btn btn-g" type="button" disabled={unread === 0 || marking} onClick={() => void markAll()}>
               <Icon name="check" />
               Mark all as read
             </button>
@@ -336,8 +350,8 @@ export default function NotificationsPage() {
           <div className="endl">
             <span className="muted">Updates go to the owners and admins of each company.</span>
             {nextCursor ? (
-              <button className="btn btn-g" type="button" onClick={() => void loadMore()}>
-                Show earlier
+              <button className="btn btn-g" type="button" disabled={loadingMore} onClick={() => void loadMore()}>
+                {loadingMore ? 'Getting earlier updates' : 'Show earlier'}
               </button>
             ) : null}
           </div>

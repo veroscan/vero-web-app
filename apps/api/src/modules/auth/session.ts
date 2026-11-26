@@ -155,6 +155,23 @@ export async function authenticate(
   };
 }
 
+/**
+ * Who is signed in, if anyone, for a public route that treats its owner a little differently
+ * (an owner previewing their own share link isn't a view). Never refuses and never touches the
+ * cookie: no session, a revoked one or an expired one are all just "nobody".
+ */
+export async function peekSessionUser(deps: AppDeps, request: FastifyRequest): Promise<string | null> {
+  const token = sessionTokenOf(request);
+  if (!token) return null;
+  const [row] = await deps.db.withSystem((tx) =>
+    tx
+      .select({ userId: schema.session.userId })
+      .from(schema.session)
+      .where(and(eq(schema.session.tokenHash, hashToken(token)), isNull(schema.session.revokedAt), gt(schema.session.expiresAt, deps.now()))),
+  );
+  return row?.userId ?? null;
+}
+
 /** Re-reads the membership every request, so a removal or role change applies at once. */
 export async function resolveOrg(deps: AppDeps, session: SessionContext): Promise<OrgContext> {
   const organisationId = session.activeOrganisationId;

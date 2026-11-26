@@ -73,3 +73,50 @@
   .pg-wl .capw{left:120px;right:50px}
   .pg-wl .ci{grid-template-columns:1fr}
 }
+/* followed companies with no score yet */
+.pg-wl .wl-wait{margin-top:16px;font-size:13px;font-weight:600;line-height:1.55;color:rgba(255,255,255,.7)}
+.pg-wl .wl-wait b{color:#fff;font-weight:700}
+.pg-wl .bars+.axis+.wl-wait,.pg-wl .wl-wait{padding-top:14px;border-top:1px solid rgba(255,255,255,.12)}
+.pg-wl .br .nm{min-width:0}
+.pg-wl .wt .co{min-width:0}
+.pg-wl .wt .co b{overflow-wrap:anywhere}
+.pg-wl .wt .ls{white-space:nowrap}
+.pg-wl .wl-act{min-height:32px;padding:0 6px;margin:0 -6px;border-radius:8px;transition:color .15s,background .15s}
+.pg-wl .wl-act:hover{background:var(--hover)}
+.pg-wl .wl-act:active{background:var(--line)}
+.pg-wl .wl-act[disabled]{opacity:.6;cursor:default}
+.pg-wl .wl-ask{gap:12px;animation:wlask .22s var(--ease) both}
+@keyframes wlask{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.pg-wl .ci a{border-radius:6px}
+/* stop following, on the page of one followed company (the navy hero) */
+.wl-confirm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.78);animation:wlask .22s var(--ease) both}
+.wl-confirm .wl-stop{border-color:rgba(255,138,142,.6);color:#FFD0D2}
+.wl-confirm .wl-stop:hover{background:rgba(255,107,112,.18)}
+@media (max-width:960px){
+  /* each company becomes a card: name and score, coverage, then the last change and the way out */
+  .pg-wl .mod table.wt,.pg-wl .wt tbody{display:block;width:100%}
+  .pg-wl .wt thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .pg-wl .wt tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"co sc" "cv cv" "ls ls" "ch ac";align-items:center;gap:2px 14px;padding:16px;border-bottom:1px solid var(--line-2)}
+  .pg-wl .wt tr:last-child{border-bottom:0}
+  .pg-wl .wt td{display:block;padding:0;border:0}
+  .pg-wl .wt td.co{grid-area:co}
+  .pg-wl .wt td.scc{grid-area:sc;text-align:right;align-self:start}
+  .pg-wl .wt td.cv{grid-area:cv;font-size:13px;margin-top:6px;white-space:normal}
+  .pg-wl .wt td.ls{grid-area:ls;font-size:13px}
+  .pg-wl .wt td.ch{grid-area:ch;display:flex;align-items:center;gap:8px;min-height:40px}
+  .pg-wl .wt td.ac{grid-area:ac;text-align:right}
+  .pg-wl .wt td[data-label]::before{content:attr(data-label) ": ";font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:13px;font-weight:600;color:var(--ink-3)}
+  .pg-wl .wt td.ch:has(+td+td .wl-ask){display:none}
+  .pg-wl .wt tr:has(.wl-ask){grid-template-areas:"co sc" "cv cv" "ls ls" "ac ac"}
+  .pg-wl .wl-act{min-height:40px}
+  .pg-wl .wl-ask{white-space:normal;flex-wrap:wrap;justify-content:flex-end;min-height:40px}
+  .pg-wl .ci a{min-height:40px;display:inline-flex;align-items:center}
+  .pg-wl .br,.pg-wl .axis{grid-template-columns:96px 1fr 40px}
+  .pg-wl .capw{left:106px}
+  .wl-confirm{width:100%}
+  .wl-confirm .btn{flex:1;justify-content:center}
+  .wl-confirm span{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .pg-wl .wl-ask,.wl-confirm{animation:none}
+}

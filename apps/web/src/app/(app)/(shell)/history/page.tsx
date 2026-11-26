@@ -5,14 +5,14 @@
 
 import type { CompanyHistoryItem } from '@vero/shared';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading, SampleNote } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { historyPoints, ScoreChart, spanDays, withinMonths } from '@/components/overview/ScoreChart';
 import { Change, PixelScore, RescanButton, scanWhen, scoreValue, URGENT_CAP, useRescan } from '@/components/overview/parts';
 import { useSession } from '@/components/Session';
-import { After, Hero } from '@/components/Shell';
+import { After, Hero, Plain } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { api } from '@/lib/api';
 import { plural, shortDate } from '@/lib/format';
@@ -76,22 +76,43 @@ const RANGES = [
   { key: 'All', months: null },
 ] as const;
 
-function ScanDrawer({ row, companyName, onClose }: { row: Row | null; companyName: string; onClose: () => void }) {
+function ScanDrawer({ row, companyName, readOnly, onClose }: { row: Row | null; companyName: string; readOnly: boolean; onClose: () => void }) {
   const open = row !== null;
   const [shown, setShown] = useState<Row | null>(row);
+  const panel = useRef<HTMLElement>(null);
+  const closer = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (row) setShown(row);
   }, [row]);
   useEffect(() => {
     document.body.classList.toggle('open', open);
     if (!open) return;
+    // Focus moves into the panel, stays there while it is open, and goes back to the row that opened it.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closer.current?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panel.current) return;
+      const stops = Array.from(panel.current.querySelectorAll<HTMLElement>('a[href],button:not([disabled])'));
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.classList.remove('open');
+      if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
     };
   }, [open, onClose]);
   const item = row ?? shown;
@@ -109,10 +130,10 @@ function ScanDrawer({ row, companyName, onClose }: { row: Row | null; companyNam
   return (
     <>
       <div className="scrim" onClick={onClose} aria-hidden="true" />
-      <aside className="drawer" aria-label="Scan detail" aria-hidden={!open} data-testid="scan-drawer" {...(open ? {} : { inert: true })}>
+      <aside ref={panel} className="drawer" role="dialog" aria-modal="true" aria-label="Scan detail" aria-hidden={!open} data-testid="scan-drawer" {...(open ? {} : { inert: true })}>
         <div className="dh">
           <span className="muted">{item ? triggerWords(item.scan.trigger) : ''}</span>
-          <button className="ibtn" type="button" style={{ marginLeft: 'auto', border: 0 }} onClick={onClose} aria-label="Close">
+          <button ref={closer} className="ibtn" type="button" style={{ marginLeft: 'auto', border: 0 }} onClick={onClose} aria-label="Close">
             <Icon name="x" />
           </button>
         </div>
@@ -145,7 +166,7 @@ function ScanDrawer({ row, companyName, onClose }: { row: Row | null; companyNam
                       {count.word}
                       <small>{count.note}</small>
                     </span>
-                    <em style={{ color: count.tone }}>{count.word.split(' ')[0]}</em>
+                    {/^\d/.test(count.word) ? <em style={{ color: count.tone }}>{count.word.split(' ')[0]}</em> : null}
                   </div>
                 ))}
               </div>
@@ -182,9 +203,15 @@ function ScanDrawer({ row, companyName, onClose }: { row: Row | null; companyNam
         ) : null}
         <div className="df">
           <span className="muted">{item?.scan.coverage ? `${item.scan.coverage.counted} of ${plural(item.scan.coverage.total, 'check', 'checks')}` : ''}</span>
-          <TLink className="btn btn-p" style={{ marginLeft: 'auto' }} href="/issues">
-            Open findings
-          </TLink>
+          {readOnly ? (
+            <button type="button" className="btn btn-p" style={{ marginLeft: 'auto' }} onClick={onClose}>
+              Done
+            </button>
+          ) : (
+            <TLink className="btn btn-p" style={{ marginLeft: 'auto' }} href="/issues">
+              Open findings
+            </TLink>
+          )}
         </div>
       </aside>
     </>
@@ -275,8 +302,35 @@ function HistoryScreen() {
   const name = picked?.legalName ?? '';
   const short = name.replace(/\s+(inc\.?|ltd\.?|llc|limited|plc)$/i, '');
 
-  if (followedId && followed.error) return <ErrorState error={followed.error} onRetry={followed.reload} />;
-  if (!picked) return <Loading what="Getting your scans" />;
+  if (followedId && followed.error) {
+    return (
+      <Plain>
+        <ErrorState error={followed.error} onRetry={followed.reload} title={followed.error.status === 404 ? "That company isn't one of yours" : "We couldn't load this company"} />
+      </Plain>
+    );
+  }
+  if (!picked && !followedId && companies.length === 0) {
+    // Nothing has been scanned yet, so there is no history to show.
+    return (
+      <Plain>
+        <div className="state" data-testid="empty-state">
+          <h1>No scans yet</h1>
+          <p>Every scan of your company is kept here, with what it changed. It starts with your first one.</p>
+          <TLink className="btn btn-p" href="/onboarding/company">
+            <Icon name="scan" />
+            Scan your company
+          </TLink>
+        </div>
+      </Plain>
+    );
+  }
+  if (!picked) {
+    return (
+      <Plain>
+        <Loading what="Getting your scans" />
+      </Plain>
+    );
+  }
 
   return (
     <div className="pg-hist">
@@ -376,12 +430,24 @@ function HistoryScreen() {
                     <span className="sub hs-since">Since {shortDate(first.at)}</span>
                   ) : null}
                 </div>
-                {points.length > 0 ? <ScoreChart points={points} cap={held ? URGENT_CAP : null} height={250} label={`${name}, score over time`} /> : <p className="hs-nochart">The line starts after the first finished scan.</p>}
+                {points.length > 0 ? (
+                  <ScoreChart points={points} cap={held ? URGENT_CAP : null} height={250} label={`${name}, score over time`} />
+                ) : (
+                  <p className="hs-nochart">
+                    {all.length > 0
+                      ? `No scan in this time. The last was on ${shortDate(all[all.length - 1]?.at ?? '')}.`
+                      : scans.length > 0
+                        ? `${scans.length === 1 ? 'The scan so far has' : `The ${scans.length} scans so far have`} no score, so there is no line yet. It starts with the first scan that has one.`
+                        : 'The line starts after the first finished scan.'}
+                  </p>
+                )}
                 <div className="chart-legend">
-                  <span>
-                    <i style={{ background: '#fff' }} />
-                    Score when it moved
-                  </span>
+                  {points.length > 0 ? (
+                    <span>
+                      <i style={{ background: '#fff' }} />
+                      {points.length === 1 ? 'One score so far. The line grows as it moves.' : 'Score when it moved'}
+                    </span>
+                  ) : null}
                   {held ? (
                     <span>
                       <i style={{ background: 'repeating-linear-gradient(90deg,#FF8A8E 0 4px,transparent 4px 7px)' }} />
@@ -434,7 +500,7 @@ function HistoryScreen() {
               <h2>Past scans</h2>
               <span className="sub">Open a scan to see what Vero checked and what moved</span>
             </div>
-            <div className="tabs" role="tablist">
+            <div className="tabs" role="group" aria-label="Which scans">
               {FILTERS.map((item) => {
                 const n = rows.filter(item.match).length;
                 if (n === 0 && item.key !== 'all') return null;
@@ -442,8 +508,7 @@ function HistoryScreen() {
                   <button
                     key={item.key}
                     type="button"
-                    role="tab"
-                    aria-selected={filter === item.key}
+                    aria-pressed={filter === item.key}
                     className={`tab${filter === item.key ? ' on' : ''}`}
                     onClick={() => {
                       setFilter(item.key);
@@ -458,18 +523,18 @@ function HistoryScreen() {
             {shown.length === 0 ? (
               <p className="vempty">
                 <b>No scans yet</b>
-                They show here as each one finishes.
+                {readOnly ? 'They show here as Vero checks this company.' : 'They show here as each one finishes. Use Scan again above to run one now.'}
               </p>
             ) : (
               <table className="scans vtable">
                 <thead>
                   <tr>
                     <th style={{ width: 150 }}>Date</th>
-                    <th className="opt" style={{ width: 190 }}>Trigger</th>
-                    <th style={{ width: 80 }}>Score</th>
-                    <th style={{ width: 110 }}>Change</th>
-                    <th className="opt">What changed</th>
-                    <th className="opt" aria-label="Open" />
+                    <th style={{ width: 190 }}>Trigger</th>
+                    <th style={{ width: 96 }}>Score</th>
+                    <th style={{ width: 150 }}>Change</th>
+                    <th>What changed</th>
+                    <th aria-label="Open" />
                   </tr>
                 </thead>
                 <tbody className="rows-in" key={filter}>
@@ -486,16 +551,22 @@ function HistoryScreen() {
                           </b>
                           <small>{time}</small>
                         </td>
-                        <td className="trg opt">
+                        <td className="trg">
                           {triggerWords(row.scan.trigger)}
                           <small>{row.scan.kind === 'full' ? 'Sources asked again' : 'Scored again'}</small>
                         </td>
-                        <td>
-                          <span className="sc">{row.after ?? (row.scan.score.kind === 'approximate' ? `${row.scan.score.low}-${row.scan.score.high}` : '-')}</span>
+                        <td className="scc">
+                          {row.before !== null && row.after !== null && row.before !== row.after ? (
+                            <span className="mv" aria-hidden="true">
+                              <span className="sc">{row.before}</span>
+                              <Icon name="chev" />
+                            </span>
+                          ) : null}
+                          {row.scan.score.kind === 'none' ? <span className="muted">No score</span> : <span className="sc">{row.after ?? (row.scan.score.kind === 'approximate' ? `${row.scan.score.low}-${row.scan.score.high}` : '')}</span>}
                         </td>
-                        <td>{row.first ? <span className="vchg no">First</span> : <Change before={row.before} after={row.after} />}</td>
-                        <td className="wc opt">{changeWords(row)}</td>
-                        <td className="opt">
+                        <td className="chg">{row.first ? <span className="vchg no">First scan</span> : row.scan.score.kind === 'none' ? <span className="vchg no">Nothing to compare</span> : <Change before={row.before} after={row.after} />}</td>
+                        <td className="wc">{changeWords(row)}</td>
+                        <td className="go">
                           <Icon name="chev" />
                         </td>
                       </tr>
@@ -511,7 +582,7 @@ function HistoryScreen() {
                   {shown.length > 0 ? `, back to ${shortDate(shown[shown.length - 1]?.scan.finishedAt ?? '')}` : ''}.
                 </span>
                 {filtered.length > shown.length ? (
-                  <button type="button" className="btn btn-g" style={{ height: 34, fontSize: 13 }} onClick={() => setCount((value) => value + PAGE * 2)}>
+                  <button type="button" className="btn btn-g hs-earlier" onClick={() => setCount((value) => value + PAGE * 2)}>
                     Show earlier scans
                   </button>
                 ) : null}
@@ -520,14 +591,20 @@ function HistoryScreen() {
           </Reveal>
         </After>
       ) : null}
-      <ScanDrawer row={openRow} companyName={name} onClose={close} />
+      <ScanDrawer row={openRow} companyName={name} readOnly={readOnly} onClose={close} />
     </div>
   );
 }
 
 export default function HistoryPage() {
   return (
-    <Suspense fallback={<Loading what="Getting your scans" />}>
+    <Suspense
+      fallback={
+        <Plain>
+          <Loading what="Getting your scans" />
+        </Plain>
+      }
+    >
       <HistoryScreen />
     </Suspense>
   );

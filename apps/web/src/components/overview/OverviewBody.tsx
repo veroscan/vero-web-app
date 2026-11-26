@@ -19,7 +19,7 @@ import { FINDING_COLOUR, FINDING_WORDS, findingSource, findingStatus, issueKey, 
 import { useResource } from '@/lib/useResource';
 import { scoreSentence, sourceStatus, statusTone, type Tone } from '@/lib/words';
 import { historyPoints, ScoreChart, spanDays, withinMonths } from './ScoreChart';
-import { coverageLevelWords, CoverageLine, NextCard, numberWords, PixelScore, RescanButton, scanWhen, URGENT_CAP, useFixProjection, useRescan } from './parts';
+import { coverageLevelWords, CoverageLine, ListError, NextCard, numberWords, PixelScore, RescanButton, scanWhen, SkeletonRows, URGENT_CAP, useFixProjection, useRescan } from './parts';
 import '@/app/styles/pages/overview.css';
 
 export const TONE_COLOUR: Record<Tone, string> = { good: 'var(--good)', watch: 'var(--warn)', risk: 'var(--urgent)', none: 'var(--ink-3)' };
@@ -35,9 +35,18 @@ function trendWords(trend: NonNullable<OverviewResponse['trend']>): string {
   return `${trend.delta > 0 ? '+' : '-'}${Math.abs(trend.delta)} since ${monthName(trend.since)}`;
 }
 
-function verdict(overview: OverviewResponse): string {
-  if (overview.heldByUrgent) return `${scoreSentence(overview.statusWord)} An urgent gap holds it at ${URGENT_CAP} or below.`;
-  return scoreSentence(overview.statusWord);
+/** The same verdicts for a company you follow: about it, not about you, and only its public record. */
+const FOLLOWED_VERDICT: Record<string, string> = {
+  Healthy: 'A solid base on the public record.',
+  'Early read': 'Good so far, but less than half of what applies has been checked.',
+  'Needs work': 'A real base, with gaps on the public record.',
+  'At risk': 'There are serious gaps on the public record.',
+};
+
+function verdict(overview: OverviewResponse, readOnly: boolean): string {
+  const words = readOnly ? (FOLLOWED_VERDICT[overview.statusWord ?? ''] ?? 'Not enough could be checked yet to give a score.') : scoreSentence(overview.statusWord);
+  if (overview.heldByUrgent) return `${words} An urgent gap holds it at ${URGENT_CAP} or below.`;
+  return words;
 }
 
 const RANGES = [
@@ -51,12 +60,13 @@ const RANGES = [
 function useHistories(companies: readonly Company[]) {
   const ids = companies.map((company) => company.id).join(',');
   return useResource(async () => {
-    const lists = await Promise.all(companies.map((company) => api.companies.history({ params: { companyId: company.id } }).catch(() => ({ companyId: company.id, scans: [] }))));
-    return Object.fromEntries(lists.map((list) => [list.companyId, historyPoints(list.scans)]));
+    const lists = await Promise.all(companies.map((company) => api.companies.history({ params: { companyId: company.id } }).catch(() => null)));
+    // A company whose history didn't load is left out, so the chart can say so instead of "no scans".
+    return Object.fromEntries(lists.filter((list) => list !== null).map((list) => [list.companyId, historyPoints(list.scans)]));
   }, [ids]);
 }
 
-function HealthPanel({ overview, companies, level, levelTitle, projected }: { overview: OverviewResponse; companies: readonly Company[]; level: string | null; levelTitle?: string; projected: number | null }) {
+function HealthPanel({ overview, companies, level, levelTitle, projected, readOnly }: { overview: OverviewResponse; companies: readonly Company[]; level: string | null; levelTitle?: string; projected: number | null; readOnly: boolean }) {
   const histories = useHistories(companies);
   const group = companies.length > 1;
   // In a group the score covers every company, but each company has its own history: the chart
@@ -68,6 +78,7 @@ function HealthPanel({ overview, companies, level, levelTitle, projected }: { ov
   }, [histories.data, companies]);
   const [picked, setPicked] = useState<string | null>(null);
   const shown = picked ?? lowest;
+  const failed = histories.data !== undefined && histories.data[shown] === undefined;
   const all = histories.data?.[shown] ?? [];
   const span = spanDays(all);
   const [range, setRange] = useState<(typeof RANGES)[number]['key']>('All');
@@ -94,7 +105,7 @@ function HealthPanel({ overview, companies, level, levelTitle, projected }: { ov
           <small>{overview.score.kind === 'approximate' ? '/ 100, roughly' : '/ 100'}</small>
         </div>
         {overview.trend ? <span className="delta2">{trendWords(overview.trend)}</span> : null}
-        <div className="verdict">{verdict(overview)}</div>
+        <div className="verdict">{verdict(overview, readOnly)}</div>
         <CoverageLine coverage={overview.coverage} level={level} {...(levelTitle ? { levelTitle } : {})} open={open} />
       </div>
       <div className="ov-chart">
@@ -115,17 +126,31 @@ function HealthPanel({ overview, companies, level, levelTitle, projected }: { ov
           ) : null}
         </div>
         {histories.loading && !histories.data ? (
-          <div className="ov-chartwait" aria-busy="true" />
+          <div className="ov-chartwait" role="status">
+            <i />
+            <span>Getting the score history</span>
+          </div>
+        ) : failed || histories.error ? (
+          <p className="ov-nochart">
+            <span>We couldn&apos;t load the score history.</span>
+            <button type="button" className="link" onClick={histories.reload}>
+              Try again
+            </button>
+          </p>
         ) : points.length > 0 ? (
           <ScoreChart points={points} cap={capped ? URGENT_CAP : null} projected={group ? null : projected} label={`${shownCompany?.legalName ?? 'Score'} over time`} />
         ) : (
-          <p className="ov-nochart">The line starts after the first finished scan.</p>
+          <p className="ov-nochart">
+            <span>{all.length > 0 ? `No scan in this time. The last was on ${shortDate(all[all.length - 1]?.at ?? '')}.` : 'The line starts after the first finished scan.'}</span>
+          </p>
         )}
         <div className="chart-legend">
-          <span>
-            <i style={{ background: '#fff' }} />
-            Score
-          </span>
+          {points.length > 0 && !failed ? (
+            <span>
+              <i style={{ background: '#fff' }} />
+              Score
+            </span>
+          ) : null}
           {capped ? (
             <span>
               <i style={{ background: 'repeating-linear-gradient(90deg,#FF8A8E 0 4px,transparent 4px 7px)' }} />
@@ -141,8 +166,8 @@ function HealthPanel({ overview, companies, level, levelTitle, projected }: { ov
           {group ? (
             <span className="ov-pick" role="group" aria-label="Company on the chart">
               {companies.map((company) => (
-                <button key={company.id} type="button" className={company.id === shown ? 'on' : undefined} aria-pressed={company.id === shown} onClick={() => setPicked(company.id)}>
-                  {shortName(company.legalName)}
+                <button key={company.id} type="button" className={company.id === shown ? 'on' : undefined} aria-pressed={company.id === shown} title={company.legalName} onClick={() => setPicked(company.id)}>
+                  <span>{shortName(company.legalName)}</span>
                 </button>
               ))}
             </span>
@@ -179,7 +204,7 @@ function Findings({ overview, companyId, group, readOnly }: { overview: Overview
     <Reveal as="section" className="mod r2" i={0}>
       <div className="mh">
         <h2>Findings</h2>
-        <span className="sub">What Vero found on the registers, your website and your documents</span>
+        <span className="sub">{readOnly ? 'What Vero found on the public registers and the company website' : 'What Vero found on the registers, your website and your documents'}</span>
         {readOnly ? null : (
           <div className="r">
             <TLink className="btn btn-g" style={{ height: 34, fontSize: 13 }} href="/issues">
@@ -188,22 +213,19 @@ function Findings({ overview, companyId, group, readOnly }: { overview: Overview
           </div>
         )}
       </div>
-      <div className="tabs" role="tablist">
+      <div className="tabs vtabs" role="group" aria-label="Which findings">
         {tabs.map((item) => (
-          <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={`tab${tab === item.key ? ' on' : ''}`} onClick={() => setTab(item.key)}>
+          <button key={item.key} type="button" aria-pressed={tab === item.key} className={`tab${tab === item.key ? ' on' : ''}`} onClick={() => setTab(item.key)}>
             {item.label} {item.n !== null ? <span className="n2">{item.n}</span> : null}
           </button>
         ))}
       </div>
       {waiting ? (
-        <p className="vempty">Getting the findings</p>
+        <SkeletonRows what="Getting the findings" />
       ) : open.error ? (
-        <p className="vempty">
-          <b>We couldn&apos;t load the findings.</b>
-          <button type="button" className="link" onClick={open.reload}>
-            Try again
-          </button>
-        </p>
+        <ListError what="the findings" onRetry={open.reload} />
+      ) : tab === 'cleared' && passed.error ? (
+        <ListError what="the cleared checks" onRetry={passed.reload} />
       ) : shown.length === 0 ? (
         <p className="vempty">
           <b>{tab === 'cleared' ? 'Nothing cleared yet' : 'Nothing open here'}</b>
@@ -271,15 +293,15 @@ function Findings({ overview, companyId, group, readOnly }: { overview: Overview
   );
 }
 
-function Areas({ overview, areaHref }: { overview: OverviewResponse; areaHref: (layer: number) => string }) {
+function Areas({ overview, areaHref, readOnly }: { overview: OverviewResponse; areaHref: (layer: number) => string; readOnly: boolean }) {
   const router = useRouter();
   // Lowest score first, as in the design. Areas with no score go last.
   const areas = [...overview.areas].sort((a, b) => (a.score ?? 101) - (b.score ?? 101));
   return (
     <Reveal as="section" className="mod ov-areas" i={1}>
       <div className="mh">
-        <h2>Where you stand</h2>
-        <span className="sub">Six areas, lowest first</span>
+        <h2>{readOnly ? 'Where it stands' : 'Where you stand'}</h2>
+        <span className="sub">{plural(areas.length, 'area', 'areas')}, lowest first</span>
       </div>
       <table className="vtable">
         <thead>
@@ -312,7 +334,7 @@ function Areas({ overview, areaHref }: { overview: OverviewResponse; areaHref: (
                     {area.locked ? 'Paid plan' : (area.statusWord ?? 'Not scored')}
                   </span>
                 </td>
-                <td>{area.score !== null ? <span className="ov-sc">{area.score}</span> : <span className="muted">-</span>}</td>
+                <td>{area.score !== null ? <span className="ov-sc">{area.score}</span> : <span className="muted" aria-label="No score">-</span>}</td>
                 <td className="opt">
                   <span className="ov-bar" aria-hidden="true">
                     {area.score !== null ? <i className={`grow ${tone}`} style={{ width: `${area.score}%`, '--i': index } as CSSProperties} /> : null}
@@ -336,6 +358,7 @@ const ORDER: Record<Tone, number> = { risk: 0, watch: 1, none: 2, good: 3 };
 function Registries({ companies, href }: { companies: readonly Company[]; href: string }) {
   const ids = companies.map((company) => company.id).join(',');
   const records = useResource(() => Promise.all(companies.map((company) => api.records.get({ params: { companyId: company.id } }).catch(() => null))), [ids]);
+  const failed = records.data !== undefined && records.data.length > 0 && records.data.every((item) => item === null);
   const rows = (records.data ?? [])
     .filter((item): item is CompanyRecordsResponse => item !== null)
     .flatMap((item) => item.sources.map((source) => ({ source, company: item.legalName, status: sourceStatus(source) })))
@@ -348,7 +371,9 @@ function Registries({ companies, href }: { companies: readonly Company[]; href: 
         <span className="sub">Asked on every scan</span>
       </div>
       {records.loading && !records.data ? (
-        <p className="vempty">Getting the registries</p>
+        <SkeletonRows what="Getting the registries" rows={5} />
+      ) : failed ? (
+        <ListError what="the registries" onRetry={records.reload} />
       ) : shown.length === 0 ? (
         <p className="vempty">No registry has been asked yet.</p>
       ) : (
@@ -470,10 +495,14 @@ export interface OverviewBodyProps {
   /** Called after a fresh scan finishes. */
   onScanned: () => void;
   crumb?: ReactNode;
+  /** The way back on a phone, where the top bar has no room for the crumb. */
+  back?: { href: string; label: string };
+  /** Extra buttons beside the page title, such as "Stop following". */
+  actions?: ReactNode;
   areaHref?: (layer: number) => string;
 }
 
-export function OverviewBody({ company, related, overview, readOnly = false, onScanned, crumb, areaHref = (layer) => `/areas/${layer}` }: OverviewBodyProps) {
+export function OverviewBody({ company, related, overview, readOnly = false, onScanned, crumb, back, actions, areaHref = (layer) => `/areas/${layer}` }: OverviewBodyProps) {
   const companies = useMemo(() => [company, ...related], [company, related]);
   const group = companies.length > 1;
   const level = coverageLevelWords(overview.countryCoverage ?? company.countryCoverage, company.incorporationCountry);
@@ -494,8 +523,14 @@ export function OverviewBody({ company, related, overview, readOnly = false, onS
       <Hero {...(crumb ? { crumb } : {})}>
         <div className="pagehead">
           <div>
+            {back ? (
+              <TLink className="vback" href={back.href}>
+                <Icon name="chev" />
+                {back.label}
+              </TLink>
+            ) : null}
             <div className="mono kick">
-              <Scramble text={readOnly ? 'A company you follow' : 'Legal health'} /> · <b><Scramble text="Scan / Score / Fix" delay={120} /></b>
+              <Scramble text={readOnly ? 'A company you follow' : 'Legal health'} /> · <b><Scramble text={readOnly ? 'Public records only' : 'Scan / Score / Fix'} delay={120} /></b>
             </div>
             <h1 className="disp">
               <Words text={company.legalName} />
@@ -507,15 +542,18 @@ export function OverviewBody({ company, related, overview, readOnly = false, onS
               {level ? <span title={levelTitle}>{level}</span> : null}
             </div>
           </div>
-          <div className="acts">
-            {readOnly ? null : <RescanButton rescan={rescan} />}
-            {readOnly ? null : (
-              <TLink className="btn btn-g" href="/badge">
-                <Icon name="share" />
-                Share report
-              </TLink>
-            )}
-          </div>
+          {readOnly && !actions ? null : (
+            <div className="acts">
+              {readOnly ? null : <RescanButton rescan={rescan} />}
+              {readOnly ? null : (
+                <TLink className="btn btn-g" href="/badge">
+                  <Icon name="share" />
+                  Share report
+                </TLink>
+              )}
+              {actions}
+            </div>
+          )}
         </div>
         {rescan.error ? (
           <p className="ov-heronote" role="alert">
@@ -523,7 +561,7 @@ export function OverviewBody({ company, related, overview, readOnly = false, onS
           </p>
         ) : null}
         <section className="r1">
-          <HealthPanel overview={overview} companies={companies} level={level} {...(levelTitle ? { levelTitle } : {})} projected={projected} />
+          <HealthPanel overview={overview} companies={companies} level={level} {...(levelTitle ? { levelTitle } : {})} projected={projected} readOnly={readOnly} />
           {action ? (
             <NextCard
               title={action.title}
@@ -540,6 +578,20 @@ export function OverviewBody({ company, related, overview, readOnly = false, onS
                   <span data-testid="points-held">{POINTS_HELD_WORDS}</span>
                 ) : null
               }
+            />
+          ) : readOnly ? (
+            <NextCard
+              label="A company you follow"
+              title={overview.score.kind === 'none' ? 'No score yet' : 'Nothing open on the public record'}
+              body={
+                overview.score.kind === 'none'
+                  ? 'Vero has not been able to check enough of the public record to give a score. It keeps trying, and the score shows here as soon as it can.'
+                  : 'Vero keeps checking the public record of this company. Changes show here and in its scan history.'
+              }
+              href={`/history?company=${company.id}`}
+              action="See its scan history"
+              art={null}
+              testId="next-action"
             />
           ) : (
             <NextCard
@@ -568,7 +620,7 @@ export function OverviewBody({ company, related, overview, readOnly = false, onS
           </p>
         ) : null}
         <Findings overview={overview} companyId={company.id} group={group} readOnly={readOnly} />
-        <Areas overview={overview} areaHref={areaHref} />
+        <Areas overview={overview} areaHref={areaHref} readOnly={readOnly} />
         <section className="r3b">
           <Registries companies={companies} href={readOnly ? `/company/${company.id}` : '/company'} />
           <ComingUp overview={overview} readOnly={readOnly} />

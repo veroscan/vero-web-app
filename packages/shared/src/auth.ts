@@ -121,3 +121,27 @@ export const deleteAccountBodySchema = z.object({
   totpCode: totpCodeSchema.optional(),
 });
 export type DeleteAccountBody = z.infer<typeof deleteAccountBodySchema>;
+
+// ---- Sessions ----
+
+export const sessionInfoSchema = z.object({
+  id: uuidSchema,
+  createdAt: isoDateTimeSchema,
+  /** When this session was last used. Updated about once an hour, not on every request. */
+  lastUsedAt: isoDateTimeSchema,
+  /** A coarse label such as "Chrome on Windows", or null when we can't tell. Never an address or location. */
+  device: z.string().nullable(),
+  /** The session making this request. */
+  current: z.boolean(),
+  /** When it ends by itself if it isn't used again. */
+  expiresAt: isoDateTimeSchema,
+});
+export type SessionInfo = z.infer<typeof sessionInfoSchema>;
+
+export const sessionListResponseSchema = z.object({
+  /** Active sessions only, this one first, then the most recently used. */
+  sessions: z.array(sessionInfoSchema),
+});
+export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
+
+export const sessionParamsSchema = z.object({ sessionId: uuidSchema });

@@ -5,6 +5,7 @@ import type { IssueSummary, ProjectionResponse } from '@vero/shared';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ErrorState, Loading, PlanLink, SampleNote, SourcesDownNote } from '@/components/Bits';
 import { FindingDrawer } from '@/components/findings/FindingDrawer';
+import { arrowKeys } from '@/components/findings/tabKeys';
 import { useScanAgain } from '@/components/findings/useScanAgain';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
@@ -212,9 +213,10 @@ export default function IssuesPage() {
           </div>
           <div className="acts">
             {companyIds.length > 0 ? (
-              <button className="btn btn-g" type="button" onClick={rescan.start} disabled={rescan.running} aria-live="polite">
+              <button className={`btn btn-g rescan${rescan.running ? ' busy' : ''}`} type="button" onClick={rescan.start} disabled={rescan.running} aria-busy={rescan.running} data-testid="scan-again">
                 <Icon name="scan" />
                 {rescan.running ? (rescan.total > 0 ? `Scanning, ${rescan.checked} of ${rescan.total}` : 'Starting the scan') : 'Scan again'}
+                {rescan.running && rescan.total > 0 ? <i className="rbar" style={{ transform: `scaleX(${Math.min(1, rescan.checked / rescan.total)})` }} aria-hidden="true" /> : null}
               </button>
             ) : null}
             <TLink className="btn btn-g" href="/report">
@@ -223,9 +225,15 @@ export default function IssuesPage() {
             </TLink>
           </div>
         </div>
+        <span className="sr-only" role="status">
+          {rescan.running ? 'Scanning again. This page updates when it finishes.' : ''}
+        </span>
         {rescan.problem ? (
-          <p className="note warn" role="alert" style={{ marginBottom: 20 }}>
-            {rescan.problem}
+          <p className="note warn rprob" role="alert">
+            <span>The scan didn&apos;t start. {rescan.problem}</span>
+            <button className="link" type="button" onClick={rescan.start}>
+              Try again
+            </button>
           </p>
         ) : null}
 
@@ -335,9 +343,9 @@ export default function IssuesPage() {
                       <button key={issueKey(issue)} type="button" onClick={() => setDrawer(issue)}>
                         <i className={status === 'urgent' ? 'u' : 'w'} style={{ opacity: 1 - index * 0.2 }} />
                         {issue.points && issue.points > 0 ? <span className="pixel">+{issue.points}</span> : <span className="pixel none">{status === 'urgent' ? 'Cap' : 'Held'}</span>}
-                        <span>
-                          {issue.title ?? issue.headline}
-                          <small>{status === 'urgent' ? 'lifts the urgent cap' : issue.layerName}</small>
+                        <span className="lt">
+                          <b>{issue.title ?? issue.headline}</b>
+                          <small>{[status === 'urgent' ? 'Lifts the urgent cap' : issue.layerName, several ? shortName(issue.companyName) : null].filter(Boolean).join(' · ')}</small>
                         </span>
                       </button>
                     );
@@ -403,31 +411,67 @@ export default function IssuesPage() {
             <h2>Everything Vero found</h2>
             <span className="sub">{overview?.countryCoverage?.sentence ?? 'Across official registries and the documents you shared'}</span>
           </div>
-          <div className="tabs" role="tablist" aria-label="Filter findings">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                className={`tab${tab === item.id ? ' on' : ''}`}
-                type="button"
-                role="tab"
-                aria-selected={tab === item.id}
-                data-testid={item.id === 'unseen' ? 'group-to-check' : undefined}
-                onClick={() =>
-                  softly(() => {
-                    setTab(item.id);
-                    setLimit(PAGE);
-                  })
-                }
-              >
-                {item.label} <span className="n2">{counts[item.id]}</span>
-              </button>
-            ))}
+          <div className="tabsw">
+            <div className="tabs" role="tablist" aria-label="Filter findings" onKeyDown={arrowKeys}>
+              {TABS.map((item) => (
+                <button
+                  key={item.id}
+                  className={`tab${tab === item.id ? ' on' : ''}`}
+                  type="button"
+                  role="tab"
+                  id={`findings-tab-${item.id}`}
+                  aria-selected={tab === item.id}
+                  aria-controls="findings-panel"
+                  tabIndex={tab === item.id ? 0 : -1}
+                  data-testid={item.id === 'unseen' ? 'group-to-check' : undefined}
+                  onClick={() =>
+                    softly(() => {
+                      setTab(item.id);
+                      setLimit(PAGE);
+                    })
+                  }
+                >
+                  {item.label} <span className="n2">{counts[item.id]}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <div className="fr">
-            <label className="fs">
+            <div className="fs">
               <Icon name="search" />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search findings, sources or areas" autoComplete="off" aria-label="Search findings" />
-            </label>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setLimit(PAGE);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape' && query) {
+                    event.stopPropagation();
+                    setQuery('');
+                  }
+                }}
+                placeholder="Search findings, sources or areas"
+                autoComplete="off"
+                enterKeyHint="search"
+                aria-label="Search findings"
+                data-testid="findings-search"
+              />
+              {query ? (
+                <button
+                  className="fx"
+                  type="button"
+                  aria-label="Clear the search"
+                  onClick={(event) => {
+                    setQuery('');
+                    event.currentTarget.parentElement?.querySelector('input')?.focus();
+                  }}
+                >
+                  <Icon name="x" />
+                </button>
+              ) : null}
+            </div>
             <div className="seg" role="group" aria-label="Filter by source">
               {(
                 [
@@ -436,94 +480,157 @@ export default function IssuesPage() {
                   ['doc', 'Your documents'],
                 ] as const
               ).map(([id, label]) => (
-                <button key={id} type="button" className={source === id ? 'on' : undefined} aria-pressed={source === id} onClick={() => setSource(id)}>
+                <button
+                  key={id}
+                  type="button"
+                  className={source === id ? 'on' : undefined}
+                  aria-pressed={source === id}
+                  onClick={() => {
+                    setSource(id);
+                    setLimit(PAGE);
+                  }}
+                >
                   {label}
                 </button>
               ))}
             </div>
             <span className="muted sort">{tab === 'cleared' ? 'Checks in order, counted in the score' : tab === 'unseen' ? "These don't count for or against the score" : 'Grouped by area, highest impact first'}</span>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: '42%' }}>Finding</th>
-                <th className="hs">Source</th>
-                <th>Status</th>
-                <th className="hm">Impact</th>
-                <th className="hs">Updated</th>
-                <th className="hm" aria-label="Open" />
-              </tr>
-            </thead>
-            {groups.map((group) => {
-              const area = group.layer !== null ? overview?.areas.find((item) => item.layer === group.layer) : undefined;
-              const openHere = group.items.filter(isOpenIssue).length;
-              return (
-                <tbody key={group.key} className="rows-in">
-                  <tr className="gh" data-testid={`group-${group.key}`}>
+          <span className="sr-only" role="status">
+            {query.trim() || source !== 'all' ? plural(shown.length, 'finding matches', 'findings match') : ''}
+          </span>
+          <div className="tpanel" id="findings-panel" role="tabpanel" aria-labelledby={`findings-tab-${tab}`}>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: '42%' }}>Finding</th>
+                  <th className="hs">Source</th>
+                  <th>Status</th>
+                  <th className="hm">Impact</th>
+                  <th className="hs">Updated</th>
+                  <th className="hm" aria-label="Open" />
+                </tr>
+              </thead>
+              {groups.map((group) => {
+                const area = group.layer !== null ? overview?.areas.find((item) => item.layer === group.layer) : undefined;
+                const openHere = group.items.filter(isOpenIssue).length;
+                return (
+                  <tbody key={group.key} className="rows-in">
+                    <tr className="gh" data-testid={`group-${group.key}`}>
+                      <td colSpan={6}>
+                        <div className="gw">
+                          <b>{group.name}</b>
+                          <small>{group.layer === null ? plural(group.items.length, 'check', 'checks') : `${openHere} open`}</small>
+                          {area && area.score !== null ? (
+                            <TLink href={`/areas/${area.layer}`}>
+                              Area score <span className="pixel">{area.score}</span>
+                            </TLink>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                    {group.items.map((issue, index) => {
+                      const status = findingStatus(issue);
+                      const src = findingSource(issue);
+                      return (
+                        <tr
+                          key={issueKey(issue)}
+                          className="f"
+                          style={{ '--r': Math.min(index, 12) } as CSSProperties}
+                          tabIndex={0}
+                          data-testid="issue-row"
+                          onClick={() => setDrawer(issue)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setDrawer(issue);
+                            }
+                          }}
+                          aria-label={`${status === 'cleared' ? (issue.title ?? issue.headline) : issue.headline}, ${FINDING_WORDS[status]}`}
+                        >
+                          <td>
+                            <div className="ft2">
+                              <b>{status === 'cleared' ? (issue.title ?? issue.headline) : issue.headline}</b>
+                              <small>{[issue.layerName, several ? shortName(issue.companyName) : null, issue.declaredMissing ? "You told us you don't have this" : null].filter(Boolean).join(' · ')}</small>
+                            </div>
+                          </td>
+                          <td className="src2 hs">{src.label}</td>
+                          <td>
+                            <span className="st2" style={{ color: FINDING_COLOUR[status] }}>
+                              {FINDING_WORDS[status]}
+                            </span>
+                          </td>
+                          <td className="hm imp2">
+                            {issue.points && issue.points > 0 && isOpenIssue(issue) ? (
+                              <span className="gain">
+                                +{issue.points}
+                                <span className="sr-only"> {issue.points === 1 ? 'point' : 'points'}</span>
+                              </span>
+                            ) : (
+                              <span className="muted none">
+                                <span aria-hidden="true">-</span>
+                                <span className="sr-only">No change</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="muted hs upd" style={{ whiteSpace: 'nowrap' }}>
+                            {issue.dueOn ? `Due ${shortDate(issue.dueOn)}` : overview?.scannedAt ? whenWords(overview.scannedAt) : ''}
+                          </td>
+                          <td className="chevc hm">
+                            <Icon name="chev" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                );
+              })}
+              {shown.length === 0 ? (
+                <tbody>
+                  <tr className="emptyrow" data-testid="empty-state">
                     <td colSpan={6}>
-                      <div className="gw">
-                        <b>{group.name}</b>
-                        <small>{group.layer === null ? plural(group.items.length, 'check', 'checks') : `${openHere} open`}</small>
-                        {area && area.score !== null ? (
-                          <TLink href={`/areas/${area.layer}`}>
-                            Area score <span className="pixel">{area.score}</span>
+                      {all.length === 0 ? (
+                        <>
+                          <b>Nothing found yet</b>
+                          <span>Findings show here after the first scan.</span>
+                          <TLink className="btn btn-p btn-sm" href="/scan">
+                            Start a scan
                           </TLink>
-                        ) : null}
-                      </div>
+                        </>
+                      ) : query.trim() || source !== 'all' ? (
+                        <>
+                          <b>{query.trim() ? `Nothing matches “${query.trim().length > 40 ? `${query.trim().slice(0, 40)}…` : query.trim()}”` : 'Nothing from that source here'}</b>
+                          <span>
+                            {query.trim() ? 'Try a shorter word, or look in another tab.' : 'Try all sources, or look in another tab.'} {TABS.find((item) => item.id === tab)?.label} has {plural(counts[tab], 'finding', 'findings')} in all.
+                          </span>
+                          <button
+                            className="btn btn-g btn-sm"
+                            type="button"
+                            onClick={() => {
+                              setQuery('');
+                              setSource('all');
+                            }}
+                          >
+                            Clear the filters
+                          </button>
+                        </>
+                      ) : tab === 'open' || tab === 'urgent' || tab === 'attention' ? (
+                        <>
+                          <b>{tab === 'urgent' ? 'Nothing urgent' : tab === 'attention' ? 'Nothing needs attention' : 'Nothing open'}</b>
+                          <span>Vero keeps checking and tells you when something changes.</span>
+                        </>
+                      ) : (
+                        <>
+                          <b>{tab === 'cleared' ? 'Nothing cleared yet' : 'Nothing waiting to be seen'}</b>
+                          <span>{tab === 'cleared' ? 'Checks show here once Vero has seen they are in order.' : 'Every check that applies has been looked at.'}</span>
+                        </>
+                      )}
                     </td>
                   </tr>
-                  {group.items.map((issue, index) => {
-                    const status = findingStatus(issue);
-                    const src = findingSource(issue);
-                    return (
-                      <tr
-                        key={issueKey(issue)}
-                        className="f"
-                        style={{ '--r': Math.min(index, 12) } as CSSProperties}
-                        tabIndex={0}
-                        data-testid="issue-row"
-                        onClick={() => setDrawer(issue)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            setDrawer(issue);
-                          }
-                        }}
-                        aria-label={`${status === 'cleared' ? (issue.title ?? issue.headline) : issue.headline}, ${FINDING_WORDS[status]}`}
-                      >
-                        <td>
-                          <div className="ft2">
-                            <b>{status === 'cleared' ? (issue.title ?? issue.headline) : issue.headline}</b>
-                            <small>{[issue.layerName, several ? shortName(issue.companyName) : null, issue.declaredMissing ? "You told us you don't have this" : null].filter(Boolean).join(' · ')}</small>
-                          </div>
-                        </td>
-                        <td className="src2 hs">{src.label}</td>
-                        <td>
-                          <span className="st2" style={{ color: FINDING_COLOUR[status] }}>
-                            {FINDING_WORDS[status]}
-                          </span>
-                        </td>
-                        <td className="hm">{issue.points && issue.points > 0 && isOpenIssue(issue) ? <span className="gain">+{issue.points}</span> : <span className="muted">-</span>}</td>
-                        <td className="muted hs" style={{ whiteSpace: 'nowrap' }}>
-                          {issue.dueOn ? `Due ${shortDate(issue.dueOn)}` : overview?.scannedAt ? whenWords(overview.scannedAt) : ''}
-                        </td>
-                        <td className="chevc hm">
-                          <Icon name="chev" />
-                        </td>
-                      </tr>
-                    );
-                  })}
                 </tbody>
-              );
-            })}
-            {shown.length === 0 ? (
-              <tbody>
-                <tr className="emptyrow" data-testid="empty-state">
-                  <td colSpan={6}>{all.length === 0 ? 'Nothing found yet. Findings show here after the first scan.' : query || source !== 'all' ? 'No findings match that search.' : tab === 'open' || tab === 'urgent' || tab === 'attention' ? 'Nothing open here. Vero keeps checking.' : 'Nothing here yet.'}</td>
-                </tr>
-              </tbody>
-            ) : null}
-          </table>
+              ) : null}
+            </table>
+          </div>
           {shown.length > limit ? (
             <div className="more">
               <button className="btn btn-g btn-sm" type="button" onClick={() => setLimit((value) => value + PAGE * 3)}>

@@ -111,3 +111,30 @@
   .pg-finding table th:first-child{width:auto!important}
   .pg-finding td .st2{white-space:nowrap}
 }
+/* polish, 23 Nov: score labels that never collide, keyboard, phone targets */
+.pg-finding .trk .lb.e{transform:translateX(calc(-100% + 10px))}
+.pg-finding .trk .lb.s{transform:translateX(-10px)}
+.pg-finding .trk.near .lb.t{bottom:calc(100% + 30px)}
+.pg-finding .trk.near.capped .lb.c{bottom:calc(100% + 48px)}
+.pg-finding .trk.near.capped{margin-top:82px}
+@media (max-width:560px){
+  .pg-finding .trk.nearish .lb.t{bottom:calc(100% + 30px)}
+  .pg-finding .trk.near.capped{margin-top:62px}
+  .pg-finding .acts .btn{flex:1 1 auto;justify-content:center}
+  .pg-finding .declm .btn-sm{height:40px}
+  .pg-finding .lst .link{display:inline-block;padding:6px 0}
+}
+.pg-finding .opts.one{grid-template-columns:1fr}
+.pg-finding .opt:focus-visible{outline-offset:2px;border-radius:14px}
+.pg-finding .opt:active{background:var(--sel)}
+.pg-finding .rel a:focus-visible{outline-offset:-2px}
+.pg-finding .rel a .i{transition:transform .2s var(--ease)}
+.pg-finding .rel a:hover .i{transform:translateX(3px)}
+.pg-finding .rel b{overflow-wrap:anywhere}
+.pg-finding .pagehead h1,.pg-finding .facts b,.pg-finding .kv b,.pg-finding .lst b{overflow-wrap:anywhere}
+.pg-finding .will li{align-items:flex-start;padding:5px 0}
+.pg-finding #clear{scroll-margin-top:20px}
+@media (prefers-reduced-motion:reduce){
+  .pg-finding .trk .gain2{animation:none}
+  .pg-finding .rel a .i{transition:none}
+}

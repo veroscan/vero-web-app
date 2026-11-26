@@ -7,6 +7,7 @@ import { Fragment, Suspense, useEffect, useMemo, useState, type CSSProperties } 
 import { ErrorState, Loading, PlanLink } from '@/components/Bits';
 import { DeclareMissing } from '@/components/DeclareMissing';
 import { PaperArt } from '@/components/documents/Paper';
+import { arrowKeys } from '@/components/findings/tabKeys';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
@@ -46,8 +47,8 @@ function DownloadButton({ documentId }: { documentId: string }) {
   };
   return (
     <>
-      <button className="lnk" type="button" disabled={busy} onClick={() => void download()}>
-        Download
+      <button className="lnk" type="button" disabled={busy} aria-busy={busy} onClick={() => void download()}>
+        {busy ? 'Getting it' : 'Download'}
       </button>
       {problem ? (
         <span className="formerror" role="alert">
@@ -407,136 +408,186 @@ function Documents() {
             <h2>All documents</h2>
             <span className="sub">{company?.countryCoverage ? company.countryCoverage.sentence : 'Shared by you, read by Vero'}</span>
           </div>
-          <div className="tabs" role="tablist" aria-label="Filter documents">
-            {(
-              [
-                ['all', 'All', facts.length],
-                ['ok', 'In order', counts.ok],
-                ['problem', 'Problem', counts.problem],
-                ['missing', 'Missing', counts.missing],
-              ] as const
-            ).map(([id, label, count]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                className={`tab${tab === id ? ' on' : ''}`}
-                onClick={() =>
-                  softly(() => {
-                    setTab(id);
-                    setLimit(PAGE);
-                  })
-                }
-              >
-                {label} <span className="n2">{count}</span>
-              </button>
-            ))}
+          <div className="tabsw">
+            <div className="tabs" role="tablist" aria-label="Filter documents" onKeyDown={arrowKeys}>
+              {(
+                [
+                  ['all', 'All', facts.length],
+                  ['ok', 'In order', counts.ok],
+                  ['problem', 'Problem', counts.problem],
+                  ['missing', 'Missing', counts.missing],
+                ] as const
+              ).map(([id, label, count]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`documents-tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="documents-panel"
+                  tabIndex={tab === id ? 0 : -1}
+                  className={`tab${tab === id ? ' on' : ''}`}
+                  onClick={() =>
+                    softly(() => {
+                      setTab(id);
+                      setLimit(PAGE);
+                    })
+                  }
+                >
+                  {label} <span className="n2">{count}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <table className="docs">
-            <thead>
-              <tr>
-                <th style={{ width: '27%' }}>Document</th>
-                <th className="hs">Where it came from</th>
-                <th className="hs">Shared</th>
-                <th className="hm" style={{ width: '30%' }}>
-                  What Vero found
-                </th>
-                <th className="hm">Status</th>
-                <th aria-label="Action" />
-              </tr>
-            </thead>
-            <tbody className="rows-in">
-              {shown.slice(0, limit).map((item, index) => {
-                const { slot, document } = item;
-                const open = openRow === slot.key;
-                const toggle = () => setOpenRow(open ? null : slot.key);
-                const bodyId = `slot-${slot.key}`;
-                return (
-                  <Fragment key={slot.key}>
-                    <tr
-                      className={`f${open ? ' open' : ''}`}
-                      style={{ '--r': Math.min(index, 12) } as CSSProperties}
-                      data-testid="slot-row"
-                      data-slot={slot.key}
-                      onClick={(event) => {
-                        if (!(event.target as HTMLElement).closest('a,button')) toggle();
-                      }}
-                    >
-                      <td>
-                        <div className="ft2">
-                          <b>{slot.label}</b>
-                          <small>
-                            {slot.layerName} · {slot.jurisdiction}
-                          </small>
-                          <span className="st2 mst" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
-                            {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="src2 hs">{document ? 'Shared by you' : 'Expected from you'}</td>
-                      <td className="muted hs">{document ? shortDate(document.uploadedAt) : '-'}</td>
-                      <td className="fd hm">{found(item)}</td>
-                      <td className="hm">
-                        <span className="st2" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
-                          {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
-                        </span>
-                      </td>
-                      <td className="act">
-                        {!canAct ? null : slot.state === 'missing' || slot.state === 'declared_missing' ? (
-                          <TLink className={`btn ${item.urgent ? 'btn-p' : 'btn-g'} bsm`} href={addHref(companyId, slot.key)}>
-                            Upload
-                          </TLink>
-                        ) : slot.state === 'needs_confirmation' && slot.documentId ? (
-                          <TLink className="lnk" href={`/documents/add?company=${companyId}&document=${slot.documentId}`}>
-                            Confirm
-                          </TLink>
-                        ) : slot.state === 'not_accepted' && slot.documentId ? (
-                          <TLink className="lnk" href={`/documents/${slot.documentId}/rejected`}>
-                            See why
-                          </TLink>
-                        ) : isInPlace(slot.state) && slot.documentId ? (
-                          <DownloadButton documentId={slot.documentId} />
-                        ) : null}
-                        <button className="lnk" type="button" aria-expanded={open} aria-controls={bodyId} aria-label={`More about ${slot.label}`} data-testid="slot-toggle" onClick={toggle} style={{ marginLeft: 12, verticalAlign: 'middle', color: 'var(--ink-4)' }}>
-                          <Icon name="chev" />
-                        </button>
-                      </td>
-                    </tr>
-                    {open ? (
-                      <tr className="xr" id={bodyId}>
-                        <td colSpan={6}>
-                          <div className="xb">
-                            <p>{slot.reason}</p>
-                            {document?.fileName ? (
-                              <p>
-                                {document.fileName}
-                                {document.pages ? `, ${plural(document.pages, 'page', 'pages')}` : ''}. Shared {longDate(document.uploadedAt)}.{document.signatureHintWords ? ` ${document.signatureHintWords}` : ''}
-                              </p>
-                            ) : null}
-                            {canAct && item.issue && (item.issue.canDeclareMissing || item.issue.declaredMissing) ? <DeclareMissing key={`${item.issue.ruleKey}-${String(item.issue.declaredMissing)}`} item={item.issue} onChanged={resource.reload} /> : null}
-                            <div className="xl">
-                              {item.open[0] ? (
-                                <TLink className="lnk" href={issuePath(item.open[0])}>
-                                  See the finding
-                                </TLink>
-                              ) : null}
-                              {canAct && slot.documentId && document ? <RemoveDocument documentId={slot.documentId} filed={document.status === 'filed'} onRemoved={resource.reload} /> : null}
-                            </div>
+          <div className="tpanel" id="documents-panel" role="tabpanel" aria-labelledby={`documents-tab-${tab}`}>
+            <table className="docs">
+              <thead>
+                <tr>
+                  <th style={{ width: '27%' }}>Document</th>
+                  <th className="hs">Where it came from</th>
+                  <th className="hs">Shared</th>
+                  <th className="hm" style={{ width: '30%' }}>
+                    What Vero found
+                  </th>
+                  <th className="hm">Status</th>
+                  <th aria-label="Action" />
+                </tr>
+              </thead>
+              <tbody className="rows-in">
+                {shown.slice(0, limit).map((item, index) => {
+                  const { slot, document } = item;
+                  const open = openRow === slot.key;
+                  const toggle = () => setOpenRow(open ? null : slot.key);
+                  const bodyId = `slot-${slot.key}`;
+                  return (
+                    <Fragment key={slot.key}>
+                      <tr
+                        className={`f${open ? ' open' : ''}`}
+                        style={{ '--r': Math.min(index, 12) } as CSSProperties}
+                        data-testid="slot-row"
+                        data-slot={slot.key}
+                        onClick={(event) => {
+                          if (!(event.target as HTMLElement).closest('a,button')) toggle();
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape' && open) setOpenRow(null);
+                        }}
+                      >
+                        <td>
+                          <div className="ft2">
+                            <b>{slot.label}</b>
+                            <small>
+                              {slot.layerName} · {slot.jurisdiction}
+                            </small>
+                            <span className="st2 mst" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
+                              {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
+                            </span>
                           </div>
                         </td>
+                        <td className="src2 hs">{document ? 'Shared by you' : 'Expected from you'}</td>
+                        <td className="muted hs">{document ? shortDate(document.uploadedAt) : '-'}</td>
+                        <td className="fd hm">{found(item)}</td>
+                        <td className="hm">
+                          <span className="st2" style={{ color: item.kind === 'missing' && item.urgent ? 'var(--urgent)' : slotColour(slot.state) }}>
+                            {item.kind === 'missing' && item.urgent ? 'Not found' : slot.stateWord}
+                          </span>
+                        </td>
+                        <td className="act">
+                          {!canAct ? null : slot.state === 'missing' || slot.state === 'declared_missing' ? (
+                            <TLink className={`btn ${item.urgent ? 'btn-p' : 'btn-g'} bsm`} href={addHref(companyId, slot.key)}>
+                              Upload
+                            </TLink>
+                          ) : slot.state === 'needs_confirmation' && slot.documentId ? (
+                            <TLink className="lnk" href={`/documents/add?company=${companyId}&document=${slot.documentId}`}>
+                              Confirm
+                            </TLink>
+                          ) : slot.state === 'not_accepted' && slot.documentId ? (
+                            <TLink className="lnk" href={`/documents/${slot.documentId}/rejected`}>
+                              See why
+                            </TLink>
+                          ) : isInPlace(slot.state) && slot.documentId ? (
+                            <DownloadButton documentId={slot.documentId} />
+                          ) : null}
+                          <button className="tog" type="button" aria-expanded={open} aria-controls={open ? bodyId : undefined} aria-label={`More about ${slot.label}`} data-testid="slot-toggle" onClick={toggle}>
+                            <Icon name="chev" />
+                          </button>
+                        </td>
                       </tr>
-                    ) : null}
-                  </Fragment>
-                );
-              })}
-              {shown.length === 0 ? (
-                <tr className="emptyrow" data-testid="empty-state">
-                  <td colSpan={6}>{facts.length === 0 ? "Nothing to add yet. Vero lists what this company should have once it knows more about it." : tab === 'problem' ? 'Nothing with a problem.' : tab === 'missing' ? 'Nothing missing. Every slot has a document.' : 'Nothing in order yet. Documents show here once you add and confirm them.'}</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+                      {open ? (
+                        <tr
+                          className="xr"
+                          id={bodyId}
+                          onKeyDown={(event) => {
+                            if (event.key !== 'Escape') return;
+                            setOpenRow(null);
+                            event.currentTarget.previousElementSibling?.querySelector<HTMLElement>('.tog')?.focus();
+                          }}
+                        >
+                          <td colSpan={6}>
+                            <div className="xb">
+                              <p>{slot.reason}</p>
+                              {document?.fileName ? (
+                                <p>
+                                  {document.fileName}
+                                  {document.pages ? `, ${plural(document.pages, 'page', 'pages')}` : ''}. Shared {longDate(document.uploadedAt)}.{document.signatureHintWords ? ` ${document.signatureHintWords}` : ''}
+                                </p>
+                              ) : null}
+                              {canAct && item.issue && (item.issue.canDeclareMissing || item.issue.declaredMissing) ? <DeclareMissing key={`${item.issue.ruleKey}-${String(item.issue.declaredMissing)}`} item={item.issue} onChanged={resource.reload} /> : null}
+                              <div className="xl">
+                                {item.open[0] ? (
+                                  <TLink className="lnk" href={issuePath(item.open[0])}>
+                                    See the finding
+                                  </TLink>
+                                ) : null}
+                                {canAct && slot.documentId && document ? <RemoveDocument documentId={slot.documentId} filed={document.status === 'filed'} onRemoved={resource.reload} /> : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+                {shown.length === 0 ? (
+                  <tr className="emptyrow" data-testid="empty-state">
+                    <td colSpan={6}>
+                      {facts.length === 0 ? (
+                        <>
+                          <b>Nothing to add yet</b>
+                          <span>Vero lists what this company should have once it knows more about it. Answering the questions is the quickest way.</span>
+                          {canAct ? (
+                            <TLink className="btn btn-g btn-sm" href={`/onboarding/questions?company=${companyId}`}>
+                              Answer the questions
+                            </TLink>
+                          ) : null}
+                        </>
+                      ) : tab === 'problem' ? (
+                        <>
+                          <b>Nothing with a problem</b>
+                          <span>Every document Vero has read can count.</span>
+                        </>
+                      ) : tab === 'missing' ? (
+                        <>
+                          <b>Nothing missing</b>
+                          <span>Every slot has a document.</span>
+                        </>
+                      ) : (
+                        <>
+                          <b>Nothing in order yet</b>
+                          <span>Documents show here once you add one and confirm where it belongs.</span>
+                          {canAct ? (
+                            <TLink className="btn btn-p btn-sm" href={addHref(companyId)}>
+                              Add a document
+                            </TLink>
+                          ) : null}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
           {shown.length > limit ? (
             <div className="moreb">
               <button className="btn btn-g btn-sm" type="button" onClick={() => setLimit((value) => value + PAGE)}>

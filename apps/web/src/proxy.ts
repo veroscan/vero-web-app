@@ -26,7 +26,8 @@ export function proxy(request: NextRequest): NextResponse {
   if (hasSession && (pathname === '/sign-in' || pathname === '/sign-up')) {
     // Already signed in. A stale cookie is cleared by the API's first 401, so this can't loop.
     const next = safeNext(request.nextUrl.searchParams.get('next'));
-    return NextResponse.redirect(new URL(next ?? '/', request.nextUrl.origin));
+    // The scan page is where a signed-in person lands unless they were on their way somewhere.
+    return NextResponse.redirect(new URL(next ?? '/scan', request.nextUrl.origin));
   }
   return NextResponse.next();
 }

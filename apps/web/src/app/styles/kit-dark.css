@@ -54,13 +54,13 @@
 /* from pages\area.css */
 [data-theme="dark"] .pg-area .slot.fix .pg{border:1.5px solid rgba(150,170,255,.14)}
 /* from pages\auth.css */
-[data-theme="dark"] .pg-auth .preview .scanline{background:linear-gradient(90deg,transparent,rgba(61,123,255,.16) 30%,var(--panel) 50%,rgba(61,123,255,.16) 70%,transparent)}
 [data-theme="dark"] .pg-auth .env .e-head{fill:#8FB0FF}
 [data-theme="dark"] .pg-auth .sent .row button:hover{background:rgba(61,123,255,.16)}
 /* from pages\deadlines.css */
 [data-theme="dark"] .pg-deadlines .yr .blk i{background:var(--panel)}
 [data-theme="dark"] .pg-deadlines .yr .blk i.now{background:rgba(79,168,255,.32)}
 [data-theme="dark"] .pg-deadlines .ev2 i{border:3px solid rgba(150,170,255,.14);box-shadow:0 0 0 1px var(--line),0 4px 10px -4px rgba(0,0,12,0.90)}
+@media (max-width:560px){[data-theme="dark"] .pg-deadlines .tln .co{box-shadow:8px 0 10px -8px rgba(0,0,12,0.43)}}
 /* from pages\docflow.css */
 [data-theme="dark"] .pg-docflow .drop{border:1.5px dashed rgba(150,170,255,.14);background:linear-gradient(180deg,rgba(61,123,255,.16),rgba(61,123,255,.16))}
 [data-theme="dark"] .pg-docflow .drop:hover,[data-theme="dark"] .pg-docflow .drop.over{background:rgba(61,123,255,.16)}
@@ -80,10 +80,13 @@
 [data-theme="dark"] .pg-hist .hs-mv{background:rgba(61,123,255,.16)}
 /* from pages\notifications.css */
 [data-theme="dark"] .pg-notifications .nt.new{background:rgba(61,123,255,.16)}
+/* from pages\overview.css */
+[data-theme="dark"] .pg-ov .ov-pick button:focus-visible,[data-theme="dark"] .pg-ov .hero .seg button:focus-visible{outline:2px solid rgba(150,170,255,.14)}
 /* from pages\plan.css */
 [data-theme="dark"] .pg-plan .ur .bk i.on{background:var(--panel)}
 [data-theme="dark"] .pg-plan .cmp .cur{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-plan .cancel{background:rgba(61,123,255,.16)}
+[data-theme="dark"] .pg-plan .offnote{background:rgba(150,170,255,.045)}
 /* from pages\public.css */
 [data-theme="dark"] .pg-pub .opencard{background:var(--panel)}
 [data-theme="dark"] .pg-pub .after .mod{box-shadow:0 1px 2px rgba(0,0,12,0.10),0 24px 48px -32px rgba(0,0,12,0.60)}
@@ -92,11 +95,15 @@
 /* from pages\records.css */
 [data-theme="dark"] .pg-records .xn{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-records .xn.band{background:rgba(150,170,255,.045)}
+[data-theme="dark"] .pg-records .cos>a:focus-visible{outline:2px solid rgba(150,170,255,.14)}
 /* from pages\report.css */
-@media print{[data-theme="dark"] .pg-report{background:var(--panel)}}
+[data-theme="dark"] .pg-report .acts2 .btn:focus-visible{outline:2px solid rgba(150,170,255,.14)}
+@media print{html[data-theme="dark"]:has(.pg-report),html[data-theme="dark"]:has(.pg-report) body{background:var(--panel)!important}
+[data-theme="dark"] .pg-report{background:var(--panel)}}
 /* from pages\scan.css */
 [data-theme="dark"] .pg-scan .sbox{background:var(--panel)}
-[data-theme="dark"] .pg-scan .cty{background:rgba(61,123,255,.16)}
+[data-theme="dark"] .pg-scan .cty .sel-btn{background:rgba(61,123,255,.16)}
+[data-theme="dark"] .pg-scan .cty .sel-btn:hover:not(:disabled){background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .res .nm b em{color:#8FB0FF;background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .nc{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .rec .sc{color:#8FB0FF}
@@ -106,6 +113,7 @@
 [data-theme="dark"] .pg-scan .prog i.now{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .op.on{background:var(--panel);border-color:rgba(150,170,255,.14)}
 [data-theme="dark"] .pg-scan .typed input:focus{border-color:rgba(150,170,255,.14)}
+[data-theme="dark"] .pg-scan .op:focus-visible,[data-theme="dark"] .pg-scan .qnav .skip:focus-visible{outline:2px solid rgba(150,170,255,.14)}
 [data-theme="dark"] .pg-scan .ans tr.got .n{color:#8FB0FF}
 [data-theme="dark"] .pg-scan .pstack .bk.a{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .pstack .bk.b{background:rgba(61,123,255,.16)}
@@ -118,6 +126,10 @@
 [data-theme="dark"] .pg-scan .lv tr.now td{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-scan .ar .tr i{background:var(--panel)}
 [data-theme="dark"] .pg-scan .ar .tr i.watch{background:rgba(150,170,255,.07)}
+/* from pages\scorechart.css */
+[data-theme="dark"] .vchart:focus-visible{outline:2px solid rgba(150,170,255,.14)}
+[data-theme="dark"] .vchart .tip{background:var(--panel);color:var(--ink-2)}
+[data-theme="dark"] .vchart .tip b{color:var(--ink)}
 /* from pages\settings.css */
 [data-theme="dark"] .pg-settings .snav a.on{background:rgba(61,123,255,.16)}
 [data-theme="dark"] .pg-settings .field input[readonly]{background:rgba(61,123,255,.16)}
@@ -171,6 +183,7 @@ html[data-theme="dark"],[data-theme="dark"] body,[data-theme="dark"] .vroot{back
 [data-theme="dark"] tbody tr:hover,[data-theme="dark"] tr.f:hover{background:var(--hover)}
 [data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color:var(--ink);background-color:rgba(150,170,255,.06)}
 [data-theme="dark"] input::placeholder{color:var(--ink-4)}
+[data-theme="dark"] .cmd .q input,[data-theme="dark"] .sel-find input{background-color:transparent}
 [data-theme="dark"] .drawer,[data-theme="dark"] .cmd{background:#05073F!important;border:1px solid var(--line)}
 [data-theme="dark"] .pixel{text-shadow:0 0 24px rgba(120,160,255,.25)}
 [data-theme="dark"] .tab.on{color:#fff!important}

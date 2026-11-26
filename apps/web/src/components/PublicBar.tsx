@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import '@/app/styles/pages/public.css';
-import { Atmos, FlowLines } from './Motion';
+import { Atmos, FlowLines, Scramble, Words } from './Motion';
 import { ThemeToggle } from './Theme';
 
 /** The top bar of a page anyone can open with a link. Nothing here needs an account. */
@@ -42,8 +42,14 @@ export function PublicMessage({ kicker, title, children, art, testId, role }: { 
       <PublicHero size="tall">
         <main className="msg" data-testid={testId} role={role}>
           {art}
-          {kicker ? <span className="mono">{kicker}</span> : null}
-          <h1 className="disp">{title}</h1>
+          {kicker ? (
+            <span className="mono kick">
+              <Scramble text={kicker} />
+            </span>
+          ) : null}
+          <h1 className="disp">
+            <Words text={title} delay={80} />
+          </h1>
           {children}
         </main>
       </PublicHero>

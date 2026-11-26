@@ -79,6 +79,11 @@ export function findingSource(issue: Pick<IssueSummary, 'howWeKnow'>): { label: 
   return { label: 'Not seen yet', kind: 'none' };
 }
 
+/** One "how we know" line as a whole thought. The API can send a bare "You told us", which reads as cut off. */
+export function knowWords(line: string): string {
+  return /^You told us\.?$/i.test(line.trim()) ? 'From the answers you gave Vero' : line;
+}
+
 /** Vero is a scanner: rule text that tells people to hire someone is left out of what a customer sees. */
 export function withoutReferrals(text: string | null | undefined): string | null {
   if (!text) return null;

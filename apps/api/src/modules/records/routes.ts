@@ -1,5 +1,5 @@
 import { howWeKnow, type EvidenceMethod, type FactValue } from '@vero/rules';
-import { contract, type CompanyRecordsResponse, type RecordItem } from '@vero/shared';
+import { contract, type CompanyRecordChangesResponse, type CompanyRecordsResponse, type RecordItem } from '@vero/shared';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { schema } from '../../db';
@@ -10,6 +10,7 @@ import { writeAudit } from '../audit/service';
 import { connectorsForSelection, coverageFor, latestSources, requireCompany, SAMPLE_NOTE, selectCompanyPacks } from '../scans/facts';
 import { startFullScan } from '../scans/pipeline';
 import { scanDto, sourceDto } from '../scans/routes';
+import { registryChangeHistory } from './changes';
 
 interface FieldSpec {
   key: string;
@@ -87,7 +88,48 @@ function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
+const FIELD_BY_KEY = new Map([...Object.values(FIELDS).flat(), SANCTIONS_FIELD].map((field) => [field.key, field]));
+// Not on the records page (it is never shown as a live Delaware status), but a change in it is still a change, said in these words.
+FIELD_BY_KEY.set('registry.us.delaware_vendor.vendor_status', { key: 'registry.us.delaware_vendor.vendor_status', label: 'Status from our licensed data provider' });
+
+/** A field we have no name for yet, from its key: "registered_office_postcode" reads "Registered office postcode". */
+function labelFromKey(key: string): string {
+  const words = (key.split('.').pop() ?? key).replace(/_/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function changeValue(key: string, value: FactValue | null): string | null {
+  if (value === null) return null;
+  const format = FIELD_BY_KEY.get(key)?.format;
+  if (format) return format(value);
+  if (typeof value === 'boolean') return yesNo(value);
+  return Array.isArray(value) ? value.join(', ') : String(value);
+}
+
 export function registerRecordRoutes(app: FastifyInstance, deps: AppDeps): void {
+  defineRoute(app, deps, contract.records.changes, { auth: 'org', permission: 'companies.read' }, async ({ org, params }) =>
+    deps.db.withOrg(org.organisationId, async (tx): Promise<CompanyRecordChangesResponse> => {
+      const company = await requireCompany(tx, params.companyId);
+      const rows = await registryChangeHistory(tx, company.id);
+      return {
+        companyId: company.id,
+        changes: rows.map((row) => ({
+          id: row.id,
+          scanId: row.scanId,
+          field: row.field,
+          label: FIELD_BY_KEY.get(row.field)?.label ?? labelFromKey(row.field),
+          oldValue: changeValue(row.field, row.oldValue),
+          newValue: changeValue(row.field, row.newValue),
+          detailWithheld: row.detailWithheld,
+          changedAt: row.changedAt.toISOString(),
+          source: row.sourceName,
+          sampleData: row.isFixture,
+        })),
+        sampleData: rows.some((row) => row.isFixture),
+      };
+    }),
+  );
+
   defineRoute(app, deps, contract.records.get, { auth: 'org', permission: 'companies.read' }, async ({ org, params }) =>
     deps.db.withOrg(org.organisationId, async (tx): Promise<CompanyRecordsResponse> => {
       const company = await requireCompany(tx, params.companyId);

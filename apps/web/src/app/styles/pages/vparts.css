@@ -22,14 +22,55 @@ tr.f a.rowlink:hover{text-decoration:underline}
 @media (prefers-reduced-motion:reduce){
   .vblocks i{animation:none}
 }
-/* phones: tables keep their main columns, the page heads wrap whole items */
-@media (max-width:560px){
+/* the button sits on the floor of the card when nothing else pushes it there */
+.next>p+.btn,.next>h3+.btn{margin-top:auto}
+.next>p:has(+.btn){margin-bottom:18px}
+/* a list on its way: rows of the list's own shape */
+.vskel{padding:8px 22px 14px}
+.vskel>div{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px 0;border-top:1px solid var(--line-2)}
+.vskel>div:first-of-type{border-top:0}
+.vskel>div>span{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.vskel .skel{display:block;height:12px;border-radius:6px}
+.vskel>div>span .skel+.skel{height:10px}
+.vskel>div>.skel{width:84px;flex:none}
+.vempty button.link{margin-left:2px}
+/* long names never push a page sideways */
+.pg-ov .pagehead h1,.pg-area .pagehead h1,.pg-hist .pagehead h1,.pg-wl .pagehead h1{overflow-wrap:anywhere;text-wrap:balance}
+.pg-ov .pagehead>div:first-child,.pg-area .pagehead>div:first-child,.pg-hist .pagehead>div:first-child,.pg-wl .pagehead>div:first-child{min-width:0}
+.pg-ov .pagehead .meta,.pg-area .pagehead .meta,.pg-hist .pagehead .meta,.pg-wl .pagehead .meta{flex-wrap:wrap;row-gap:4px}
+table.vtable .ft2 b,table.vtable td b{overflow-wrap:anywhere}
+/* the way back, where the top bar has no room for a crumb */
+.vback{display:none}
+/* tablets: tables stay tables and fill their panel */
+@media (max-width:960px){
   .mod table.vtable{display:table;width:100%;overflow:visible}
+  .vmore{flex-wrap:wrap;row-gap:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .vskel .skel{animation:none}
+}
+/* phones: tables keep their main columns, the page heads wrap whole items */
+@media (max-width:680px){
   table.vtable .opt{display:none}
   table.vtable th:first-child{width:auto!important}
   table.vtable td,table.vtable th{padding-left:16px;padding-right:16px}
+}
+@media (max-width:560px){
+  .vskel{padding-left:16px;padding-right:16px}
+  .vmore{padding-left:16px;padding-right:16px}
+  .vempty{padding-left:16px;padding-right:16px}
+  .pg-ov .bar .crumb,.pg-area .bar .crumb{display:none}
+  .vback{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin:-8px 0 2px -4px;padding:0 4px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.78)}
+  .vback .i{width:16px;height:16px;transform:rotate(180deg)}
+  .pg-ov .tabs,.pg-area .tabs,.pg-hist .tabs,.pg-wl .tabs{padding-left:10px;padding-right:10px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+  .pg-ov .tabs::-webkit-scrollbar,.pg-hist .tabs::-webkit-scrollbar{display:none}
+  .pg-ov .tab,.pg-hist .tab{padding:0 9px;gap:6px;flex:none}
+  .pg-ov .hero .seg button,.pg-hist .hero .seg button,.pg-wl .seg button{height:40px;padding:0 13px}
   .pg-ov .pagehead .meta,.pg-area .pagehead .meta,.pg-hist .pagehead .meta,.pg-wl .pagehead .meta{flex-wrap:wrap;gap:4px 14px}
-  .pg-ov .pagehead .meta span,.pg-area .pagehead .meta span,.pg-hist .pagehead .meta span,.pg-wl .pagehead .meta span{white-space:nowrap}
+  .pg-ov .pagehead .meta span,.pg-area .pagehead .meta span,.pg-hist .pagehead .meta span,.pg-wl .pagehead .meta span{max-width:100%;overflow-wrap:anywhere}
   .pg-ov .mh .sub,.pg-area .mh .sub,.pg-hist .mh .sub,.pg-wl .mh .sub{display:none}
   .pg-ov .tab,.pg-area .tab,.pg-hist .tab,.pg-wl .tab{white-space:nowrap}
 }
+tr.f:focus-within{background:var(--hover)}
+tr.f:active{background:var(--sel,var(--hover))}
+tr.f a.rowlink,tr.f button.rowlink{border-radius:6px}

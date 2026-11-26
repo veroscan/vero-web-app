@@ -1,7 +1,7 @@
 /* Scan history: ported from the History board, scoped to .pg-hist. */
 .pg-hist .gl{background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 40px 80px -40px rgba(0,0,30,.7);color:#fff}
-.pg-hist .hist{display:grid;grid-template-columns:230px 1fr;min-height:360px}
-.pg-hist .hist .l{padding:22px 0 22px 24px;display:flex;flex-direction:column}
+.pg-hist .hist{display:grid;grid-template-columns:262px 1fr;min-height:360px}
+.pg-hist .hist .l{padding:22px 14px 22px 24px;display:flex;flex-direction:column;min-width:0}
 .pg-hist .hist .l h2{font-size:15px;font-weight:700;color:#fff}
 .pg-hist .hist .now{display:flex;align-items:flex-end;gap:8px;margin-top:22px}
 .pg-hist .hist .now .pixel{font-size:96px;color:#fff;text-shadow:0 0 40px rgba(157,218,247,.45)}
@@ -13,7 +13,7 @@
 .pg-hist .hist .r{min-width:0;display:flex;flex-direction:column}
 .pg-hist .hist .r .mh h2{font-size:14px;color:rgba(255,255,255,.75)}
 .pg-hist .hs-since{margin-left:auto;color:rgba(255,255,255,.55)}
-.pg-hist .hs-nochart{margin:18px 22px 16px 32px;min-height:210px;display:grid;place-items:center;border:1px dashed rgba(255,255,255,.22);border-radius:14px;color:rgba(255,255,255,.62);font-weight:600;font-size:13.5px}
+.pg-hist .hs-nochart{margin:18px 22px 16px 32px;min-height:210px;display:grid;place-items:center;text-align:center;padding:18px;line-height:1.5;border:1px dashed rgba(255,255,255,.22);border-radius:14px;color:rgba(255,255,255,.62);font-weight:600;font-size:13.5px}
 .pg-hist .hs-co button{white-space:nowrap}
 /* scan again card */
 .pg-hist .next .art2{position:absolute;right:16px;top:14px;width:112px;height:100px}
@@ -33,7 +33,7 @@
 .pg-hist .scans .trg{color:var(--ink-2);font-weight:600;white-space:nowrap}
 .pg-hist .scans .sc{font-family:"Lowres Pixel";font-size:24px;color:var(--navy)}
 .pg-hist .scans .wc{color:var(--ink-2);font-weight:600;font-size:13.5px;line-height:1.45}
-.pg-hist .scans tr.f td:last-child{width:40px;color:var(--ink-4)}
+.pg-hist .scans tr.f td.go{width:40px;color:var(--ink-4)}
 .pg-hist .hs-open{border:0;background:none;padding:0;font:inherit;cursor:pointer;text-align:left}
 /* drawer extras */
 .pg-hist .db .lb2{font-size:13px;font-weight:700;color:var(--ink-3);margin-top:28px}
@@ -58,4 +58,47 @@
 }
 @media (prefers-reduced-motion:reduce){
   .pg-hist .art2.run .rl{animation:none;opacity:1}
+}
+.pg-hist .hist .facts div>span:last-child,.pg-hist .hist .facts b{white-space:nowrap}
+.pg-hist .hist .now small{white-space:nowrap}
+.pg-hist .scans .mv{display:none}
+.pg-hist .scans .scc .muted{font-size:13px;white-space:nowrap}
+.pg-hist .scans .wc{overflow-wrap:anywhere}
+.pg-hist .hs-open{min-height:24px;border-radius:6px}
+.pg-hist .hs-earlier{height:36px;font-size:13px;white-space:nowrap}
+.pg-hist .hs-ck em{align-self:center}
+.pg-hist .drawer .db h3{overflow-wrap:anywhere}
+.pg-hist .next h3{overflow-wrap:anywhere}
+[data-theme="dark"] .pg-hist .hs-mv{background:rgba(255,255,255,.06)}
+@media (max-width:1180px){
+  .pg-hist .scans th:nth-child(2){width:160px!important}
+}
+@media (max-width:860px){
+  /* each scan becomes a card: when and the score it reached, what set it off and the change, then the sentence */
+  .pg-hist .mod table.scans,.pg-hist .scans tbody{display:block;width:100%}
+  .pg-hist .scans thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .pg-hist .scans tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"dt sc" "trg chg" "wc wc";align-items:center;gap:6px 14px;padding:16px;border-bottom:1px solid var(--line-2)}
+  .pg-hist .scans tr:last-child{border-bottom:0}
+  .pg-hist .scans td{display:block;padding:0;border:0}
+  .pg-hist .scans td.dt{grid-area:dt;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .pg-hist .scans td.scc{grid-area:sc;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+  .pg-hist .scans td.trg{grid-area:trg;font-size:13px;white-space:normal}
+  .pg-hist .scans td.trg small{display:inline;margin-left:6px}
+  .pg-hist .scans td.chg{grid-area:chg;text-align:right}
+  .pg-hist .scans td.wc{grid-area:wc;font-size:13px;font-weight:500}
+  .pg-hist .scans td.go{display:none}
+  .pg-hist .scans .mv{display:inline-flex;align-items:center;gap:6px}
+  .pg-hist .scans .mv .sc{color:var(--ink-3);font-size:20px}
+  .pg-hist .scans .mv .i{width:14px;height:14px;color:var(--ink-4)}
+  .pg-hist .hs-open{min-height:40px}
+}
+@media (max-width:560px){
+  .pg-hist .hist .l{padding:22px 22px 0}
+  .pg-hist .hs-nochart{margin-left:22px}
+  .pg-hist .chart-legend{padding-left:22px}
+  .pg-hist .pagehead .acts .btn{flex:1;justify-content:center}
+  .pg-hist .hs-co{width:100%}
+  .pg-hist .hs-earlier{height:40px;flex:1;justify-content:center}
+  .pg-hist .db{padding:22px 20px}
+  .pg-hist .hs-mv .pixel{font-size:36px}
 }

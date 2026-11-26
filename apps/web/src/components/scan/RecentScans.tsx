@@ -17,6 +17,7 @@ interface Row {
   where: string;
   when: string;
   score: ScoreView;
+  scanning: boolean;
   href: string;
 }
 
@@ -34,6 +35,7 @@ export function useRecentRows(): Row[] | null {
       where: countryShort(root.incorporationCountry),
       when: overview?.scannedAt ? whenWords(overview.scannedAt) : 'Not scanned yet',
       score: overview?.score ?? { kind: 'none' },
+      scanning: false,
       href: session.hasResult ? '/' : '/onboarding/questions',
     });
   }
@@ -41,10 +43,11 @@ export function useRecentRows(): Row[] | null {
     rows.push({
       key: item.companyId,
       name: item.legalName,
-      sub: item.scanInProgress ? 'Watchlist · scanning now' : 'Watchlist',
+      sub: 'Watchlist',
       where: countryShort(item.incorporationCountry),
       when: item.lastScannedAt ? whenWords(item.lastScannedAt) : 'Not scanned yet',
       score: item.score,
+      scanning: item.scanInProgress,
       href: `/watchlist/${item.companyId}`,
     });
   }
@@ -63,9 +66,9 @@ export function RecentScans({ rows, i = 1 }: { rows: Row[]; i?: number }) {
         <thead>
           <tr>
             <th>Company</th>
-            <th>Where</th>
-            <th>Last scan</th>
-            <th style={{ textAlign: 'right' }}>Score</th>
+            <th className="c-wh">Where</th>
+            <th className="c-ls">Last scan</th>
+            <th className="c-sc">Score</th>
           </tr>
         </thead>
         <tbody className="rows-in">
@@ -75,13 +78,20 @@ export function RecentScans({ rows, i = 1 }: { rows: Row[]; i?: number }) {
               <tr key={row.key} style={{ '--r': index } as CSSProperties} onClick={() => router.push(row.href)}>
                 <td>
                   <TLink href={row.href} onClick={(event) => event.stopPropagation()}>
-                    <b>{row.name}</b>
+                    <b title={row.name}>{row.name}</b>
                   </TLink>
                   <small>{row.sub}</small>
                 </td>
                 <td className="src2">{row.where}</td>
                 <td className="src2">{row.when}</td>
-                <td className={`pixel sc${low ? ' low' : ''}`}>{scoreText(row.score)}</td>
+                {row.score.kind === 'none' ? (
+                  <td className="sc nil">
+                    {row.scanning ? <span className="live" aria-hidden="true" /> : null}
+                    {row.scanning ? 'Scanning' : 'No score yet'}
+                  </td>
+                ) : (
+                  <td className={`pixel sc${low ? ' low' : ''}`}>{scoreText(row.score)}</td>
+                )}
               </tr>
             );
           })}

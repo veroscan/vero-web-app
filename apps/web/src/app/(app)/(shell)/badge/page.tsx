@@ -3,9 +3,8 @@
 import '@/app/styles/pages/share.css';
 import type { BadgeStatusResponse, OverviewResponse, ShareLink } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState, type CSSProperties } from 'react';
+import { Suspense, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ErrorState, Loading, PlanLink } from '@/components/Bits';
-import { CopyLink } from '@/components/CopyLink';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
@@ -14,15 +13,110 @@ import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { entitlementsOf, roleCan } from '@/lib/entitlements';
-import { coverageWords, longDate, scoreWords, shortDate } from '@/lib/format';
+import { coverageWords, longDate, plural, scoreWords, shortDate } from '@/lib/format';
 import { badgeRows, earnedBadge, shareUrl, verifiedUrl } from '@/lib/trust';
 import { useResource } from '@/lib/useResource';
 
 const LINK_DAYS = [7, 30, 90] as const;
 const TONE_COLOUR: Readonly<Record<string, string>> = { good: 'var(--good)', watch: 'var(--warn)', risk: 'var(--urgent)', none: 'var(--ink-3)' };
 
+const ENDED_SHOWN = 5;
+
 function daysLeft(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+}
+
+function leftWords(iso: string): string {
+  const days = daysLeft(iso);
+  if (days <= 1) return days === 0 ? 'ends today' : 'ends tomorrow';
+  return `in ${plural(days, 'day', 'days')}`;
+}
+
+/** Something to copy and keep. The button itself says it worked, and the text stays selectable if the browser refuses. */
+function CopyRow({ text, note, testId, what = 'link' }: { text: string; note: ReactNode; testId?: string; what?: string }) {
+  const toast = useToast();
+  const id = useId();
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const timer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    [],
+  );
+  const copy = async () => {
+    let worked = true;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(what === 'link' ? 'Link copied.' : 'Copied.');
+    } catch {
+      worked = false;
+    }
+    setState(worked ? 'copied' : 'failed');
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setState('idle'), worked ? 2400 : 6000);
+  };
+  return (
+    <div className="copylink" data-testid={testId}>
+      <label htmlFor={id}>{note}</label>
+      <div className="copyrow">
+        <input className="input" id={id} type="text" readOnly value={text} onFocus={(event) => event.target.select()} />
+        <button className={`btn btn-sm cp${state === 'copied' ? ' ok' : ''}`} type="button" onClick={() => void copy()}>
+          <Icon name={state === 'copied' ? 'check' : 'copy'} />
+          {state === 'copied' ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      {state === 'failed' ? (
+        <span className="cpsay" role="alert">
+          We couldn&apos;t copy it. Select the {what} and copy it yourself.
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A button that asks before it does something that can't be taken back. The question opens in place,
+ * focus lands on the safe answer, Escape backs out, and focus returns to the button that asked.
+ */
+function Confirm({ label, question, yes, no, busy, onYes, triggerClass, yesClass, noClass, testId, yesTestId }: { label: string; question: string; yes: string; no: string; busy: boolean; onYes: () => void; triggerClass: string; yesClass: string; noClass?: string; testId?: string; yesTestId?: string }) {
+  const [asking, setAsking] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const safe = useRef<HTMLButtonElement>(null);
+  const was = useRef(false);
+  useEffect(() => {
+    if (asking) safe.current?.focus();
+    else if (was.current) trigger.current?.focus();
+    was.current = asking;
+  }, [asking]);
+  if (!asking) {
+    return (
+      <button ref={trigger} className={triggerClass} type="button" data-testid={testId} onClick={() => setAsking(true)}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <span
+      className="cf"
+      role="group"
+      aria-label={question}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !busy) {
+          event.stopPropagation();
+          setAsking(false);
+        }
+      }}
+    >
+      <span className="cfq">{question}</span>
+      <button className={yesClass} type="button" disabled={busy} data-testid={yesTestId} onClick={onYes}>
+        {busy ? 'Withdrawing' : yes}
+      </button>
+      <button ref={safe} className={noClass} type="button" disabled={busy} onClick={() => setAsking(false)}>
+        {no}
+      </button>
+    </span>
+  );
 }
 
 /** What a viewer of the public page gets. Fixed by the API: a summary and counts, never documents. */
@@ -136,7 +230,7 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
           </button>
         ))}
       </div>
-      {fresh ? <CopyLink testId="share-fresh" url={fresh} note="Copy it now. We only show a link once, because we keep just a scrambled copy of it." /> : null}
+      {fresh ? <CopyRow testId="share-fresh" text={fresh} note="Your new link. Copy it now: we only show a link once, because we keep just a scrambled copy of it." /> : null}
       {problem ? (
         <p className="probl" role="alert">
           {problem}
@@ -146,7 +240,7 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
       {canMake ? (
         <button className="btn" type="button" disabled={busy} onClick={() => void create()}>
           <Icon name="link" />
-          {busy ? 'Making the link' : 'Make a public link'}
+          {busy ? 'Making the link' : fresh ? 'Make another link' : 'Make a public link'}
         </button>
       ) : (
         <p className="sum" data-testid="share-no-permission">
@@ -159,11 +253,11 @@ function NewLink({ companyId, canMake, onMade }: { companyId: string; canMake: b
 
 function Links({ links, loading, error, canManage, onChanged }: { links: ShareLink[]; loading: boolean; error: string | null; canManage: boolean; onChanged: () => void }) {
   const toast = useToast();
-  const [asking, setAsking] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const live = links.filter((link) => link.active);
-  const ended = links.filter((link) => !link.active).slice(0, 5);
+  const allEnded = links.filter((link) => !link.active);
+  const ended = allEnded.slice(0, ENDED_SHOWN);
 
   const revoke = async (link: ShareLink) => {
     setBusy(true);
@@ -171,7 +265,6 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
     try {
       await api.shares.revoke({ params: { shareId: link.id } });
       toast('Link withdrawn. It no longer opens.');
-      setAsking(null);
       onChanged();
     } catch (failure) {
       setProblem(asApiError(failure).message);
@@ -196,9 +289,13 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
         </p>
       ) : null}
       {live.length === 0 && ended.length === 0 ? (
-        loading ? null : (
+        loading ? (
+          <p className="none2" role="status">
+            Getting your links
+          </p>
+        ) : error ? null : (
           <p className="none2" data-testid="share-none">
-            No links are open.
+            No links are open. Make one above and it shows here, with the day it stops opening.
           </p>
         )
       ) : (
@@ -222,14 +319,18 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
                   <small>Shown once when it was made</small>
                 </td>
                 <td className="who">Anyone with the link</td>
-                <td className="muted">{longDate(link.createdAt)}</td>
-                <td>
+                <td className="muted made">
+                  <span className="ph2">Made </span>
+                  {longDate(link.createdAt)}
+                </td>
+                <td className="until">
                   {link.active ? (
                     <>
                       <span className="st2" style={{ color: 'var(--ink)' }}>
+                        <span className="ph2">Open until </span>
                         {shortDate(link.expiresAt)}
                       </span>
-                      <small className="muted in">in {daysLeft(link.expiresAt)} days</small>
+                      <small className="muted in">{leftWords(link.expiresAt)}</small>
                     </>
                   ) : (
                     <span className="st2" style={{ color: 'var(--ink-3)' }}>
@@ -237,23 +338,10 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
                     </span>
                   )}
                 </td>
-                <td>
+                <td className="acts3">
                   {link.active && canManage ? (
                     <div className="ac">
-                      {asking === link.id ? (
-                        <>
-                          <button className="rv" type="button" disabled={busy} onClick={() => void revoke(link)}>
-                            Yes, withdraw it
-                          </button>
-                          <button type="button" onClick={() => setAsking(null)}>
-                            Keep it
-                          </button>
-                        </>
-                      ) : (
-                        <button className="rv" type="button" onClick={() => setAsking(link.id)}>
-                          Withdraw
-                        </button>
-                      )}
+                      <Confirm label="Withdraw" question="Withdraw this link? It stops opening for everyone." yes="Yes, withdraw it" no="Keep it" busy={busy} onYes={() => void revoke(link)} triggerClass="wd" yesClass="wd" />
                     </div>
                   ) : null}
                 </td>
@@ -262,7 +350,10 @@ function Links({ links, loading, error, canManage, onChanged }: { links: ShareLi
           </tbody>
         </table>
       )}
-      <p className="foot3">Vero doesn&apos;t count views of a link yet, and keeps no record of who opened it.</p>
+      <p className="foot3">
+        {allEnded.length > ENDED_SHOWN ? `Showing the ${ENDED_SHOWN} most recent of ${allEnded.length} ended links. ` : ''}
+        Vero doesn&apos;t count views of a link yet, and keeps no record of who opened it.
+      </p>
     </Reveal>
   );
 }
@@ -284,7 +375,6 @@ function BadgePanel({ status, companyName, companyId, canManage, publicSharing, 
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
   const earned = earnedBadge(status);
   const rows = badgeRows(status);
   const met = rows.filter((row) => row.tone === 'good').length;
@@ -310,7 +400,6 @@ function BadgePanel({ status, companyName, companyId, canManage, publicSharing, 
       await api.badge.revoke({ params: { companyId } });
       toast('Badge withdrawn. Its link no longer opens.');
       setLink(null);
-      setAsking(false);
       onChanged();
     } catch (error) {
       setProblem(asApiError(error).message);
@@ -387,7 +476,17 @@ function BadgePanel({ status, companyName, companyId, canManage, publicSharing, 
               Your last badge ended. It isn&apos;t showing to anyone now.
             </p>
           ) : null}
-          {link ? <CopyLink testId="badge-link" url={link} note="Copy it now. We only show this link once, because we keep just a scrambled copy of it." /> : null}
+          {link ? (
+            <>
+              <CopyRow testId="badge-link" text={link} note="Your badge's public page. Copy it now: we only show this link once, because we keep just a scrambled copy of it." />
+              <CopyRow
+                testId="badge-embed"
+                what="code"
+                text={`<a href="${link}" rel="noopener">${companyName ? `${companyName.replace(/[<>&"]/g, '')}: ` : ''}verified by Vero</a>`}
+                note="To show it on your website, paste this where the badge should sit. It is a plain link to the page above: Vero doesn't host a badge image yet."
+              />
+            </>
+          ) : null}
           {earned && !link ? (
             <p className="quiet2" data-testid="badge-link-gone">
               Its link was shown once, when it was issued. To get a new one, issue the badge again.
@@ -402,7 +501,7 @@ function BadgePanel({ status, companyName, companyId, canManage, publicSharing, 
           <div className="btns2">
             {status.eligible && canManage ? (
               <button className={`btn ${earned ? 'btn-g' : 'btn-p'}`} type="button" disabled={busy} data-testid="badge-issue" onClick={() => void issue()}>
-                {earned ? 'Issue it again, with a new link' : 'Issue your badge'}
+                {busy ? 'Working on it' : earned ? 'Issue it again, with a new link' : 'Issue your badge'}
               </button>
             ) : null}
             {!status.eligible && !earned && publicSharing ? (
@@ -416,20 +515,19 @@ function BadgePanel({ status, companyName, companyId, canManage, publicSharing, 
               </TLink>
             ) : null}
             {earned && canManage ? (
-              asking ? (
-                <>
-                  <button className="btn btn-g danger" type="button" disabled={busy} data-testid="badge-revoke-yes" onClick={() => void revoke()}>
-                    Yes, withdraw it
-                  </button>
-                  <button className="btn btn-g" type="button" onClick={() => setAsking(false)}>
-                    Keep it
-                  </button>
-                </>
-              ) : (
-                <button className="btn btn-g" type="button" data-testid="badge-revoke" onClick={() => setAsking(true)}>
-                  Withdraw the badge
-                </button>
-              )
+              <Confirm
+                label="Withdraw the badge"
+                question="Withdraw the badge? Its public page stops opening."
+                yes="Yes, withdraw it"
+                no="Keep it"
+                busy={busy}
+                onYes={() => void revoke()}
+                triggerClass="btn btn-g"
+                yesClass="btn btn-g danger"
+                noClass="btn btn-g"
+                testId="badge-revoke"
+                yesTestId="badge-revoke-yes"
+              />
             ) : null}
           </div>
           {status.eligible && !canManage ? (

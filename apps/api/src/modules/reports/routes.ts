@@ -11,14 +11,16 @@ import {
   type PublicReportResponse,
   type ShareLink,
 } from '@vero/shared';
-import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { schema, type Tx } from '../../db';
 import type { AppDeps } from '../../deps';
 import { AppError, errors } from '../../http/errors';
 import { defineRoute } from '../../http/route';
+import { enforceWriteLimit } from '../../http/write-limit';
 import { hashToken, randomToken } from '../../lib/crypto';
 import { writeAudit } from '../audit/service';
+import { peekSessionUser } from '../auth/session';
 import { planPrices } from '../billing/routes';
 import { isOwned, requireOwned } from '../companies/ownership';
 import { parseInvitationToken } from '../organisations/service';
@@ -184,6 +186,9 @@ function shareDto(row: typeof sharedReport.$inferSelect, now: Date): ShareLink {
   return {
     id: row.id,
     companyId: row.companyId,
+    name: row.name,
+    viewCount: row.viewCount,
+    lastViewedAt: row.lastViewedAt?.toISOString() ?? null,
     expiresAt: row.expiresAt.toISOString(),
     revokedAt: row.revokedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
@@ -342,6 +347,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: AppDeps): void 
           companyId: params.companyId,
           tokenHash: hash,
           summary,
+          name: body.name ?? null,
           createdBy: session.userId,
           expiresAt: new Date(now.getTime() + body.expiresInDays * 86_400_000),
         })
@@ -352,6 +358,16 @@ export function registerReportRoutes(app: FastifyInstance, deps: AppDeps): void 
       return { ...shareDto(row, now), token };
     }),
   );
+
+  defineRoute(app, deps, contract.shares.rename, { auth: 'org', permission: 'sharing.manage' }, async ({ org, session, params, body, meta }) => {
+    await enforceWriteLimit(deps, 'share-rename', session.userId);
+    return deps.db.withOrg(org.organisationId, async (tx) => {
+      const [row] = await tx.update(sharedReport).set({ name: body.name }).where(eq(sharedReport.id, params.shareId)).returning();
+      if (!row) throw errors.notFound('That link');
+      await writeAudit(tx, { organisationId: org.organisationId, actorId: session.userId, action: 'share.renamed', target: row.id, metadata: { named: body.name !== null }, meta });
+      return shareDto(row, deps.now());
+    });
+  });
 
   defineRoute(app, deps, contract.shares.revoke, { auth: 'org', permission: 'sharing.manage' }, async ({ org, session, params, meta }) =>
     deps.db.withOrg(org.organisationId, async (tx) => {
@@ -364,17 +380,26 @@ export function registerReportRoutes(app: FastifyInstance, deps: AppDeps): void 
 
   // ---- Public. No sign-in, rate limited, and one answer for every kind of bad link. ----
 
-  defineRoute(app, deps, contract.public.report, { auth: 'public' }, async ({ params, meta }) => {
+  defineRoute(app, deps, contract.public.report, { auth: 'public' }, async ({ params, meta, request }) => {
     await enforcePublicLimit(deps, meta.ip);
     const parsed = await resolvePublicToken(deps, params.token, 'share');
     if (!parsed) throw linkGone();
+    // Only to tell the link's own team from the public. Nothing about the viewer is kept.
+    const viewer = await peekSessionUser(deps, request);
+    const now = deps.now();
     const row = await deps.db.withOrg(parsed.organisationId, async (tx) => {
       const [found] = await tx.select().from(sharedReport).where(eq(sharedReport.tokenHash, parsed.tokenHash));
-      if (!found) return null;
+      if (!found || found.revokedAt !== null || found.expiresAt <= now) return null;
       // An exact score is a paid feature, so a downgraded organisation's links stop answering.
-      return PLAN_ENTITLEMENTS[await planOf(tx, parsed.organisationId, deps.config)].publicSharing ? found : null;
+      if (!PLAN_ENTITLEMENTS[await planOf(tx, parsed.organisationId, deps.config)].publicSharing) return null;
+      // A public open counts. The team's own preview doesn't.
+      const [member] = viewer ? await tx.select({ id: schema.membership.id }).from(schema.membership).where(eq(schema.membership.userId, viewer)) : [];
+      if (!member) {
+        await tx.update(sharedReport).set({ viewCount: sql`${sharedReport.viewCount} + 1`, lastViewedAt: now }).where(eq(sharedReport.id, found.id));
+      }
+      return found;
     });
-    if (!row || row.revokedAt !== null || row.expiresAt <= deps.now()) throw linkGone();
+    if (!row) throw linkGone();
     // The stored summary still goes through the schema, so nothing else can ever leave.
     return publicReportResponseSchema.parse({ ...(row.summary as object), expiresAt: row.expiresAt.toISOString() });
   });

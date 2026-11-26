@@ -4,16 +4,19 @@ import type { FastifyInstance } from 'fastify';
 import { schema } from '../../db';
 import type { AppDeps } from '../../deps';
 import { defineRoute } from '../../http/route';
+import { enforceWriteLimit } from '../../http/write-limit';
 import {
   completeTotpChallenge,
   confirmTotpEnrolment,
   deleteAccount,
   disableTotp,
   getMe,
+  listSessions,
   logout,
   logoutEverywhere,
   regenerateRecoveryCodes,
   requestMagicLink,
+  revokeSession,
   startTotpEnrolment,
   verifyMagicLink,
 } from './service';
@@ -82,6 +85,14 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AppDeps): void {
       tx.update(schema.user).set(body).where(eq(schema.user.id, session.userId)),
     );
     return getMe(deps, session);
+  });
+
+  defineRoute(app, deps, contract.me.sessions, { auth: 'session' }, async ({ session }) => ({ sessions: await listSessions(deps, session) }));
+
+  defineRoute(app, deps, contract.me.revokeSession, { auth: 'session' }, async ({ session, params, meta }) => {
+    await enforceWriteLimit(deps, 'session-revoke', session.userId);
+    await revokeSession(deps, session, params.sessionId, meta);
+    return { ok: true as const };
   });
 
   defineRoute(app, deps, contract.me.deleteAccount, { auth: 'session' }, async ({ session, body, meta, reply, request }) => {

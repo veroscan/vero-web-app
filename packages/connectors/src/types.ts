@@ -72,7 +72,8 @@ export interface Provenance {
  */
 export type SourceStatus = 'found' | 'not_found' | 'ambiguous' | 'error' | 'unsupported' | 'unavailable' | 'waiting';
 
-export interface Candidate { name: string; identifier?: string }
+/** One possible match. `status` is the company's own status on the register, only when the source's answer includes it. */
+export interface Candidate { name: string; identifier?: string; status?: string }
 
 export interface SourceResult {
   connector: string;

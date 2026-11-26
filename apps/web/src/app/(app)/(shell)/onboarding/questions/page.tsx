@@ -3,7 +3,7 @@
 import '@/app/styles/pages/scan.css';
 import type { QuestionnaireResponse } from '@vero/shared';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
 import { ErrorState, Loading } from '@/components/Bits';
 import { Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
@@ -51,8 +51,18 @@ function Choices({ step, onAnswer }: { step: Step; onAnswer: (value: AnswerValue
   const { field } = step;
   const multi = field.type === 'multi';
   const chosen = Array.isArray(field.value) ? field.value : [];
+  // Up and down move between the answers. Choosing one stays a deliberate Enter or Space, because it moves the screen on.
+  const onKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    const all = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('.op'));
+    const at = all.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    event.preventDefault();
+    const to = event.key === 'Home' ? 0 : event.key === 'End' ? all.length - 1 : (at + (event.key === 'ArrowDown' ? 1 : -1) + all.length) % all.length;
+    all[to]?.focus();
+  };
   return (
-    <div className="opts" role={multi ? 'group' : 'radiogroup'} aria-label={multi ? step.how || step.title : step.title}>
+    <div className="opts" role={multi ? 'group' : 'radiogroup'} aria-label={multi ? step.how || step.title : step.title} onKeyDown={onKey}>
       {optionsOf(step).map((option, index) => {
         const on = multi ? chosen.includes(String(option.value)) : field.value === option.value;
         return (
@@ -76,7 +86,7 @@ function Choices({ step, onAnswer }: { step: Step; onAnswer: (value: AnswerValue
   );
 }
 
-function Typed({ step, onAnswer, onNext }: { step: Step; onAnswer: (value: AnswerValue | null, advance: boolean) => void; onNext: () => void }) {
+function Typed({ step, onAnswer, onNext, saver }: { step: Step; onAnswer: (value: AnswerValue | null, advance: boolean) => void; onNext: () => void; saver: RefObject<(() => boolean) | null> }) {
   const { field } = step;
   const initial = field.value === null || typeof field.value === 'boolean' || Array.isArray(field.value) ? '' : String(field.value);
   const [text, setText] = useState(initial);
@@ -88,6 +98,13 @@ function Typed({ step, onAnswer, onNext }: { step: Step; onAnswer: (value: Answe
     else onAnswer(field.type === 'number' ? Number(trimmed) : trimmed, true);
     return true;
   };
+  // The Continue button under the box saves what was typed as well, so nothing typed is ever dropped.
+  useEffect(() => {
+    saver.current = save;
+    return () => {
+      saver.current = null;
+    };
+  });
   return (
     <form
       className="typed"
@@ -99,8 +116,8 @@ function Typed({ step, onAnswer, onNext }: { step: Step; onAnswer: (value: Answe
       <label className="sr-only" htmlFor={inputId}>
         {step.title}
       </label>
-      <input id={inputId} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} min={field.type === 'number' ? 0 : undefined} inputMode={field.type === 'number' ? 'numeric' : undefined} value={text} autoFocus onChange={(event) => setText(event.target.value)} />
-      <small>Press Enter to save and continue.</small>
+      <input id={inputId} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} min={field.type === 'number' ? 0 : undefined} inputMode={field.type === 'number' ? 'numeric' : undefined} enterKeyHint="next" autoComplete="off" value={text} autoFocus onChange={(event) => setText(event.target.value)} />
+      <small className="kbh">Press Enter to save and continue.</small>
       <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
     </form>
   );
@@ -142,6 +159,10 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
   const [problem, setProblem] = useState<string | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
+  const typedSave = useRef<(() => boolean) | null>(null);
+  const sent = useRef(0);
+  const answerArea = useRef<HTMLDivElement>(null);
+  const moved = useRef(false);
 
   useEffect(() => {
     if (!data) return;
@@ -194,10 +215,16 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
     (value: AnswerValue | null, advance: boolean) => {
       if (!company || !step) return;
       const id = step.field.id;
+      const turn = (sent.current += 1);
+      clearTimeout(advanceTimer.current);
       setBusy(true);
       setProblem(null);
+      // The choice shows at once. The API's answer then replaces it, because one answer can add or hide other questions.
+      if (data) set({ ...data, questions: data.questions.map((question) => ({ ...question, fields: question.fields.map((field) => (field.id === id ? { ...field, value } : field)) })) });
       api.questionnaire.answer({ params: { companyId: company.id }, body: { answers: { [id]: value } } }).then(
         (response) => {
+          // Only the newest answer counts: an older reply arriving late must not undo a later choice.
+          if (turn !== sent.current) return;
           setBusy(false);
           if (advance) {
             latestAdvance.current = () => {
@@ -214,13 +241,32 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
           set(response);
         },
         (error: unknown) => {
+          if (turn !== sent.current) return;
           setBusy(false);
           setProblem(asApiError(error).message);
+          resource.reload();
         },
       );
     },
-    [company, step, set, finish],
+    [company, step, set, finish, data, resource],
   );
+
+  // After the first screen, the keyboard follows to the new question's first answer.
+  const stepId = step?.field.id;
+  useEffect(() => {
+    if (!stepId) return;
+    if (!moved.current) {
+      moved.current = true;
+      return;
+    }
+    answerArea.current?.querySelector<HTMLElement>('.op.on, .op, .typed input')?.focus({ preventScroll: true });
+  }, [stepId]);
+
+  const onContinue = () => {
+    if (busy) return;
+    if (typedSave.current?.()) return;
+    goNext();
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -230,11 +276,11 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
         const optionButtons = document.querySelectorAll<HTMLButtonElement>('[data-step] .op');
         optionButtons[Number(event.key) - 1]?.click();
       }
-      if (event.key === 'Enter' && !target?.closest('a,button')) goNext();
+      if (event.key === 'Enter' && !target?.closest('a,button') && !busy) goNext();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [step, goNext]);
+  }, [step, goNext, busy]);
 
   useEffect(() => {
     if (!session.root) router.replace('/onboarding/company');
@@ -243,7 +289,9 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
   const name = company?.legalName ?? session.root?.legalName ?? 'your company';
   const total = step?.questionTotal ?? 0;
   const hasChoices = step ? ['multi', 'single', 'boolean'].includes(step.field.type) : false;
-  const answeredCount = steps.filter((item) => item.field.value !== null).length;
+  // An honest guess at the time: a few seconds a screen, never less than a minute.
+  const minutes = Math.max(1, Math.round((steps.length * 5) / 60));
+  const timeWords = minutes === 1 ? 'about a minute' : `about ${minutes} minutes`;
   const groups = steps.reduce<Step[][]>((list, item) => {
     const last = list[list.length - 1];
     if (last && last[0]?.question.id === item.question.id) last.push(item);
@@ -263,7 +311,7 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
               <Words text={`A few questions about ${name}`} />
             </h1>
             <div className="meta">
-              <span>{total > 0 ? `${total} ${total === 1 ? 'question' : 'questions'}, about a minute` : 'About a minute'}</span>
+              <span>{total > 0 ? `${total} ${total === 1 ? 'question' : 'questions'}, ${timeWords}` : 'A few questions'}</span>
               <span>Your answers decide which checks run</span>
             </div>
           </div>
@@ -299,8 +347,8 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
                 </div>
               </div>
             </div>
-            <div data-step="" data-field={step.field.id} key={`a-${step.field.id}`}>
-              {hasChoices ? <Choices step={step} onAnswer={answer} /> : <Typed step={step} onAnswer={answer} onNext={goNext} />}
+            <div data-step="" data-field={step.field.id} key={`a-${step.field.id}`} ref={answerArea}>
+              {hasChoices ? <Choices step={step} onAnswer={answer} /> : <Typed step={step} onAnswer={answer} onNext={goNext} saver={typedSave} />}
               {problem ? (
                 <p className="qerr" role="alert">
                   {problem}
@@ -313,7 +361,7 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
                 <button className="skip" type="button" onClick={goNext}>
                   Not sure, skip this one
                 </button>
-                <button className="btn btn-p" type="button" disabled={busy} aria-disabled={busy || undefined} onClick={goNext} data-testid="q-continue">
+                <button className="btn btn-p" type="button" aria-busy={busy || undefined} onClick={onContinue} data-testid="q-continue">
                   {isLast ? (session.hasResult && params.get('added') !== '1' ? 'Save answers' : 'Start the scan') : 'Continue'}
                 </button>
               </div>
@@ -342,7 +390,7 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
             <div className="mh">
               <h2>Your answers</h2>
               <span className="sub">
-                {answeredCount} of {steps.length} answers given. Change any of them later in Settings, and Vero re-runs the checks they affect.
+                {groups.filter((group) => group.some((item) => item.field.value !== null)).length} of {groups.length} questions answered. Change any of them later in Settings, and Vero re-runs the checks they affect.
               </span>
             </div>
             <table style={{ marginTop: 12 }}>
@@ -366,13 +414,16 @@ function QuestionFlow({ companyId }: { companyId: string | null }) {
                       className={`${current ? 'cur' : ''}${answered.length > 0 ? ' got' : ''}`}
                       style={{ '--r': at } as CSSProperties}
                       onClick={() => {
+                        setProblem(null);
                         setCurrentId(target.field.id);
                         window.scrollTo({ top: 0, behavior: prefersCalm() ? 'auto' : 'smooth' });
                       }}
                     >
                       <td className="n">{first.questionIndex}</td>
                       <td>
-                        <b>{first.question.title}</b>
+                        <button className="qlink" type="button" aria-current={current ? 'step' : undefined} aria-label={`${first.question.title}, ${words ? 'change the answer' : 'answer it'}`}>
+                          {first.question.title}
+                        </button>
                       </td>
                       <td className={`a${words ? '' : ' none'}`}>{words ?? 'Not answered yet'}</td>
                     </tr>

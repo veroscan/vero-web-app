@@ -49,6 +49,8 @@ export const registryCandidateSchema = z.object({
   entityType: z.string().nullable(),
   incorporatedOn: z.string().nullable(),
   matchConfidence: z.number().min(0).max(1),
+  /** The company's status on the register ("Active", "Dissolved"), when the source returns it. Otherwise null. Always sent. */
+  status: z.string().nullable().optional(),
 });
 
 export const registrySearchResponseSchema = z.object({
@@ -132,7 +134,7 @@ export const attestationResponseSchema = z.object({ key: z.string(), value: z.bo
 
 // ---- Scans ----
 
-export const SCAN_STATUSES = ['queued', 'running', 'partial', 'completed', 'failed'] as const;
+export const SCAN_STATUSES = ['queued', 'running', 'partial', 'completed', 'failed', 'cancelled'] as const;
 export const SOURCE_STATES = ['waiting', 'found', 'not_found', 'ambiguous', 'error', 'unsupported', 'unavailable'] as const;
 
 export const scanSourceSchema = z.object({
@@ -149,6 +151,21 @@ export const scanSourceSchema = z.object({
   sampleData: z.boolean(),
 });
 export type ScanSource = z.infer<typeof scanSourceSchema>;
+
+/**
+ * How far a scan has got, from what has really happened. A step is one source asked: answered or
+ * down both count as done. The estimate comes only from how long this company's earlier full
+ * scans really took, and is null until there are enough of them (and once the scan has stopped).
+ */
+export const scanProgressSchema = z.object({
+  stepsDone: z.number().int().min(0),
+  stepsTotal: z.number().int().min(0),
+  /** Seconds left, never below zero. Null when we have no real past durations to base it on. */
+  etaSeconds: z.number().int().min(0).nullable(),
+  /** How many earlier scans the estimate rests on. Null with no estimate. */
+  etaBasedOnScans: z.number().int().min(1).nullable(),
+});
+export type ScanProgress = z.infer<typeof scanProgressSchema>;
 
 export const scanSchema = z.object({
   id: uuidSchema,
@@ -167,6 +184,10 @@ export const scanSchema = z.object({
   rulePackVersions: z.record(z.string(), z.string()),
   /** How long to wait before asking again. Zero once the scan has finished. */
   pollAfterMs: z.number().int(),
+  /** Steps done of total, and an estimate only when real past durations allow one. Always sent. */
+  progress: scanProgressSchema.optional(),
+  /** When it was cancelled, or null. A cancelled scan has no score. Always sent. */
+  cancelledAt: isoDateTimeSchema.nullable().optional(),
 });
 export type Scan = z.infer<typeof scanSchema>;
 
@@ -310,7 +331,23 @@ export type IssueListResponse = z.infer<typeof issueListResponseSchema>;
 
 export const companyIssueParamsSchema = z.object({ companyId: uuidSchema, ruleKey: ruleKeySchema });
 
+export const ISSUE_ACTIVITY_KINDS = ['opened', 'document_added', 'declared_missing', 'declaration_withdrawn', 'cleared', 'reopened'] as const;
+
+export const issueActivitySchema = z.object({
+  kind: z.enum(ISSUE_ACTIVITY_KINDS),
+  at: isoDateTimeSchema,
+  /** One plain sentence for the log. */
+  text: z.string(),
+  /** The scan behind an opened, cleared or reopened entry. Null for the others. */
+  scanId: uuidSchema.nullable(),
+});
+export type IssueActivity = z.infer<typeof issueActivitySchema>;
+
 export const issueDetailSchema = issueSummarySchema.extend({
+  /** When this issue's newest result was worked out (the scan that produced it finished). Null if unknown. Always sent. */
+  lastCheckedAt: isoDateTimeSchema.nullable().optional(),
+  /** What has happened to this issue, newest first. Built from real scans, documents and statements; empty means nothing yet. Always sent. */
+  activity: z.array(issueActivitySchema).optional(),
   missing: z.string(),
   why: z.string(),
   ifLeft: z.string(),
@@ -382,6 +419,53 @@ export type ProjectionResponse = z.infer<typeof projectionResponseSchema>;
 
 export const deadlineStateSchema = z.enum(['overdue', 'due_soon', 'upcoming', 'done']);
 
+/** The reminders used when an organisation hasn't chosen its own: 30, 7 and 1 days before. */
+export const STANDARD_REMINDER_DAYS = [30, 7, 1] as const;
+export const REMINDER_DAYS_MAX = 365;
+export const REMINDER_DAYS_LIMIT = 6;
+
+/** Days before the due date. 0 is the day itself. Sorted largest first, repeats removed. An empty list means no reminders. */
+export const reminderLeadDaysSchema = z
+  .array(
+    z
+      .number({ error: 'Each reminder is a number of days.' })
+      .int({ error: 'Each reminder is a whole number of days.' })
+      .min(0, { error: "A reminder can't be after the date." })
+      .max(REMINDER_DAYS_MAX, { error: 'A reminder can be up to 365 days before.' }),
+    { error: 'Choose when to be reminded.' },
+  )
+  .max(REMINDER_DAYS_LIMIT * 4, { error: 'That is too many reminders.' })
+  .transform((days) => [...new Set(days)].sort((a, b) => b - a))
+  .refine((days) => days.length <= REMINDER_DAYS_LIMIT, { error: 'Choose up to 6 reminders.' });
+
+export const deadlineRemindersSchema = z.object({
+  leadDays: z.array(z.number().int()),
+  /** Whose choice this is: this date's own, the organisation's default, or the standard 30, 7 and 1 days. */
+  source: z.enum(['deadline', 'organisation', 'standard']),
+  /** The date of the next reminder still to come, or null when there is none (or it is done). */
+  nextReminderOn: z.string().nullable(),
+});
+export type DeadlineReminders = z.infer<typeof deadlineRemindersSchema>;
+
+export const reminderDefaultsResponseSchema = z.object({
+  leadDays: z.array(z.number().int()),
+  /** "organisation" once someone has chosen; "standard" until then. */
+  source: z.enum(['organisation', 'standard']),
+  standardLeadDays: z.array(z.number().int()),
+  /** Where reminders go. In the app always; by email to each person who hasn't switched deadline emails off. */
+  channels: z.array(z.enum(['in_app', 'email'])),
+});
+export type ReminderDefaultsResponse = z.infer<typeof reminderDefaultsResponseSchema>;
+
+export const setReminderDefaultsBodySchema = z.object({
+  /** null goes back to the standard 30, 7 and 1 days. */
+  leadDays: reminderLeadDaysSchema.nullable(),
+});
+export const setDeadlineRemindersBodySchema = z.object({
+  /** null goes back to the organisation's default. */
+  leadDays: reminderLeadDaysSchema.nullable(),
+});
+
 export const deadlineSchema = z.object({
   id: uuidSchema,
   companyId: uuidSchema,
@@ -398,6 +482,15 @@ export const deadlineSchema = z.object({
   basis: z.string().nullable(),
   /** The date rests on a rule whose content hasn't been reviewed yet. */
   needsReview: z.boolean(),
+  /**
+   * When reminders go out for this date. Null when none are sent: a company this team only
+   * follows. Always sent.
+   */
+  reminders: deadlineRemindersSchema.nullable().optional(),
+  /** When this was last filed, only where the register itself holds that date. Otherwise null. Always sent. */
+  lastFiledOn: z.string().nullable().optional(),
+  /** What that date is and who says so, in plain words. Null with no date. Always sent. */
+  lastFiledNote: z.string().nullable().optional(),
 });
 export type Deadline = z.infer<typeof deadlineSchema>;
 
@@ -452,6 +545,34 @@ export const companyRecordsResponseSchema = z.object({
 });
 export type CompanyRecordsResponse = z.infer<typeof companyRecordsResponseSchema>;
 
+export const registryChangeSchema = z.object({
+  id: z.string(),
+  /** The scan that found the change. */
+  scanId: uuidSchema,
+  /** The fact that changed, such as registry.uk.companies_house.status. */
+  field: z.string(),
+  /** The field in words, such as "Status". */
+  label: z.string(),
+  /** Null when the field wasn't there before, or when the detail is withheld. */
+  oldValue: z.string().nullable(),
+  newValue: z.string().nullable(),
+  /** A field that holds people's names: we record that it changed, never the names. */
+  detailWithheld: z.boolean(),
+  changedAt: isoDateTimeSchema,
+  /** Who said so, in words. Null for changes recorded before sources were kept. */
+  source: z.string().nullable(),
+  sampleData: z.boolean(),
+});
+export type RegistryChange = z.infer<typeof registryChangeSchema>;
+
+export const companyRecordChangesResponseSchema = z.object({
+  companyId: uuidSchema,
+  /** Newest first. Empty until a scan finds the register differs from the scan before. */
+  changes: z.array(registryChangeSchema),
+  sampleData: z.boolean(),
+});
+export type CompanyRecordChangesResponse = z.infer<typeof companyRecordChangesResponseSchema>;
+
 // ---- Badge and shared report ----
 
 export const badgeStatusResponseSchema = z.object({
@@ -500,6 +621,12 @@ export const publicBadgeResponseSchema = z.object({
 });
 export type PublicBadgeResponse = z.infer<typeof publicBadgeResponseSchema>;
 
+export const shareNameSchema = z
+  .string({ error: 'Enter a name for the link.' })
+  .trim()
+  .min(1, { error: 'Enter a name for the link, or leave it out.' })
+  .max(80, { error: 'That name is too long. Keep it under 80 characters.' });
+
 export const createShareBodySchema = z.object({
   expiresInDays: z
     .number({ error: 'Choose how many days the link lasts.' })
@@ -507,10 +634,23 @@ export const createShareBodySchema = z.object({
     .min(1, { error: 'A link lasts at least one day.' })
     .max(90, { error: 'A link can last up to 90 days.' })
     .default(30),
+  /** Optional, so a team can tell its links apart. */
+  name: shareNameSchema.optional(),
 });
+/** null takes the name away. */
+export const renameShareBodySchema = z.object({ name: shareNameSchema.nullable() });
 export const shareLinkSchema = z.object({
   id: uuidSchema,
   companyId: uuidSchema,
+  /** The name the team gave it, or null. Always sent. */
+  name: z.string().nullable().optional(),
+  /**
+   * How many times the public link has been opened. Opens by people signed in to the
+   * organisation that made it aren't counted, and nothing about a viewer is kept. Always sent.
+   */
+  viewCount: z.number().int().min(0).optional(),
+  /** When it was last opened, or null if it never has been. Always sent. */
+  lastViewedAt: isoDateTimeSchema.nullable().optional(),
   expiresAt: isoDateTimeSchema,
   revokedAt: isoDateTimeSchema.nullable(),
   createdAt: isoDateTimeSchema,

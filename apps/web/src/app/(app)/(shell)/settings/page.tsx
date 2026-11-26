@@ -2,16 +2,18 @@
 
 import '@/app/styles/pages/settings.css';
 import { type Invitation, type Member, type Role, type TotpEnrolResponse } from '@vero/shared';
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { Icon } from '@/components/Icon';
 import { Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
+import { Select } from '@/components/Select';
 import { After, Hero, useWatchlist } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { useToast } from '@/components/Toast';
 import { api, asApiError } from '@/lib/api';
 import { entitlementsOf, planNameOf, roleCan } from '@/lib/entitlements';
 import { longDate } from '@/lib/format';
+import { softly } from '@/lib/motion';
 import { countryLong } from '@/lib/records';
 import { ROLE_WORDS } from '@/lib/trust';
 import { useResource } from '@/lib/useResource';
@@ -22,6 +24,50 @@ function FormProblem({ message }: { message: string | null }) {
     <p className="formerror" role="alert">
       {message}
     </p>
+  );
+}
+
+/**
+ * A button that asks before it does something that can't be taken back. The question opens in place,
+ * focus lands on the safe answer, Escape backs out, and focus returns to the button that asked.
+ */
+function Confirm({ label, question, yes, no, busyWord, busy, onYes, triggerClass, yesClass, noClass, testId, yesTestId }: { label: string; question: string; yes: string; no: string; busyWord: string; busy: boolean; onYes: () => void; triggerClass?: string; yesClass?: string; noClass?: string; testId?: string; yesTestId?: string }) {
+  const [asking, setAsking] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const safe = useRef<HTMLButtonElement>(null);
+  const was = useRef(false);
+  useEffect(() => {
+    if (asking) safe.current?.focus();
+    else if (was.current) trigger.current?.focus();
+    was.current = asking;
+  }, [asking]);
+  if (!asking) {
+    return (
+      <button ref={trigger} className={triggerClass} type="button" data-testid={testId} onClick={() => setAsking(true)}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <span
+      className="cf"
+      role="group"
+      aria-label={question}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !busy) {
+          event.stopPropagation();
+          setAsking(false);
+        }
+      }}
+    >
+      <span className="cfq">{question}</span>
+      <button className={yesClass} type="button" disabled={busy} data-testid={yesTestId} onClick={onYes}>
+        {busy ? busyWord : yes}
+      </button>
+      <button ref={safe} className={noClass} type="button" disabled={busy} onClick={() => setAsking(false)}>
+        {no}
+      </button>
+    </span>
   );
 }
 
@@ -80,6 +126,14 @@ function Companies() {
   );
 }
 
+/** What each role can do, in a line. From the permissions the API enforces. */
+const ROLE_HINTS: Record<Role, string> = {
+  owner: 'Everything, including billing and other owners',
+  admin: 'Manages the team, sharing and scans',
+  member: 'Uploads documents and runs scans',
+  lawyer: 'Sees findings and reports, changes nothing',
+};
+
 function roleChoices(canOwn: boolean): Role[] {
   return canOwn ? ['owner', 'admin', 'member', 'lawyer'] : ['admin', 'member', 'lawyer'];
 }
@@ -87,7 +141,6 @@ function roleChoices(canOwn: boolean): Role[] {
 function MemberRow({ member, isYou, soleOwner, canManage, canOwn, onChanged }: { member: Member; isYou: boolean; soleOwner: boolean; canManage: boolean; canOwn: boolean; onChanged: () => void }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const [asking, setAsking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const name = member.name ?? member.email;
   const touchable = canManage && !isYou && (member.role !== 'owner' || canOwn);
@@ -96,7 +149,10 @@ function MemberRow({ member, isYou, soleOwner, canManage, canOwn, onChanged }: {
     setBusy(true);
     setProblem(null);
     try {
-      await api.members.update({ params: { userId: member.userId }, body: { role } });
+      await api.members.update({
+        params: { userId: member.userId },
+        body: { role },
+      });
       toast(`${name} is now ${ROLE_WORDS[role].toLowerCase()}.`);
       onChanged();
     } catch (error) {
@@ -124,7 +180,7 @@ function MemberRow({ member, isYou, soleOwner, canManage, canOwn, onChanged }: {
 
   return (
     <tr data-testid="member-row" data-email={member.email}>
-      <td>
+      <td className="who3">
         <div className="mbr">
           <span className="av3" aria-hidden="true">
             {initialsOf(name)}
@@ -144,39 +200,41 @@ function MemberRow({ member, isYou, soleOwner, canManage, canOwn, onChanged }: {
             <label className="sr-only" htmlFor={`role-${member.userId}`}>
               Role for {name}
             </label>
-            <select className="input roleselect" id={`role-${member.userId}`} value={member.role} disabled={busy} onChange={(event) => void change(event.target.value as Role)}>
-              {roleChoices(canOwn).map((role) => (
-                <option key={role} value={role}>
-                  {ROLE_WORDS[role]}
-                </option>
-              ))}
-            </select>
+            <Select
+              className="roleselect"
+              id={`role-${member.userId}`}
+              ariaLabel={`Role for ${name}`}
+              value={member.role}
+              disabled={busy}
+              onChange={(next) => void change(next as Role)}
+              options={roleChoices(canOwn).map((role) => ({
+                value: role,
+                label: ROLE_WORDS[role],
+                hint: ROLE_HINTS[role],
+              }))}
+            />
           </>
         ) : (
           ROLE_WORDS[member.role]
         )}
       </td>
-      <td className="muted">Joined {longDate(member.joinedAt)}</td>
+      <td className="muted since">Joined {longDate(member.joinedAt)}</td>
       <td className="ac">
         {soleOwner ? (
           <span className="note2" data-testid="sole-owner-note">
             To leave, make someone else an owner first.
           </span>
         ) : touchable || isYou ? (
-          asking ? (
-            <>
-              <button className="danger2" type="button" disabled={busy} onClick={() => void remove()}>
-                {isYou ? 'Yes, leave' : 'Yes, remove'}
-              </button>
-              <button type="button" disabled={busy} onClick={() => setAsking(false)}>
-                Keep
-              </button>
-            </>
-          ) : (
-            <button type="button" onClick={() => setAsking(true)}>
-              {isYou ? 'Leave' : 'Remove'}
-            </button>
-          )
+          <Confirm
+            label={isYou ? 'Leave' : 'Remove'}
+            question={isYou ? 'Leave this workspace? You lose access straight away.' : `Remove ${name}? They lose access straight away.`}
+            yes={isYou ? 'Yes, leave' : 'Yes, remove'}
+            no={isYou ? 'Stay' : 'Keep'}
+            busyWord={isYou ? 'Leaving' : 'Removing'}
+            busy={busy}
+            onYes={() => void remove()}
+            yesClass="danger2"
+          />
         ) : null}
         <FormProblem message={problem} />
       </td>
@@ -209,18 +267,21 @@ function InviteForm({ canOwn, onSent, onClose }: { canOwn: boolean; onSent: () =
     <form className="inv" id="invite" data-testid="invite-form" onSubmit={(event) => void submit(event)}>
       <div className="field">
         <label htmlFor="invite-mail">Their work email</label>
-        <input className="input" id="invite-mail" type="email" required autoComplete="off" value={email} onChange={(event) => setEmail(event.target.value)} />
+        <input className="input" id="invite-mail" type="email" required autoComplete="off" autoFocus placeholder="name@company.example" value={email} onChange={(event) => setEmail(event.target.value)} />
         <small>We&apos;ll email them a link to join. It lasts 7 days.</small>
       </div>
       <div className="field">
         <label htmlFor="invite-role">What they can do</label>
-        <select className="input" id="invite-role" value={role} onChange={(event) => setRole(event.target.value as Role)}>
-          {roleChoices(canOwn).map((choice) => (
-            <option key={choice} value={choice}>
-              {ROLE_WORDS[choice]}
-            </option>
-          ))}
-        </select>
+        <Select
+          id="invite-role"
+          value={role}
+          onChange={(next) => setRole(next as Role)}
+          options={roleChoices(canOwn).map((choice) => ({
+            value: choice,
+            label: ROLE_WORDS[choice],
+            hint: ROLE_HINTS[choice],
+          }))}
+        />
       </div>
       <div className="invbtns">
         <button className="btn btn-p" type="submit" disabled={busy || email.trim().length === 0}>
@@ -253,7 +314,7 @@ function PendingRow({ invitation, onChanged }: { invitation: Invitation; onChang
   };
   return (
     <tr data-testid="pending-row" data-email={invitation.email}>
-      <td>
+      <td className="who3">
         <div className="mbr">
           <span className="av3" aria-hidden="true">
             <Icon name="mail" />
@@ -265,15 +326,13 @@ function PendingRow({ invitation, onChanged }: { invitation: Invitation; onChang
         </div>
       </td>
       <td className="rl">{ROLE_WORDS[invitation.role]}</td>
-      <td>
+      <td className="since">
         <span className="st2" style={{ color: 'var(--warn)' }}>
           Invite sent
         </span>
       </td>
       <td className="ac">
-        <button type="button" disabled={busy} onClick={() => void revoke()}>
-          Withdraw
-        </button>
+        <Confirm label="Withdraw" question="Withdraw this invite? Its link stops working." yes="Yes, withdraw" no="Keep" busyWord="Withdrawing" busy={busy} onYes={() => void revoke()} yesClass="danger2" />
         <FormProblem message={problem} />
       </td>
     </tr>
@@ -339,9 +398,10 @@ function Team() {
           </table>
         </div>
       ) : (
-        <p className="bd quiet" role="status">
-          Getting your team
-        </p>
+        <div className="tmload" role="status" aria-label="Getting your team">
+          <span />
+          <span />
+        </div>
       )}
       {canInvite ? (
         inviting ? (
@@ -372,7 +432,10 @@ function Team() {
 }
 
 const UPDATE_KINDS = [
-  { title: 'Deadlines approaching', note: '30, 7 and 1 day before a date, and when one passes' },
+  {
+    title: 'Deadlines approaching',
+    note: '30, 7 and 1 day before a date, and when one passes',
+  },
   { title: 'Score changes', note: 'When a score in this workspace moves' },
   { title: 'Team news', note: 'People joining, and changes to roles' },
   { title: 'From Vero', note: 'Anything about your account itself' },
@@ -426,16 +489,23 @@ function Notifications() {
 function Display() {
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
   useEffect(() => {
-    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+    // The switch in the side menu changes the same attribute, so this follows it.
+    const read = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
   }, []);
   const pick = (next: 'light' | 'dark') => {
-    document.documentElement.setAttribute('data-theme', next);
+    if (next === theme) return;
+    softly(() => document.documentElement.setAttribute('data-theme', next));
     setTheme(next);
     try {
       window.localStorage.setItem('vero-theme', next);
     } catch {
       // A private window can refuse. The choice still lasts for this page.
     }
+    window.dispatchEvent(new Event('vero:theme'));
   };
   return (
     <Reveal as="section" className="mod" id="display">
@@ -454,6 +524,12 @@ function Display() {
             <span className="lb2">
               <Icon name={choice === 'light' ? 'sun' : 'moon'} />
               {choice === 'light' ? 'Light' : 'Dark'}
+              {theme === choice ? (
+                <span className="onw">
+                  <Icon name="check" />
+                  In use
+                </span>
+              ) : null}
             </span>
           </button>
         ))}
@@ -521,6 +597,17 @@ function TwoStep() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyKey = async (secret: string) => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2400);
+    } catch {
+      toast("We couldn't copy it. Select the key and copy it yourself.");
+    }
+  };
 
   const start = async () => {
     setBusy(true);
@@ -555,11 +642,34 @@ function TwoStep() {
     <form className="codeform" onSubmit={(event) => void finish(event)}>
       <div className="field">
         <label htmlFor="totp-code">{label}</label>
-        <input className="input" id="totp-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value)} />
+        <input
+          className="input codebox"
+          id="totp-code"
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]{6}"
+          maxLength={6}
+          required
+          autoFocus
+          placeholder="000000"
+          aria-describedby={problem ? 'totp-problem' : undefined}
+          aria-invalid={problem ? true : undefined}
+          value={code}
+          onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && !busy) onCancel();
+          }}
+        />
+        {problem ? (
+          <p className="formerror" id="totp-problem" role="alert">
+            {problem}
+          </p>
+        ) : null}
       </div>
       <div className="invbtns">
         <button className="btn btn-p" type="submit" disabled={busy || code.length !== 6}>
-          {submitLabel}
+          {busy ? 'Checking the code' : submitLabel}
         </button>
         <button className="btn btn-g" type="button" disabled={busy} onClick={onCancel}>
           Cancel
@@ -586,7 +696,7 @@ function TwoStep() {
               </button>
             ) : (
               <button className="btn btn-g" type="button" disabled={busy} onClick={() => void start()}>
-                Set up two-step sign-in
+                {busy ? 'Getting a key' : 'Set up two-step sign-in'}
               </button>
             )
           ) : null}
@@ -594,30 +704,44 @@ function TwoStep() {
       </div>
       {setup ? (
         <div className="panel2" data-testid="two-step-setup">
-          <p>Add this key to your authenticator app. It isn&apos;t on until you enter a code from the app.</p>
-          <p className="totpkey num" data-testid="two-step-secret">
-            {setup.secret}
+          <p>
+            <b>1.</b> Add this key to your authenticator app. Two-step sign-in isn&apos;t on until you enter a code from the app.
           </p>
+          <div className="keyrow">
+            <p className="totpkey num" data-testid="two-step-secret">
+              {setup.secret}
+            </p>
+            <button className={`btn btn-g btn-sm cp${copied ? ' ok' : ''}`} type="button" onClick={() => void copyKey(setup.secret)}>
+              <Icon name={copied ? 'check' : 'copy'} />
+              {copied ? 'Copied' : 'Copy key'}
+            </button>
+          </div>
           <p>
             <a className="link" href={setup.otpauthUri}>
               Open it in an authenticator app on this device
             </a>
           </p>
+          <p>
+            <b>2.</b> Enter the code the app shows.
+          </p>
           {codeForm('The 6-digit code from your app', 'Turn it on', () => {
             setSetup(null);
             setCode('');
+            setProblem(null);
           })}
         </div>
       ) : null}
       {turningOff ? (
         <div className="panel2" data-testid="two-step-off">
+          <p>Turning this off means your email link alone signs you in. Enter a code from your app to confirm it&apos;s you.</p>
           {codeForm('The 6-digit code from your app', 'Turn it off', () => {
             setTurningOff(false);
             setCode('');
+            setProblem(null);
           })}
         </div>
       ) : null}
-      <FormProblem message={problem} />
+      {!setup && !turningOff ? <FormProblem message={problem} /> : null}
     </div>
   );
 }
@@ -638,7 +762,12 @@ function DeleteAccount() {
     setBusy(true);
     setProblem(null);
     try {
-      await api.me.deleteAccount({ body: { confirmEmail: email.trim(), ...(user.mfaEnabled ? { totpCode: code } : {}) } });
+      await api.me.deleteAccount({
+        body: {
+          confirmEmail: email.trim(),
+          ...(user.mfaEnabled ? { totpCode: code } : {}),
+        },
+      });
       window.location.assign('/sign-in');
     } catch (error) {
       setProblem(asApiError(error).message);
@@ -659,18 +788,19 @@ function DeleteAccount() {
       </summary>
       <div className="panel2">
         <p>
-          This deletes your account for good, and you can&apos;t undo it. On any team where you&apos;re the only person, it also deletes that team&apos;s companies, documents, scores and share links. On a team with other people, you just leave, and they keep everything. If you&apos;re the only owner of a team with other people, make
-          someone else an owner first.
+          This deletes your account for good, and you can&apos;t undo it. On any team where you&apos;re the only person, it also deletes that team&apos;s companies, documents, scores and share links. On a team with other people, you just
+          leave, and they keep everything. If you&apos;re the only owner of a team with other people, make someone else an owner first.
         </p>
         <form className="codeform" onSubmit={(event) => void submit(event)}>
           <div className="field">
             <label htmlFor="delete-email">Type your email to confirm: {user.email}</label>
-            <input className="input" id="delete-email" type="email" autoComplete="off" value={email} onChange={(event) => setEmail(event.target.value)} />
+            <input className="input" id="delete-email" type="email" autoComplete="off" spellCheck={false} value={email} onChange={(event) => setEmail(event.target.value)} />
+            {email.trim().length > 0 && !matches ? <small>That doesn&apos;t match your email yet.</small> : null}
           </div>
           {user.mfaEnabled ? (
             <div className="field">
               <label htmlFor="delete-code">The 6-digit code from your app</label>
-              <input className="input" id="delete-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} />
+              <input className="input codebox" id="delete-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} />
             </div>
           ) : null}
           <FormProblem message={problem} />
@@ -739,6 +869,15 @@ function Security() {
   const session = useSession();
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const signOut = () => {
+    setLeaving(true);
+    setProblem(null);
+    session.signOut().catch(() => {
+      setProblem("We couldn't sign you out. Check your connection and try again.");
+      setLeaving(false);
+    });
+  };
   const everywhere = async () => {
     setBusy(true);
     setProblem(null);
@@ -779,9 +918,9 @@ function Security() {
             <small>Signed in on this device</small>
           </div>
           <div className="r">
-            <button className="btn btn-g" type="button" onClick={() => void session.signOut().catch(() => setProblem("We couldn't sign you out. Check your connection and try again."))}>
+            <button className="btn btn-g" type="button" disabled={leaving || busy} onClick={signOut}>
               <Icon name="out" />
-              Sign out
+              {leaving ? 'Signing out' : 'Sign out'}
             </button>
           </div>
         </div>
@@ -791,9 +930,20 @@ function Security() {
             <small>Ends every session on every device, this one too.</small>
           </div>
           <div className="r">
-            <button className="btn btn-g" type="button" disabled={busy} data-testid="sign-out-everywhere" onClick={() => void everywhere()}>
-              Sign out everywhere
-            </button>
+            <Confirm
+              label="Sign out everywhere"
+              question="Sign out on every device, this one too?"
+              yes="Yes, sign out everywhere"
+              no="Stay signed in"
+              busyWord="Signing out"
+              busy={busy}
+              onYes={() => void everywhere()}
+              triggerClass="btn btn-g"
+              yesClass="btn btn-g danger"
+              noClass="btn btn-g"
+              testId="sign-out-everywhere"
+              yesTestId="sign-out-everywhere-yes"
+            />
           </div>
         </div>
         <DeleteAccount />
@@ -853,7 +1003,10 @@ export default function SettingsPage() {
         <div className="pagehead">
           <div>
             <div className="mono kick">
-              <Scramble text="Account" /> · <b><Scramble text="Profile, team, alerts" delay={120} /></b>
+              <Scramble text="Account" /> ·{' '}
+              <b>
+                <Scramble text="Profile, team, alerts" delay={120} />
+              </b>
             </div>
             <h1 className="disp">
               <Words text="Settings" />

@@ -101,3 +101,50 @@
   .pg-documents .docs td,.pg-documents .docs th{padding-left:12px;padding-right:12px}
   .pg-documents .docs td:first-child,.pg-documents .docs th:first-child{padding-left:18px}
 }
+/* polish, 23 Nov: states, keyboard, phone targets */
+
+/* tabs: scroll sideways on a narrow screen, with a soft edge that says there is more */
+.pg-documents .tabsw{position:relative}
+.pg-documents .tabs{scrollbar-width:none;overscroll-behavior-x:contain}
+.pg-documents .tabs::-webkit-scrollbar{display:none}
+.pg-documents .tab{white-space:nowrap;flex:none}
+.pg-documents .tab:focus-visible{outline-offset:-3px}
+@media (max-width:560px){
+  .pg-documents .tabs{padding-right:44px;scroll-padding:0 44px 0 22px}
+  .pg-documents .tab{height:44px}
+  .pg-documents .tabsw::after{content:"";position:absolute;top:0;right:0;bottom:1px;width:48px;pointer-events:none;border-top-right-radius:inherit;background:linear-gradient(90deg,transparent,var(--panel) 72%)}
+}
+/* an empty list says what to do next */
+.pg-documents .emptyrow td{padding:44px 22px;text-align:center;color:var(--ink-3);font-weight:600;font-size:13.5px;line-height:1.55}
+.pg-documents .emptyrow td>b{display:block;font-size:15px;font-weight:700;color:var(--ink)}
+.pg-documents .emptyrow td>span{display:block;max-width:440px;margin:4px auto 0}
+.pg-documents .emptyrow td>.btn{margin-top:16px}
+
+/* the arrow that opens a row's details */
+.pg-documents .tog{width:32px;height:32px;margin-left:6px;border-radius:9px;display:inline-grid;place-items:center;vertical-align:middle;color:var(--ink-3);transition:background .15s,color .15s}
+.pg-documents .tog:hover{background:var(--line);color:var(--ink)}
+.pg-documents .tog .i{width:16px;height:16px;transition:transform .3s var(--ease)}
+.pg-documents tr.f.open .tog .i{transform:rotate(90deg)}
+.pg-documents tr.f.open{background:var(--soft)}
+.pg-documents tr.f.open td{border-bottom-color:transparent}
+.pg-documents .docs .act{width:136px}
+.pg-documents .docs .ft2 b,.pg-documents .wait b{overflow-wrap:anywhere}
+.pg-documents .lnk{transition:color .15s}
+.pg-documents .lnk:focus-visible,.pg-documents .tog:focus-visible{outline-offset:2px}
+.pg-documents a.pap:focus-visible{outline-color:#fff;outline-offset:6px;border-radius:10px}
+.pg-documents .foot2{line-height:1.5;align-items:flex-start}
+.pg-documents .foot2 .i{margin-top:2px}
+@media (max-width:560px){
+  .pg-documents .tog{width:40px;height:40px;margin-left:2px}
+  .pg-documents .bsm{height:40px}
+  .pg-documents .docs .act .lnk,.pg-documents .wait .lnk{display:inline-flex;align-items:center;min-height:40px}
+  .pg-documents .docs .act{width:auto;padding-right:10px}
+  .pg-documents tr.xr td{padding:14px 18px 18px}
+  .pg-documents tr.xr .xl .lnk{min-height:40px;display:inline-flex;align-items:center}
+  .pg-documents .declm .btn-sm,.pg-documents tr.xr .btn-sm{height:40px}
+  .pg-documents .hero .seg a{height:36px}
+}
+@media (prefers-reduced-motion:reduce){
+  .pg-documents .pap,.pg-documents tr.xr .xb{animation:none}
+  .pg-documents .pap svg,.pg-documents .tog .i{transition:none}
+}

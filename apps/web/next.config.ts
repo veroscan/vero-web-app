@@ -24,8 +24,6 @@ const config: NextConfig = {
   transpilePackages: ['@vero/shared'],
   turbopack: { root: repoRoot },
   outputFileTracingRoot: repoRoot,
-  // The route that serves the 3D script reads it from docs/design.
-  outputFileTracingIncludes: { '/vero-3d.js': ['../../docs/design/vero-3d.js'] },
   async rewrites() {
     // Same origin in the browser, so the API's HttpOnly session cookie works.
     return [{ source: '/v1/:path*', destination: `${apiOrigin}/v1/:path*` }];
@@ -39,6 +37,18 @@ const config: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           // A sign-in link carries its token in the address, so it must never leak onward.
           { key: 'Referrer-Policy', value: 'same-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()' },
+          // Everything the app loads is its own: scripts, styles, fonts, images and the API (same origin, through the rewrite).
+          // Inline scripts stay allowed for the theme script and Next's own bootstrap. Development needs eval for fast refresh.
+          ...(process.env.NODE_ENV === 'production'
+            ? [
+                {
+                  key: 'Content-Security-Policy',
+                  value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+                },
+                { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+              ]
+            : []),
         ],
       },
     ];

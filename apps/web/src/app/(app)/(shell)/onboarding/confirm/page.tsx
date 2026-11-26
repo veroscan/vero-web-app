@@ -319,7 +319,7 @@ function Confirm() {
           <Reveal className="mod" i={0}>
             <div className="mh">
               <h2>Linked companies</h2>
-              <span className="sub">Found by name on the other registers</span>
+              {follow || manual || adding ? null : <span className="sub">Found by name on the other registers</span>}
             </div>
             {follow || manual || adding ? (
               <p className="lnone">

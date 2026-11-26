@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { PlanLink } from './Bits';
 import { Icon } from './Icon';
 import { CountUp } from './Motion';
+import { Select } from './Select';
 import { useSession } from './Session';
 import { TLink } from './TLink';
 import { useToast } from './Toast';
@@ -20,6 +21,56 @@ import { plural } from '@/lib/format';
 const MAX_UPLOAD_MB = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 25);
 /** How many reads in a row can fail for a passing reason before we say the document failed. */
 const READ_RETRIES = 4;
+/** What the API takes. It checks the file's contents too; this only saves a wasted upload. */
+const FILE_TYPES = ['pdf', 'docx', 'png', 'jpg', 'jpeg'];
+
+function today(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/** The heading for a file that didn't make it, by the API's own reason code. */
+function failedTitle(code: string | null): string {
+  switch (code) {
+    case 'payload_too_large':
+      return 'This file is too big';
+    case 'file_type_not_allowed':
+      return "Vero can't take this kind of file";
+    case 'file_empty':
+      return 'This file is empty';
+    case 'file_unsafe':
+      return "Vero can't take this file";
+    case 'network':
+      return "The upload didn't go through";
+    case 'network_reading':
+      return 'Vero lost the connection while reading';
+    case 'plan_upgrade_required':
+      return 'Adding documents is part of a paid plan';
+    case 'rejected':
+      return "This copy can't count yet";
+    default:
+      return "Vero can't read this file";
+  }
+}
+
+/** What to upload instead, in two plain steps. Nothing for a dropped connection: the same file is fine. */
+function insteadSteps(code: string | null): [string, string] | null {
+  switch (code) {
+    case 'network':
+    case 'network_reading':
+    case 'plan_upgrade_required':
+      return null;
+    case 'payload_too_large':
+      return [`A smaller copy, under ${MAX_UPLOAD_MB} MB.`, 'Or the same PDF saved at a lower quality. Vero only needs to read the words.'];
+    case 'file_type_not_allowed':
+    case 'file_unsafe':
+      return ['A PDF or a Word file ending in .docx.', 'Or a clear photo or scan of every page, saved as PNG or JPEG.'];
+    case 'file_empty':
+      return ['The file again, once it has finished saving or downloading.', 'Or a fresh export from where the document was made.'];
+    default:
+      return ['The original PDF from the signing tool, if there is one.', 'Or a flat scan of every page, including the signature page, at 300 dpi or more.'];
+  }
+}
 
 function sizeWords(bytes: number | null | undefined): string | null {
   if (!bytes) return null;
@@ -187,39 +238,43 @@ export function ConfirmDocument({ document, slots, wantedSlot, onFiled }: Confir
             Read
           </span>
         </div>
-        <h3>{!choosing && document.suggestion?.label ? `This looks like the ${midSentence(document.suggestion.label)}` : 'Where does this belong?'}</h3>
+        <h3 tabIndex={-1} data-stage-head="">
+          {!choosing && document.suggestion?.label ? `This looks like the ${midSentence(document.suggestion.label)}` : 'Where does this belong?'}
+        </h3>
         <p className="lead">{document.suggestion?.label ? 'Vero read every page. Nothing counts until you confirm where it goes.' : "Vero read it but couldn't tell what it is. Choose where it goes and Vero checks it against that."}</p>
         {document.signatureHintWords ? <p className="hint">{document.signatureHintWords}</p> : null}
         <div className="ask">
           {choosing ? (
             <div className="field">
               <label htmlFor="slot-choice">Where does it belong?</label>
-              <select className="input" id="slot-choice" value={slotKey} onChange={(event) => setSlotKey(event.target.value)}>
-                <option value="">Choose one</option>
-                {groups.map((group) => (
-                  <optgroup key={group} label={group}>
-                    {slots
-                      .filter((item) => item.layerName === group)
-                      .map((item) => (
-                        <option key={item.key} value={item.key}>
-                          {item.label}
-                        </option>
-                      ))}
-                  </optgroup>
-                ))}
-              </select>
+              <Select
+                id="slot-choice"
+                testId="slot-choice"
+                value={slotKey}
+                onChange={setSlotKey}
+                placeholder="Choose one"
+                options={groups.flatMap((group) =>
+                  slots
+                    .filter((item) => item.layerName === group)
+                    .map((item) => ({
+                      value: item.key,
+                      label: item.label,
+                      group,
+                    })),
+                )}
+              />
             </div>
           ) : null}
           {fields.needsDocumentDate ? (
             <div className="field">
               <label htmlFor="doc-date">Date on the certificate</label>
-              <input className="input" id="doc-date" type="date" value={documentDate} onChange={(event) => setDocumentDate(event.target.value)} />
+              <input className={`input date${documentDate ? '' : ' empty'}`} id="doc-date" type="date" max={today()} required aria-describedby={needsMore ? 'confirm-needs' : undefined} value={documentDate} onChange={(event) => setDocumentDate(event.target.value)} />
             </div>
           ) : null}
           {fields.needsExpiry ? (
             <div className="field">
               <label htmlFor="doc-expiry">When does it run out?</label>
-              <input className="input" id="doc-expiry" type="date" value={expiresOn} onChange={(event) => setExpiresOn(event.target.value)} />
+              <input className={`input date${expiresOn ? '' : ' empty'}`} id="doc-expiry" type="date" required aria-describedby={needsMore ? 'confirm-needs' : undefined} value={expiresOn} onChange={(event) => setExpiresOn(event.target.value)} />
             </div>
           ) : null}
           {fields.canValidate ? (
@@ -235,15 +290,20 @@ export function ConfirmDocument({ document, slots, wantedSlot, onFiled }: Confir
           </p>
         ) : null}
         <div className="acts2">
-          <button className="btn btn-p" type="button" disabled={busy || !slotKey || needsMore} onClick={() => void file()}>
+          <button className="btn btn-p" type="button" disabled={busy || !slotKey || needsMore} aria-busy={busy} onClick={() => void file()}>
             {busy ? 'Filing it' : choosing ? 'File it here' : 'Yes, file it'}
           </button>
           {!choosing ? (
-            <button className="btn btn-g" type="button" onClick={() => setChoosing(true)}>
+            <button className="btn btn-g" type="button" disabled={busy} onClick={() => setChoosing(true)}>
               No, it&apos;s something else
             </button>
           ) : null}
         </div>
+        {!busy && (!slotKey || needsMore) ? (
+          <p className="hint" id="confirm-needs">
+            {!slotKey ? 'Choose where it belongs to file it.' : fields.needsExpiry ? 'Add the date it runs out to file it.' : 'Add the date on the certificate to file it.'}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -255,7 +315,15 @@ type Stage =
   | { name: 'read'; fileName: string; size: number; id: string }
   | { name: 'confirm'; document: VaultDocument }
   | { name: 'filed'; document: VaultDocument }
-  | { name: 'failed'; fileName: string | null; message: string; code: string | null };
+  | {
+      name: 'failed';
+      fileName: string | null;
+      message: string;
+      code: string | null;
+      /** A document the API already has, when only the reading was interrupted. */
+      readingId?: string;
+      size?: number;
+    };
 
 export type FlowStageName = Stage['name'];
 
@@ -285,6 +353,10 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
   const [over, setOver] = useState(false);
   const [progress, setProgress] = useState(0);
   const picker = useRef<HTMLInputElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const lastFile = useRef<File | null>(null);
+  const before = useRef<FlowStageName | null>(null);
+  const [sentHere, setSentHere] = useState(false);
   const scoreBefore = useRef<number | null>(null);
   const [scoreAfter, setScoreAfter] = useState<number | null>(null);
   const stageChanged = useRef(onStage);
@@ -292,6 +364,12 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
 
   useEffect(() => {
     stageChanged.current?.(stage.name);
+    // Each step replaces the last, so the keyboard follows to the new step's heading (or back to the drop zone).
+    const was = before.current;
+    before.current = stage.name;
+    if (was === null || was === stage.name) return;
+    if (was === 'up' && stage.name === 'read') return; // Uploading to reading is one step to the person: don't pull focus twice.
+    root.current?.querySelector<HTMLElement>(stage.name === 'idle' ? '.drop' : '[data-stage-head]')?.focus({ preventScroll: true });
   }, [stage.name]);
 
   // The bar fills towards the step Vero is on; the API doesn't report pages as it reads.
@@ -306,27 +384,65 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
     const exact = session.overview?.score.kind === 'exact' ? session.overview.score.value : null;
     scoreBefore.current = exact;
     setScoreAfter(null);
+    lastFile.current = file;
+    setSentHere(true);
+    const ending = /\.([a-z0-9]+)$/i.exec(file.name)?.[1]?.toLowerCase() ?? '';
+    if (!FILE_TYPES.includes(ending)) {
+      setStage({
+        name: 'failed',
+        fileName: file.name,
+        code: 'file_type_not_allowed',
+        message: `Vero reads PDF, Word (.docx), PNG and JPEG files. ${ending ? `This one is a .${ending} file` : "This one has no file type in its name"}, so it wasn't uploaded.`,
+      });
+      return;
+    }
+    if (file.size === 0) {
+      setStage({ name: 'failed', fileName: file.name, code: 'file_empty', message: "There is nothing in this file, so it wasn't uploaded." });
+      return;
+    }
     if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-      setStage({ name: 'failed', fileName: file.name, code: 'payload_too_large', message: `That file is too big to upload. The limit is ${MAX_UPLOAD_MB} MB, so try a smaller copy.` });
+      setStage({
+        name: 'failed',
+        fileName: file.name,
+        code: 'payload_too_large',
+        message: `This file is ${sizeWords(file.size) ?? 'too large'}. The limit is ${MAX_UPLOAD_MB} MB, so it wasn't uploaded.`,
+      });
       return;
     }
     setStage({ name: 'up', fileName: file.name, size: file.size });
     try {
       const uploaded = await api.vault.upload({
         params: { companyId },
-        query: { fileName: file.name, ...(wantedSlot ? { slotKey: wantedSlot } : {}) },
+        query: {
+          fileName: file.name,
+          ...(wantedSlot ? { slotKey: wantedSlot } : {}),
+        },
         body: new Uint8Array(await file.arrayBuffer()),
       });
-      setStage({ name: 'read', fileName: file.name, size: file.size, id: uploaded.id });
+      setStage({
+        name: 'read',
+        fileName: file.name,
+        size: file.size,
+        id: uploaded.id,
+      });
     } catch (error) {
+      if (isRedirecting(error)) return;
       const failure = asApiError(error);
-      setStage({ name: 'failed', fileName: file.name, code: failure.code, message: failure.message });
+      // No answer at all means the connection dropped, not that anything is wrong with the file.
+      const offline = failure.status === 0;
+      setStage({
+        name: 'failed',
+        fileName: file.name,
+        code: offline ? 'network' : failure.code,
+        message: offline ? 'The connection dropped before the file reached Vero. Nothing was saved. Check your connection and send it again.' : failure.message,
+      });
     }
   };
 
   // Reading happens in the background on the API, so this asks until it's finished.
   const reading = stage.name === 'read' ? stage.id : null;
   const readingName = stage.name === 'read' ? stage.fileName : null;
+  const readingSize = stage.name === 'read' ? stage.size : 0;
   useEffect(() => {
     if (!reading) return;
     let current = true;
@@ -338,7 +454,13 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
           if (!current) return;
           misses = 0;
           if (document.status === 'pending' || document.status === 'processing') timer = setTimeout(check, 1200);
-          else if (document.status === 'failed' || document.status === 'rejected') setStage({ name: 'failed', fileName: document.fileName ?? readingName, code: document.status, message: document.rejectionReason ?? "Vero couldn't read this file. Please upload it again." });
+          else if (document.status === 'failed' || document.status === 'rejected')
+            setStage({
+              name: 'failed',
+              fileName: document.fileName ?? readingName,
+              code: document.status,
+              message: document.rejectionReason ?? "Vero couldn't read this file. Please upload it again.",
+            });
           else if (document.status === 'filed') setStage({ name: 'filed', document });
           else setStage({ name: 'confirm', document });
         },
@@ -350,7 +472,14 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
             timer = setTimeout(check, 1500);
             return;
           }
-          setStage({ name: 'failed', fileName: readingName, code: failure.code, message: failure.message });
+          const offline = failure.status === 0 || failure.status >= 500;
+          setStage({
+            name: 'failed',
+            fileName: readingName,
+            code: offline ? 'network_reading' : failure.code,
+            message: offline ? 'Your file is uploaded and safe. Vero lost touch while reading it. Check your connection and pick up where it left off.' : failure.message,
+            ...(offline ? { readingId: reading, size: readingSize } : {}),
+          });
         },
       );
     };
@@ -359,7 +488,7 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
       current = false;
       clearTimeout(timer);
     };
-  }, [reading, readingName]);
+  }, [reading, readingName, readingSize]);
 
   // Once filed, the score is worked out again in the background: follow it until it shows.
   const filedId = stage.name === 'filed' ? stage.document.id : null;
@@ -400,18 +529,31 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
     setStage({ name: 'idle' });
   };
 
+  /** A dropped connection: send the same file again, or pick the reading back up. */
+  const again = () => {
+    if (stage.name !== 'failed') return;
+    if (stage.readingId) setStage({ name: 'read', fileName: stage.fileName ?? 'Your file', size: stage.size ?? 0, id: stage.readingId });
+    else if (lastFile.current) void send(lastFile.current);
+    else reset();
+  };
+  const steps = stage.name === 'failed' ? insteadSteps(stage.code) : null;
+  const dropped = stage.name === 'failed' && (stage.code === 'network' || stage.code === 'network_reading');
+
   const filedSlot = stage.name === 'filed' ? slots.find((slot) => slot.key === stage.document.slotKey) : undefined;
 
   return (
-    <div className={`pg-docflow${compact ? ' compact' : ''}`} aria-live="polite">
+    <div ref={root} className={`pg-docflow${compact ? ' compact' : ''}`}>
       <input
         ref={picker}
         type="file"
         hidden
-        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+        accept=".pdf,.docx,.png,.jpg,.jpeg"
         aria-label="Choose a file"
+        tabIndex={-1}
         onChange={(event) => {
           const file = event.target.files?.[0];
+          // Cleared so choosing the same file again after a failure still starts an upload.
+          event.target.value = '';
           if (file) void send(file);
         }}
       />
@@ -430,7 +572,10 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
               event.preventDefault();
               setOver(true);
             }}
-            onDragLeave={() => setOver(false)}
+            onDragLeave={(event) => {
+              // Moving over the words inside the zone is not leaving it.
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOver(false);
+            }}
             onDrop={onDrop}
           >
             {compact ? (
@@ -460,7 +605,7 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
                   <path className="t5" d="M20 92h32l10 16h56l10-16h32v34a8 8 0 0 1-8 8H28a8 8 0 0 1-8-8z" />
                   <path className="t6" d="M20 92h32l10 16h56l10-16h32" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
-                <span className="dt1">Drop a document here</span>
+                <span className="dt1">{over ? 'Let go to upload it' : 'Drop a document here'}</span>
                 <span className="dt2">PDF, Word or a clear photo, up to {MAX_UPLOAD_MB} MB</span>
                 <span className="btn btn-p">
                   <Icon name="upload" />
@@ -485,8 +630,10 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
                   {stage.name === 'up' ? 'Uploading' : 'Reading'}
                 </span>
               </div>
-              <h3>{stage.name === 'up' ? 'Sending your document' : 'Reading your document'}</h3>
-              <div className="bar2">
+              <h3 tabIndex={-1} data-stage-head="">
+                {stage.name === 'up' ? 'Sending your document' : 'Reading your document'}
+              </h3>
+              <div className="bar2" role="progressbar" aria-label={stage.name === 'up' ? 'Uploading the file' : 'Reading every page'} aria-valuetext={stage.name === 'up' ? 'Uploading' : 'Reading'}>
                 <i style={{ width: `${progress}%` }} />
               </div>
               <div className="prog">
@@ -498,19 +645,31 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
               <div className="steps">
                 <div>
                   <span>Upload the file, encrypted</span>
-                  <span style={{ color: stage.name === 'up' ? 'var(--sky-2)' : 'var(--good)' }}>{stage.name === 'up' ? 'Now' : 'Done'}</span>
+                  <span
+                    style={{
+                      color: stage.name === 'up' ? 'var(--sky-2)' : 'var(--good)',
+                    }}
+                  >
+                    {stage.name === 'up' ? 'Now' : 'Done'}
+                  </span>
                 </div>
                 <div>
                   <span>Pull the text from every page</span>
-                  <span style={{ color: stage.name === 'read' ? 'var(--sky-2)' : 'var(--ink-4)' }}>{stage.name === 'read' ? 'Now' : 'Next'}</span>
+                  <span
+                    style={{
+                      color: stage.name === 'read' ? 'var(--sky-2)' : 'var(--ink-3)',
+                    }}
+                  >
+                    {stage.name === 'read' ? 'Now' : 'Next'}
+                  </span>
                 </div>
                 <div>
                   <span>Work out what it is and who signed it</span>
-                  <span style={{ color: 'var(--ink-4)' }}>Next</span>
+                  <span style={{ color: 'var(--ink-3)' }}>Next</span>
                 </div>
                 <div>
                   <span>Match it to the checks it can clear</span>
-                  <span style={{ color: 'var(--ink-4)' }}>Next</span>
+                  <span style={{ color: 'var(--ink-3)' }}>Next</span>
                 </div>
               </div>
             </div>
@@ -540,12 +699,14 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
             <div>
               <div className="fn">
                 <span className="nm">{stage.document.fileName ?? 'Your document'}</span>
-                <small>Read just now</small>
+                <small>{sentHere ? 'Read just now' : 'Read by Vero'}</small>
                 <span className="st2" style={{ color: 'var(--good)' }}>
                   Filed
                 </span>
               </div>
-              <h3>{filedSlot ? `Filed as the ${midSentence(filedSlot.label)}` : 'Filed'}</h3>
+              <h3 tabIndex={-1} data-stage-head="">
+                {filedSlot ? `Filed as the ${midSentence(filedSlot.label)}` : 'Filed'}
+              </h3>
               <p className="lead">{scoreAfter !== null ? 'Vero checked it again and the score has moved.' : 'Vero is checking it against everything it can clear. The score updates in about a minute.'}</p>
               {filedSlot ? (
                 <>
@@ -605,34 +766,49 @@ export function DocumentFlow({ companyId, slots, wantedSlot, resume, backHref, c
               <div className="fn">
                 <span className="nm">{stage.fileName ?? 'Your file'}</span>
                 <span className="st2" style={{ color: 'var(--warn)' }}>
-                  Not usable
+                  {stage.code === 'network' ? 'Not sent' : stage.code === 'network_reading' ? 'Not read yet' : stage.code === 'rejected' || stage.code === 'failed' ? 'Not usable' : 'Not uploaded'}
                 </span>
               </div>
-              <h3>{stage.code === 'payload_too_large' ? 'This file is too big' : stage.code === 'plan_upgrade_required' ? 'Adding documents is part of a paid plan' : stage.code === 'rejected' ? "This copy can't count yet" : "Vero can't read this file"}</h3>
+              <h3 tabIndex={-1} data-stage-head="">
+                {failedTitle(stage.code)}
+              </h3>
               <p className="why">{stage.message}</p>
               {stage.code === 'plan_upgrade_required' ? (
                 <p className="why">
                   <PlanLink />
                 </p>
-              ) : (
+              ) : steps ? (
                 <>
                   <div className="lbl2">Upload this instead</div>
                   <div className="inst">
                     <div>
-                      <span>1</span>The original PDF from the signing tool, if there is one.
+                      <span>1</span>
+                      {steps[0]}
                     </div>
                     <div>
-                      <span>2</span>Or a flat scan of every page, including the signature page, at 300 dpi or more.
+                      <span>2</span>
+                      {steps[1]}
                     </div>
                   </div>
                 </>
-              )}
+              ) : null}
               <div className="kept">Your score has not changed.</div>
               <div className="acts2">
-                <button className="btn btn-p" type="button" onClick={reset}>
-                  <Icon name="upload" />
-                  Try another file
-                </button>
+                {dropped ? (
+                  <>
+                    <button className="btn btn-p" type="button" onClick={again}>
+                      {stage.code === 'network_reading' ? 'Carry on reading' : 'Send it again'}
+                    </button>
+                    <button className="btn btn-g" type="button" onClick={reset}>
+                      Choose another file
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn btn-p" type="button" onClick={reset}>
+                    <Icon name="upload" />
+                    Try another file
+                  </button>
+                )}
               </div>
             </div>
           </div>

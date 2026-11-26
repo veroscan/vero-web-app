@@ -76,12 +76,40 @@
   .pg-report [data-theme="light"] .rp-t.how td{display:block;border-top:0;padding-top:4px}
 }
 
+/* long names and words stay on the paper */
+.pg-report .rp-head h1,.pg-report [data-theme="light"] .rp-title h2,.pg-report [data-theme="light"] .rp-t td,.pg-report [data-theme="light"] .rp-t th,.pg-report [data-theme="light"] .rp-acts b,.pg-report [data-theme="light"] .rp-top b{overflow-wrap:anywhere}
+.pg-report [data-theme="light"] .rp-top{gap:16px}
+.pg-report [data-theme="light"] .rp-top span,.pg-report [data-theme="light"] .rp-band span{white-space:nowrap}
+.pg-report .acts2 .btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media (max-width:560px){
+  .pg-report [data-theme="light"] .rp-t.how tr{display:block;border-top:1px solid var(--line-2);padding:10px 0}
+  .pg-report [data-theme="light"] .rp-t.how th,.pg-report [data-theme="light"] .rp-t.how td{display:block;width:auto;border:0;padding:0}
+  .pg-report [data-theme="light"] .rp-t.how td{padding-top:3px}
+  .pg-report [data-theme="light"] .rp-t.how tbody,.pg-report [data-theme="light"] .rp-t.how{display:block}
+  .pg-report .acts2 .btn{height:44px}
+}
+
+/* On paper. The page is A4 with no printer margin (set in the page), so the sheet carries its own.
+   The narrow-screen rules above also match a printed page's width, so every measure is restated here. */
 @media print{
-  .pg-report{background:#fff}
+  html:has(.pg-report),html:has(.pg-report) body{background:#fff!important}
+  .pg-report{background:#fff;min-height:0}
   .pg-report .rp-hero{display:none}
   .pg-report .rp-sheets{margin:0;padding:0;gap:0;display:block}
-  .pg-report .rp[data-theme="light"]{width:210mm;height:297mm;box-shadow:none;border-radius:0;animation:none;page-break-after:always;break-after:page}
-  .pg-report [data-theme="light"] .rp-band{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .pg-report [data-theme="light"] .rp-score .blk i,.pg-report [data-theme="light"] .rp-sample,.pg-report [data-theme="light"] .rp-sum{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .sidebar,.side,.topbar,.toast{display:none!important}
+  .pg-report .rp[data-theme="light"]{width:210mm;height:auto;min-height:296mm;padding:0 18mm 12mm;box-shadow:none;border-radius:0;animation:none;break-after:page;page-break-after:always}
+  .pg-report .rp[data-theme="light"]:last-child{break-after:auto;page-break-after:auto}
+  .pg-report .rp[data-theme="light"],.pg-report .rp[data-theme="light"] *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pg-report [data-theme="light"] .rp-band{margin:0 -18mm;padding:10mm 18mm 26mm;border-radius:0}
+  .pg-report [data-theme="light"] .rp-title{margin-top:-18mm;box-shadow:0 0 0 1px var(--line)}
+  .pg-report [data-theme="light"] .rp-top{padding:12mm 0 8px}
+  .pg-report [data-theme="light"] .rp-score{grid-template-columns:auto 1fr;gap:26px}
+  .pg-report [data-theme="light"] .rp-t.how{display:table}
+  .pg-report [data-theme="light"] .rp-t.how tbody{display:table-row-group}
+  .pg-report [data-theme="light"] .rp-t.how tr{display:table-row;padding:0;border:0}
+  .pg-report [data-theme="light"] .rp-t.how th,.pg-report [data-theme="light"] .rp-t.how td{display:table-cell;padding:10px 0;border-top:1px solid var(--line-2)}
+  .pg-report [data-theme="light"] .rp-t.how th{width:34%;padding-right:16px}
+  .pg-report [data-theme="light"] .rp-t tr,.pg-report [data-theme="light"] .rp-acts li,.pg-report [data-theme="light"] .rp-score,.pg-report [data-theme="light"] .rp-sum,.pg-report [data-theme="light"] .rp-note,.pg-report [data-theme="light"] .rp-foot,.pg-report [data-theme="light"] .rp-title{break-inside:avoid;page-break-inside:avoid}
+  .pg-report [data-theme="light"] .rp-h{break-after:avoid;page-break-after:avoid}
+  .pg-report [data-theme="light"] .rp-score .blk i{animation:none;transform:none}
+  .sidebar,.side,.topbar,.toast,nextjs-portal{display:none!important}
 }

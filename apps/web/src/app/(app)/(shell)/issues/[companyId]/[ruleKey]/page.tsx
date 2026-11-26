@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ErrorState, Loading, PlanLink, Redline, SampleNote } from '@/components/Bits';
 import { DeclareMissing } from '@/components/DeclareMissing';
 import { DocumentFlow } from '@/components/DocumentFlow';
+import { arrowKeys } from '@/components/findings/tabKeys';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
 import { useSession } from '@/components/Session';
@@ -17,7 +18,7 @@ import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { isInPlace, midSentence, slotColour } from '@/lib/documents';
 import { countryShort, plural, POINTS_HELD_WORDS, shortDate } from '@/lib/format';
-import { FINDING_WORDS, findingSource, findingStatus, issueKey, issuePath, withoutReferrals } from '@/lib/issues';
+import { FINDING_WORDS, findingSource, findingStatus, issueKey, issuePath, knowWords, withoutReferrals } from '@/lib/issues';
 import { useResource } from '@/lib/useResource';
 
 /** The urgent cap: an open urgent finding holds the overall score at this (owner's rule, 6 Nov 2026). */
@@ -39,23 +40,28 @@ function ScoreImpact({ from, to, capped }: { from: number; to: number; capped: b
   const step = 100 - lo > 60 ? 20 : 10;
   const ticks: number[] = [];
   for (let value = lo; value <= 100; value += step) ticks.push(value);
-  const at = (value: number) => `${((Math.max(lo, Math.min(100, value)) - lo) / (100 - lo)) * 100}%`;
+  const pos = (value: number) => ((Math.max(lo, Math.min(100, value)) - lo) / (100 - lo)) * 100;
+  const at = (value: number) => `${pos(value)}%`;
   const moves = to > from;
+  // Labels sit above their mark. Near an end they hang inward, and two that would touch take a row each.
+  const edge = (value: number) => (pos(value) > 88 ? ' e' : pos(value) < 12 ? ' s' : '');
+  const gap = moves ? pos(to) - pos(from) : 100;
+  const near = gap < 12 ? ' near' : gap < 26 ? ' nearish' : '';
   return (
-    <div className="trk" role="img" aria-label={`Score ${from} now${capped ? `, capped at ${URGENT_CAP}` : ''}${moves ? `, about ${to} once cleared` : ''}`}>
+    <div className={`trk${near}${capped ? ' capped' : ''}`} role="img" aria-label={`Score ${from} now${capped ? `, capped at ${URGENT_CAP}` : ''}${moves ? `, about ${to} once cleared` : ''}`}>
       <i className="now grow" style={{ width: at(from) }} />
       {moves ? <i className="gain2" style={{ left: at(from), width: `calc(${at(to)} - ${at(from)})` }} /> : null}
       {capped ? <span className="cap" style={{ left: at(URGENT_CAP) }} /> : null}
-      <span className="lb n" style={{ left: at(from) }}>
+      <span className={`lb n${edge(from)}`} style={{ left: at(from) }}>
         Now {from}
       </span>
       {capped ? (
-        <span className="lb c" style={{ left: at(URGENT_CAP) }}>
+        <span className={`lb c${edge(URGENT_CAP)}`} style={{ left: at(URGENT_CAP) }}>
           Urgent cap {URGENT_CAP}
         </span>
       ) : null}
       {moves ? (
-        <span className="lb t" style={{ left: at(to) }}>
+        <span className={`lb t${edge(to)}`} style={{ left: at(to) }}>
           About {to}
         </span>
       ) : null}
@@ -122,6 +128,20 @@ export default function IssuePage() {
     return (
       <div style={{ display: 'contents' }}>
         <Loading what="Getting this finding" />
+      </div>
+    );
+  }
+  if (resource.error?.status === 404) {
+    // A cleared or renamed check, or an old link: trying again won't bring it back, the list will.
+    return (
+      <div style={{ display: 'contents' }}>
+        <div className="state" role="alert" data-testid="finding-gone">
+          <h1>This finding isn&apos;t here</h1>
+          <p>It may have been cleared since, or the link is out of date. Everything Vero found is in the list.</p>
+          <TLink className="btn btn-p" href="/issues">
+            See all findings
+          </TLink>
+        </div>
       </div>
     );
   }
@@ -202,9 +222,15 @@ export default function IssuePage() {
             ) : projection ? (
               <>
                 <div className="nums">
-                  <CountUp className="pixel from" value={projection.from} />
-                  <Icon name="chev" />
-                  <CountUp className="pixel to" value={projection.to} ms={1600} />
+                  {projection.to > projection.from ? (
+                    <>
+                      <CountUp className="pixel from" value={projection.from} />
+                      <Icon name="chev" />
+                      <CountUp className="pixel to" value={projection.to} ms={1600} />
+                    </>
+                  ) : (
+                    <CountUp className="pixel" value={projection.from} />
+                  )}
                   {projection.to > projection.from ? (
                     <p data-testid="fix-projection">
                       {capped && issue.severity === 'critical' ? 'Lifts the urgent cap' : `Adds ${plural(projection.to - projection.from, 'point', 'points')}`}
@@ -218,7 +244,7 @@ export default function IssuePage() {
                   ) : (
                     <p>
                       No change on its own
-                      <small>This won&apos;t noticeably move the score.</small>
+                      <small>{isVerify ? "It doesn't count for or against the score until Vero can check it." : "This won't noticeably move the score."}</small>
                     </p>
                   )}
                 </div>
@@ -246,10 +272,12 @@ export default function IssuePage() {
                 </TLink>
               </b>
             </div>
-            <div>
-              <span>Source</span>
-              <b>{source.label}</b>
-            </div>
+            {source.kind !== 'none' ? (
+              <div>
+                <span>Source</span>
+                <b>{source.label}</b>
+              </div>
+            ) : null}
             <div>
               <span>Company</span>
               <b>
@@ -291,7 +319,7 @@ export default function IssuePage() {
                 </p>
               ) : null}
               <div className="txt">
-                <p>{isPass ? `${issue.title ?? issue.layerName}: in order for ${issue.companyName}.` : issue.missing}</p>
+                <p>{isPass ? `${issue.title ?? issue.layerName}: in order for ${issue.companyName.replace(/\.$/, '')}.` : issue.missing}</p>
                 {!isPass && issue.ifLeft ? <p className="if">If it&apos;s left: {issue.ifLeft}</p> : null}
                 <div className="kv">
                   <div>
@@ -302,10 +330,12 @@ export default function IssuePage() {
                     <span>Applies because</span>
                     <b>{issue.appliesBecause === 'incorporated' ? `Registered in ${issue.countryLabel}` : `Operates in ${issue.countryLabel}`}</b>
                   </div>
-                  <div>
-                    <span>Found by</span>
-                    <b>{source.label}</b>
-                  </div>
+                  {source.kind !== 'none' ? (
+                    <div>
+                      <span>Found by</span>
+                      <b>{source.label}</b>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {!isPass && issue.why ? (
@@ -340,9 +370,9 @@ export default function IssuePage() {
                   <span className="sub">{issue.proof.length > 1 ? 'Any of these works. Upload it and Vero checks again.' : issue.proof.length === 1 ? 'Upload it and Vero checks again.' : 'Nothing to upload for this one.'}</span>
                 </div>
                 {issue.proof.length > 0 ? (
-                  <div className="opts" role="radiogroup" aria-label="The document that clears it" data-testid="proof">
+                  <div className={`opts${issue.proof.length === 1 ? ' one' : ''}`} role="radiogroup" aria-label="The document that clears it" data-testid="proof" onKeyDown={arrowKeys}>
                     {issue.proof.map((proof) => (
-                      <button key={proof.slotKey} type="button" role="radio" aria-checked={chosen?.slotKey === proof.slotKey} className={`opt${chosen?.slotKey === proof.slotKey ? ' on' : ''}`} onClick={() => setChoice(proof.slotKey)}>
+                      <button key={proof.slotKey} type="button" role="radio" aria-checked={chosen?.slotKey === proof.slotKey} tabIndex={chosen?.slotKey === proof.slotKey ? 0 : -1} className={`opt${chosen?.slotKey === proof.slotKey ? ' on' : ''}`} onClick={() => setChoice(proof.slotKey)}>
                         <span className="rd" />
                         <span>
                           <b>{proof.label}</b>
@@ -384,7 +414,7 @@ export default function IssuePage() {
                 ) : null}
                 {!following && (issue.canDeclareMissing || issue.declaredMissing) ? (
                   <div className="declare">
-                    <DeclareMissing key={`${issue.ruleKey}-${String(issue.declaredMissing)}`} item={issue} onChanged={resource.reload} />
+                    <DeclareMissing key={`${issue.ruleKey}-${String(issue.declaredMissing)}`} item={issue} onChanged={resource.reload} addLink={!(canUpload && chosen)} />
                   </div>
                 ) : null}
               </Reveal>
@@ -400,9 +430,9 @@ export default function IssuePage() {
                 {issue.howWeKnow.length > 0 ? (
                   issue.howWeKnow.map((line) => (
                     <div className="it" key={line}>
-                      <b>{line.replace(/\s*\(sample data, not a real record\)/i, '')}</b>
+                      <b>{knowWords(line.replace(/\s*\(sample data, not a real record\)/i, ''))}</b>
                       <small>
-                        {/sample data/i.test(line) ? 'Sample data, not a real record' : source.label}
+                        {/sample data/i.test(line) ? 'Sample data, not a real record' : /^You told us/i.test(line) ? 'Your answers' : /uploaded|you shared|your document/i.test(line) ? 'Your documents' : /^We haven't seen/i.test(line) ? 'Nothing shared or found so far' : source.label}
                         {line.startsWith('You told us') && !issue.declaredMissing && !following ? (
                           <>
                             {' · '}

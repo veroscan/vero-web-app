@@ -33,6 +33,7 @@ function NewScan() {
         rowHref={({ country, candidate, found }) => confirmHref(country, candidate, found, false, true)}
         manualHref={(country, name) => manualHref(country, name, false, true)}
         notFoundHref={(country, q, source) => notFoundHref(country, q, source, false, true)}
+        publicOnly
       >
         {recent && recent.length > 0 ? (
           <section className="r3b">
@@ -40,9 +41,7 @@ function NewScan() {
             <NextSteps follow i={2} />
           </section>
         ) : (
-          <div style={{ marginTop: 20, maxWidth: 560 }}>
-            <NextSteps follow />
-          </div>
+          <NextSteps follow wide />
         )}
       </Finder>
     </div>

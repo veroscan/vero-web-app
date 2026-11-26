@@ -2,10 +2,11 @@
 
 /* The score-over-time chart from the Overview and History boards, drawn in SVG at the size it is
    shown (so the type never stretches). Real history only: one point per scan where the score moved.
-   The line draws in once, the newest point lands with a single ring, and hovering reads any point. */
+   The line draws in once, the newest point lands with a single ring, and any point can be read by
+   hovering, by touch (tap or drag along the line) or with the arrow keys. */
 
 import type { CompanyHistoryItem } from '@vero/shared';
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { prefersCalm } from '@/lib/motion';
 import '@/app/styles/pages/scorechart.css';
 
@@ -91,6 +92,7 @@ export function ScoreChart({ points, cap = null, projected = null, height = 260,
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const gradient = useId().replace(/:/g, '');
+  const readout = useId();
 
   useIso(() => {
     const element = box.current;
@@ -151,16 +153,75 @@ export function ScoreChart({ points, cap = null, projected = null, height = 260,
     // Draws in when the data changes, not on every resize.
   }, [signature, width === 0]);
 
+  // A different company or range: the point being read no longer exists.
+  useEffect(() => setHover(null), [signature]);
+
   const first = points[0];
   const last = points[points.length - 1];
-  const summary = first && last ? `${label}: ${first.value} on ${FULL.format(new Date(first.at))}, ${last.value} on ${FULL.format(new Date(last.at))}.` : label;
+  const summary = !first || !last ? label : points.length === 1 ? `${label}: ${last.value} on ${FULL.format(new Date(last.at))}.` : `${label}: ${first.value} on ${FULL.format(new Date(first.at))}, ${last.value} on ${FULL.format(new Date(last.at))}.`;
   const { W, H, x, y } = shape;
-  const hovered = hover === null ? null : points[hover];
+  const at = hover !== null && hover < points.length ? hover : null;
+  const hovered = at === null ? null : (points[at] ?? null);
+  const before = at !== null && at > 0 ? (points[at - 1] ?? null) : null;
+  const moved = hovered && before ? hovered.value - before.value : null;
+
+  /** The point nearest a pointer, measured in the chart's own units. */
+  const nearest = (event: PointerEvent<SVGSVGElement>): number => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const px = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * W;
+    let best = 0;
+    for (let index = 1; index < points.length; index += 1) if (Math.abs(x(index) - px) < Math.abs(x(best) - px)) best = index;
+    return best;
+  };
+
+  const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const n = points.length;
+    if (n === 0) return;
+    let to: number | null = null;
+    if (event.key === 'ArrowLeft') to = at === null ? n - 1 : Math.max(0, at - 1);
+    else if (event.key === 'ArrowRight') to = at === null ? n - 1 : Math.min(n - 1, at + 1);
+    else if (event.key === 'Home') to = 0;
+    else if (event.key === 'End') to = n - 1;
+    else if (event.key === 'Escape' && at !== null) {
+      event.stopPropagation();
+      setHover(null);
+      return;
+    }
+    if (to === null) return;
+    event.preventDefault();
+    setHover(to);
+  };
+
+  // The tip stays inside the panel: it hangs off the side of a point near an edge, and drops below one near the top.
+  const tipX = hovered && at !== null ? x(at) : 0;
+  const tipY = hovered ? y(hovered.value) : 0;
+  const side = tipX < 96 ? '-12px' : tipX > W - 96 ? 'calc(-100% + 12px)' : '-50%';
+  const tipStyle = hovered ? { left: tipX + 8, top: tipY + 18, opacity: 1, transform: `translate(${side}, ${tipY < 76 ? '16px' : 'calc(-100% - 14px)'})` } : undefined;
+  const spoken = hovered ? `${hovered.value} out of 100 on ${FULL.format(new Date(hovered.at))}${moved ? `, ${moved > 0 ? 'up' : 'down'} ${Math.abs(moved)} on the point before` : ''}. Point ${(at ?? 0) + 1} of ${points.length}.` : '';
 
   return (
-    <div className="chart vchart" ref={box}>
+    <div
+      className="chart vchart"
+      ref={box}
+      {...(last ? { tabIndex: 0, role: 'group', 'aria-label': `${label}. Use the left and right arrow keys to read each point.`, 'aria-describedby': readout } : {})}
+      onKeyDown={onKey}
+      onBlur={() => setHover(null)}
+      data-testid="score-chart"
+    >
       {width > 0 && last ? (
-        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={summary} onMouseLeave={() => setHover(null)}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          width={W}
+          height={H}
+          role="img"
+          aria-label={summary}
+          onPointerMove={(event) => setHover(nearest(event))}
+          onPointerDown={(event) => setHover(nearest(event))}
+          onPointerLeave={(event) => {
+            // A finger lifting leaves the reading up; tapping elsewhere clears it.
+            if (event.pointerType === 'mouse') setHover(null);
+          }}
+        >
           <defs>
             <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#9DDAF7" stopOpacity={0.35} />
@@ -175,8 +236,8 @@ export function ScoreChart({ points, cap = null, projected = null, height = 260,
               </text>
             </g>
           ))}
-          {shape.ticks.map((tick) => (
-            <text key={tick.index} {...AX} x={x(tick.index)} y={H - 8} textAnchor="middle">
+          {shape.ticks.map((tick, k) => (
+            <text key={tick.index} {...AX} x={x(tick.index)} y={H - 8} textAnchor={points.length < 2 ? 'middle' : k === shape.ticks.length - 1 && !shape.showProjection ? 'end' : tick.index === 0 ? 'start' : 'middle'}>
               {tick.text}
             </text>
           ))}
@@ -194,23 +255,31 @@ export function ScoreChart({ points, cap = null, projected = null, height = 260,
           ) : null}
           <circle className="ring" fill="#9DDAF7" cx={x(points.length - 1)} cy={y(last.value)} r={14} />
           <circle fill="#FFFFFF" stroke="#0182FA" strokeWidth={2.5} cx={x(points.length - 1)} cy={y(last.value)} r={5.5} />
-          {hover !== null && hovered ? <line stroke="rgba(255,255,255,.28)" strokeDasharray="2 3" x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} /> : null}
-          {points.map((point, index) => {
-            const half = points.length > 1 ? (W - PAD.l - PAD.r) / (points.length - 1) / 2 : 40;
-            return <rect key={`hit-${point.at}-${index}`} className="hit" x={x(index) - half} y={0} width={half * 2} height={H} onMouseEnter={() => setHover(index)} />;
-          })}
+          {at !== null && hovered ? (
+            <g className="read">
+              <line stroke="rgba(255,255,255,.34)" strokeDasharray="2 3" x1={x(at)} x2={x(at)} y1={PAD.t} y2={H - PAD.b} />
+              <circle fill="#FFFFFF" fillOpacity={0.18} cx={x(at)} cy={y(hovered.value)} r={11} />
+              <circle fill="#FFFFFF" stroke="#0182FA" strokeWidth={2.5} cx={x(at)} cy={y(hovered.value)} r={5.5} />
+            </g>
+          ) : null}
         </svg>
       ) : (
         <div style={{ height: H }} />
       )}
-      <div className="tip" style={hovered && hover !== null ? { left: x(hover) + 8, top: y(hovered.value) + 18, opacity: 1 } : undefined} aria-hidden="true">
+      <div className="tip" style={tipStyle} aria-hidden="true">
         {hovered ? (
           <>
-            <b>{hovered.value}</b>
+            <b>
+              {hovered.value}
+              {moved ? <i className={moved > 0 ? 'up' : 'down'}>{`${moved > 0 ? '+' : '-'}${Math.abs(moved)}`}</i> : null}
+            </b>
             {FULL.format(new Date(hovered.at))}
           </>
         ) : null}
       </div>
+      <p className="sr-only" id={readout} aria-live="polite">
+        {spoken}
+      </p>
     </div>
   );
 }

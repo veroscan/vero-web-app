@@ -4,30 +4,66 @@
    It reads the finding's full detail from the API and links to the full page. */
 
 import type { IssueDetail, IssueSummary } from '@vero/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon';
 import { useSession } from '@/components/Session';
 import { TLink } from '@/components/TLink';
 import { api, asApiError, isRedirecting } from '@/lib/api';
 import { midSentence } from '@/lib/documents';
-import { FINDING_COLOUR, FINDING_WORDS, findingStatus, issuePath, withoutReferrals } from '@/lib/issues';
+import { FINDING_COLOUR, FINDING_WORDS, findingStatus, issuePath, knowWords, withoutReferrals } from '@/lib/issues';
 
 export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; onClose: () => void }) {
   const session = useSession();
   const [detail, setDetail] = useState<IssueDetail | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const panel = useRef<HTMLElement>(null);
+  const closer = useRef<HTMLButtonElement>(null);
   const open = issue !== null;
 
+  // While it is open: the page behind holds still, Escape closes it, Tab stays inside it,
+  // and closing hands the keyboard back to the row that opened it.
   useEffect(() => {
-    document.body.classList.toggle('open', open);
     if (!open) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.classList.add('open');
+    closer.current?.focus({ preventScroll: true });
+    // Only the drawer's own text scrolls: a wheel or a swipe anywhere else goes nowhere.
+    const hold = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.closest('.drawer .db')) event.preventDefault();
+    };
+    document.addEventListener('wheel', hold, { passive: false });
+    document.addEventListener('touchmove', hold, { passive: false });
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panel.current) return;
+      const stops = [...panel.current.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter((node) => node.offsetParent !== null);
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      if (!first || !last) return;
+      const at = document.activeElement;
+      if (!panel.current.contains(at)) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && at === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && at === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('wheel', hold);
+      document.removeEventListener('touchmove', hold);
       document.body.classList.remove('open');
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, [open, onClose]);
 
@@ -45,7 +81,8 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
     return () => {
       live = false;
     };
-  }, [issue]);
+  }, [issue, attempt]);
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
   // The last finding stays drawn while the drawer slides away.
   const [shown, setShown] = useState<IssueSummary | null>(issue);
@@ -64,17 +101,17 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
   return (
     <>
       <div className="scrim" onClick={onClose} aria-hidden="true" />
-      <aside className="drawer" aria-label="Finding detail" aria-hidden={!open} data-testid="finding-drawer" {...(open ? {} : { inert: true })}>
+      <aside ref={panel} className="drawer" role="dialog" aria-modal="true" aria-label="Finding detail" aria-hidden={!open} data-testid="finding-drawer" {...(open ? {} : { inert: true })}>
         <div className="dh">
           <span className="st2" style={{ color: FINDING_COLOUR[status] }}>
             {FINDING_WORDS[status]}
           </span>
-          <span className="muted">{item ? `· ${item.layerName}` : ''}</span>
-          <button className="ibtn" type="button" style={{ marginLeft: 'auto', border: 0 }} onClick={onClose} aria-label="Close">
+          <span className="muted dar">{item ? `· ${item.layerName}` : ''}</span>
+          <button ref={closer} className="ibtn dx" type="button" onClick={onClose} aria-label="Close">
             <Icon name="x" />
           </button>
         </div>
-        <div className="db" data-lenis-prevent="">
+        <div className="db" data-lenis-prevent="" key={item ? `${item.companyId}|${item.ruleKey}` : 'none'}>
           {item ? (
             <>
               <div className="co">
@@ -82,18 +119,27 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
               </div>
               <h3>{status === 'cleared' ? (item.title ?? item.headline) : item.headline}</h3>
               {problem ? (
-                <p className="formerror" role="alert">
-                  {problem}
-                </p>
+                <div className="dprob" role="alert">
+                  <b>We couldn&apos;t load the rest of this finding.</b>
+                  <span>{problem}</span>
+                  <button className="btn btn-g btn-sm" type="button" onClick={retry}>
+                    Try again
+                  </button>
+                </div>
               ) : !detail ? (
-                <p className="dload" role="status">
-                  Reading this finding
-                </p>
+                <div className="dload" role="status">
+                  <span className="sr-only">Reading this finding</span>
+                  <i className="skel" style={{ width: '92%' }} />
+                  <i className="skel" style={{ width: '64%' }} />
+                  <i className="skel b" />
+                  <i className="skel" style={{ width: '80%' }} />
+                  <i className="skel" style={{ width: '48%' }} />
+                </div>
               ) : status === 'cleared' ? (
                 <>
                   <p>Vero checked this and it is in order. It counts in the score.</p>
                   <div className="lbl">Where Vero checked</div>
-                  <div className="dnote">{detail.howWeKnow.length > 0 ? detail.howWeKnow.join('. ') : 'From the latest scan.'} Vero checks it again on every scan.</div>
+                  <div className="dnote">{detail.howWeKnow.length > 0 ? `${detail.howWeKnow.map(knowWords).join('. ').replace(/\.$/, '')}.` : 'From the latest scan.'} Vero checks it again on every scan.</div>
                 </>
               ) : (
                 <>
@@ -103,7 +149,7 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
                       <div className="lbl">Evidence</div>
                       <div className="seen">
                         {detail.howWeKnow.map((line) => (
-                          <div key={line}>{line}</div>
+                          <div key={line}>{knowWords(line)}</div>
                         ))}
                       </div>
                     </>
@@ -153,16 +199,20 @@ export function FindingDrawer({ issue, onClose }: { issue: IssueSummary | null; 
         </div>
         {item ? (
           <div className="df">
-            {isOpen && item.points !== null && item.points > 0 ? (
-              <>
-                <span className="muted">Clearing this adds</span>
-                <span className="gain">+{item.points}</span>
-              </>
-            ) : isOpen && item.pointsHeldByUrgent ? (
-              <span className="muted">Counts once the urgent findings are cleared</span>
-            ) : status === 'cleared' ? (
-              <span className="muted">In order and counted in the score</span>
-            ) : null}
+            <span className="dfw">
+              {isOpen && item.points !== null && item.points > 0 ? (
+                <>
+                  <span className="muted">Clearing this adds</span>
+                  <span className="gain">+{item.points}</span>
+                </>
+              ) : isOpen && item.pointsHeldByUrgent ? (
+                <span className="muted">Counts once the urgent findings are cleared</span>
+              ) : status === 'cleared' ? (
+                <span className="muted">In order and counted in the score</span>
+              ) : status === 'unseen' ? (
+                <span className="muted">Doesn&apos;t count for or against the score yet</span>
+              ) : null}
+            </span>
             <TLink className="btn btn-p" href={issuePath(item)}>
               Open full page
             </TLink>

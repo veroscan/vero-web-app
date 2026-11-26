@@ -11,9 +11,9 @@ import { DeclareMissing } from '@/components/DeclareMissing';
 import { Icon } from '@/components/Icon';
 import { Reveal, Scramble, Words } from '@/components/Motion';
 import { TONE_COLOUR } from '@/components/overview/OverviewBody';
-import { NextCard, PixelScore, scanWhen, URGENT_CAP, useFixProjection } from '@/components/overview/parts';
+import { ListError, NextCard, PixelScore, scanWhen, SkeletonRows, URGENT_CAP, useFixProjection } from '@/components/overview/parts';
 import { useSession } from '@/components/Session';
-import { After, Hero } from '@/components/Shell';
+import { After, Hero, Plain } from '@/components/Shell';
 import { TLink } from '@/components/TLink';
 import { api } from '@/lib/api';
 import { isToDo, slotTone } from '@/lib/documents';
@@ -46,7 +46,7 @@ function slotsFor(area: AreaResponse): Slot[] {
   return out;
 }
 
-function AreaHero({ area, companyId, scope, rank, heldByUrgent }: { area: AreaResponse; companyId: string; scope: 'company' | 'group'; rank: string | null; heldByUrgent: boolean }) {
+function AreaHero({ area, companyId, scope, rank, heldByUrgent, readOnly, back }: { area: AreaResponse; companyId: string; scope: 'company' | 'group'; rank: string | null; heldByUrgent: boolean; readOnly: boolean; back: string }) {
   const tone = statusTone(area.statusWord);
   const first = area.toFix[0] ?? null;
   const projection = useFixProjection(companyId, scope, first ? { companyId: first.companyId, ruleKey: first.ruleKey } : null, heldByUrgent, true);
@@ -118,7 +118,14 @@ function AreaHero({ area, companyId, scope, rank, heldByUrgent }: { area: AreaRe
           note={first.pointsHeldByUrgent && !projection ? <span data-testid="points-held">{POINTS_HELD_WORDS}</span> : null}
         />
       ) : (
-        <NextCard title="Nothing to fix in this area" body="Every check Vero could run here passed, or is waiting on a document." href="/" action="Back to overview" />
+        <NextCard
+          label={readOnly ? 'A company you follow' : 'Do this first'}
+          title="Nothing to fix in this area"
+          body={readOnly ? 'Every check Vero could run here from the public record passed, or could not be run yet.' : 'Every check Vero could run here passed, or is waiting on a document.'}
+          href={back}
+          action={readOnly ? 'Back to the company' : 'Back to overview'}
+          art={null}
+        />
       )}
     </section>
   );
@@ -138,6 +145,11 @@ function Checks({ area, group, readOnly, onChanged }: { area: AreaResponse; grou
         <h2>Checks in this area</h2>
         <span className="sub">Open findings first, then what Vero hasn&apos;t seen, then what passed</span>
       </div>
+      {area.toCheck.length > 0 ? (
+        <p className="ar-hint">
+          <b>{plural(area.toCheck.length, 'check', 'checks')} not seen yet.</b> Open one to see how Vero would know{readOnly ? '.' : ", or to say you don't have it."}
+        </p>
+      ) : null}
       {rows.length === 0 ? (
         <p className="vempty">
           <b>No checks apply here yet</b>
@@ -169,7 +181,7 @@ function Checks({ area, group, readOnly, onChanged }: { area: AreaResponse; grou
                       <div className="ft2">
                         <b>
                           {kind === 'check' ? (
-                            <button type="button" className="rowlink ar-toggle" aria-expanded={expanded} onClick={(event) => (event.stopPropagation(), go())}>
+                            <button type="button" className="rowlink ar-toggle" aria-expanded={expanded} aria-controls={`more-${key}`} onClick={(event) => (event.stopPropagation(), go())}>
                               {name}
                             </button>
                           ) : (
@@ -202,7 +214,7 @@ function Checks({ area, group, readOnly, onChanged }: { area: AreaResponse; grou
                     </td>
                   </tr>
                   {kind === 'check' && expanded ? (
-                    <tr className="ar-more">
+                    <tr className="ar-more" id={`more-${key}`}>
                       <td colSpan={5}>
                         <p>
                           <b>How Vero knows:</b> {issue.howWeKnow.length > 0 ? issue.howWeKnow.join(' ') : "Vero hasn't seen anything on this yet."} It doesn&apos;t count for or against the score until Vero can check it.
@@ -274,7 +286,9 @@ function Reads({ companies, layer }: { companies: readonly Company[]; layer: num
         <h2>What Vero reads here</h2>
       </div>
       {vaults.loading && !vaults.data ? (
-        <p className="vempty">Getting your documents</p>
+        <SkeletonRows what="Getting your documents" rows={4} />
+      ) : vaults.data && vaults.data.length > 0 && vaults.data.every((vault) => vault === null) ? (
+        <ListError what="your documents" onRetry={vaults.reload} />
       ) : shown.length === 0 ? (
         <p className="vempty">No documents are read for this area. Vero checks it from the registers.</p>
       ) : (
@@ -293,7 +307,7 @@ function Reads({ companies, layer }: { companies: readonly Company[]; layer: num
         </div>
       )}
       <div className="vmore">
-        <span className="muted">{slots.length > shown.length ? `${shown.length} of ${plural(slots.length, 'document', 'documents')}` : ' '}</span>
+        <span className="muted">{slots.length > shown.length ? `${shown.length} of ${plural(slots.length, 'document', 'documents')}` : ''}</span>
         <TLink className="link" href="/documents">
           Documents
         </TLink>
@@ -353,6 +367,10 @@ function AreaScreen() {
       <Hero crumb={crumb}>
         <div className="pagehead">
           <div>
+            <TLink className="vback" href={back}>
+              <Icon name="chev" />
+              {followedId ? 'Back to the company' : 'Overview'}
+            </TLink>
             <div className="mono kick">
               <Scramble text="One area" /> · <b><Scramble text="Checks / Findings / Proof" delay={120} /></b>
             </div>
@@ -400,10 +418,12 @@ function AreaScreen() {
           </div>
         ) : (resource.loading && !area) || (followedId && followed.loading && !company) ? (
           <Loading what="Getting this area" />
+        ) : followedId && followed.error ? (
+          <ErrorState error={followed.error} onRetry={followed.reload} title="We couldn't load this company" />
         ) : resource.error ? (
-          <ErrorState error={resource.error} onRetry={resource.reload} />
+          <ErrorState error={resource.error} onRetry={resource.reload} title="We couldn't load this area" />
         ) : area ? (
-          <AreaHero area={area} companyId={companyId} scope={scope} rank={rank} heldByUrgent={followedId ? false : (session.overview?.heldByUrgent ?? false)} />
+          <AreaHero area={area} companyId={companyId} scope={scope} rank={rank} heldByUrgent={followedId ? false : (session.overview?.heldByUrgent ?? false)} readOnly={readOnly} back={back} />
         ) : null}
       </Hero>
       {area ? (
@@ -426,7 +446,13 @@ function AreaScreen() {
 
 export default function AreaPage() {
   return (
-    <Suspense fallback={<Loading what="Getting this area" />}>
+    <Suspense
+      fallback={
+        <Plain>
+          <Loading what="Getting this area" />
+        </Plain>
+      }
+    >
       <AreaScreen />
     </Suspense>
   );

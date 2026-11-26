@@ -6,6 +6,8 @@ import {
   recoveryCodeBodySchema,
   recoveryCodesResponseSchema,
   requestMagicLinkBodySchema,
+  sessionListResponseSchema,
+  sessionParamsSchema,
   signInResponseSchema,
   totpCodeBodySchema,
   totpEnrolResponseSchema,
@@ -35,7 +37,9 @@ import {
   notificationListQuerySchema,
   notificationListResponseSchema,
   notificationParamsSchema,
+  notificationPreferencesSchema,
   notificationSchema,
+  updateNotificationPreferencesBodySchema,
 } from './notifications';
 import {
   acceptInvitationBodySchema,
@@ -186,6 +190,15 @@ export const contract = {
       body: deleteAccountBodySchema,
       response: okResponseSchema,
     }),
+    /** Where this person is signed in now. */
+    sessions: endpoint({ method: 'GET', path: '/v1/me/sessions', response: sessionListResponseSchema }),
+    /** Signs one other session out. The session making the request uses `auth.logout` instead. */
+    revokeSession: endpoint({
+      method: 'DELETE',
+      path: '/v1/me/sessions/:sessionId',
+      params: sessionParamsSchema,
+      response: okResponseSchema,
+    }),
   },
   organisations: {
     /** Every organisation the signed-in person belongs to. */
@@ -310,6 +323,14 @@ export const contract = {
       params: companyParamsSchema,
       response: w.companyHistoryResponseSchema,
     }),
+    /** The score over time, oldest first, for the chart: this company, or with `?scope=group` its whole group. */
+    scoreHistory: endpoint({
+      method: 'GET',
+      path: '/v1/companies/:companyId/score-history',
+      params: companyParamsSchema,
+      query: w.scoreHistoryQuerySchema,
+      response: w.scoreHistoryResponseSchema,
+    }),
   },
   /** Companies this organisation follows: public data only, read-only. */
   watchlist: {
@@ -393,6 +414,8 @@ export const contract = {
     }),
     /** Live per-source status for the scanning screen. Poll every `pollAfterMs`. */
     get: endpoint({ method: 'GET', path: '/v1/scans/:scanId', params: p.scanParamsSchema, response: p.scanSchema }),
+    /** Stops a scan that is queued or running. It ends at the next step and produces no score. Asking again changes nothing. */
+    cancel: endpoint({ method: 'POST', path: '/v1/scans/:scanId/cancel', params: p.scanParamsSchema, response: p.scanSchema }),
   },
   results: {
     overview: endpoint({
@@ -727,6 +750,22 @@ export const contract = {
       params: p.deadlineParamsSchema,
       response: p.deadlineSchema,
     }),
+    /** The organisation's default reminder lead times. */
+    reminderDefaults: endpoint({ method: 'GET', path: '/v1/deadlines/reminders', response: p.reminderDefaultsResponseSchema }),
+    setReminderDefaults: endpoint({
+      method: 'PUT',
+      path: '/v1/deadlines/reminders',
+      body: p.setReminderDefaultsBodySchema,
+      response: p.reminderDefaultsResponseSchema,
+    }),
+    /** One date's own reminder lead times. null goes back to the organisation's default. */
+    setReminders: endpoint({
+      method: 'PUT',
+      path: '/v1/deadlines/:deadlineId/reminders',
+      params: p.deadlineParamsSchema,
+      body: p.setDeadlineRemindersBodySchema,
+      response: p.deadlineSchema,
+    }),
   },
   records: {
     get: endpoint({
@@ -734,6 +773,13 @@ export const contract = {
       path: '/v1/companies/:companyId/records',
       params: companyParamsSchema,
       response: p.companyRecordsResponseSchema,
+    }),
+    /** What scans found changed on the register, field by field, newest first. */
+    changes: endpoint({
+      method: 'GET',
+      path: '/v1/companies/:companyId/records/changes',
+      params: companyParamsSchema,
+      response: p.companyRecordChangesResponseSchema,
     }),
     /** Re-runs this entity's sources. Rate limited. */
     checkAgain: endpoint({
@@ -795,6 +841,14 @@ export const contract = {
       params: companyParamsSchema,
       body: p.createShareBodySchema,
       response: p.shareCreatedResponseSchema,
+    }),
+    /** Names a link, or takes its name away with null. */
+    rename: endpoint({
+      method: 'PATCH',
+      path: '/v1/shares/:shareId',
+      params: p.shareParamsSchema,
+      body: p.renameShareBodySchema,
+      response: p.shareLinkSchema,
     }),
     revoke: endpoint({
       method: 'DELETE',
@@ -910,6 +964,18 @@ export const contract = {
       method: 'POST',
       path: '/v1/notifications/read-all',
       response: markAllReadResponseSchema,
+    }),
+    /** Which kinds of notification also reach this person by email, in this organisation. */
+    preferences: endpoint({
+      method: 'GET',
+      path: '/v1/notifications/preferences',
+      response: notificationPreferencesSchema,
+    }),
+    updatePreferences: endpoint({
+      method: 'PUT',
+      path: '/v1/notifications/preferences',
+      body: updateNotificationPreferencesBodySchema,
+      response: notificationPreferencesSchema,
     }),
   },
 } as const;

@@ -3,7 +3,7 @@
 import '@/app/styles/pages/deadlines.css';
 import type { Deadline, DeadlineListResponse } from '@vero/shared';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
 import { Empty, ErrorState, Loading, PlanLink, SampleNote, SourcesDownNote } from '@/components/Bits';
 import { Icon } from '@/components/Icon';
 import { CountUp, Reveal, Scramble, Words } from '@/components/Motion';
@@ -128,7 +128,27 @@ function DeadlineRow({ deadline, watching, checkedAt, canMark, onDone, index }: 
 
 const TONE_COLOUR: Readonly<Record<string, string>> = { late: 'var(--urgent)', soon: 'var(--warn)', ok: 'var(--navy)' };
 
-function Timeline({ lanes, where }: { lanes: Lanes; where: (companyId: string) => string }) {
+/** A wide timeline in a narrow box: says so while there is more to the side, and stops saying it at the end. */
+function useMoreToTheSide() {
+  // Kept in state, not a ref: the box only exists once the dates have loaded.
+  const [element, box] = useState<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    if (!element) return;
+    const read = () => setMore(element.scrollWidth - element.clientWidth - element.scrollLeft > 8);
+    read();
+    element.addEventListener('scroll', read, { passive: true });
+    const observer = new ResizeObserver(read);
+    observer.observe(element);
+    return () => {
+      element.removeEventListener('scroll', read);
+      observer.disconnect();
+    };
+  }, [element]);
+  return { box, more };
+}
+
+function Timeline({ lanes, where, onGo }: { lanes: Lanes; where: (companyId: string) => string; onGo: (event: MouseEvent<HTMLAnchorElement>, deadlineId: string) => void }) {
   return (
     <div className="tln" role="group" aria-label={lanes.label} data-testid="deadline-timeline">
       <div className="tlw">
@@ -159,6 +179,7 @@ function Timeline({ lanes, where }: { lanes: Lanes; where: (companyId: string) =
                   key={event.key}
                   className={`ev2 ${event.place === 'down' ? 'lo' : ''} ${event.align === 'l' ? 'al' : event.align === 'r' ? 'ar' : ''}`}
                   href={`#d-${event.ids[0]}`}
+                  onClick={(click) => onGo(click, event.ids[0] ?? '')}
                   style={{ left: `${event.left}%`, animationDelay: `${0.25 + (laneIndex * 4 + index) * 0.07}s` }}
                 >
                   <i style={{ background: TONE_COLOUR[event.tone] }} />
@@ -220,6 +241,8 @@ function download(text: string, name: string) {
 }
 
 function DeadlinesBody() {
+  const toast = useToast();
+  const side = useMoreToTheSide();
   const session = useSession();
   const params = useSearchParams();
   const asked = params.get('company');
@@ -250,7 +273,11 @@ function DeadlinesBody() {
   const list = resource.data?.list;
   const all = useMemo(() => list?.deadlines ?? [], [list]);
   const shown = useMemo(() => all.filter((item) => filter === 'all' || item.companyId === filter), [all, filter]);
-  const undated = useMemo(() => (list?.undated ?? []).filter((item) => filter === 'all' || item.companyId === filter), [list, filter]);
+  // Followed companies come back from the API too, with no name here and no dates of their own: their page is the watchlist.
+  const undated = useMemo(
+    () => (list?.undated ?? []).filter((item) => (filter === 'all' ? companies.some((company) => company.id === item.companyId) : item.companyId === filter)),
+    [list, filter, companies],
+  );
   const groups = useMemo(() => groupDeadlines(shown), [shown]);
   const lanes = useMemo(() => buildLanes(all), [all]);
   const done = useMemo(() => shown.filter((item) => item.state === 'done'), [shown]);
@@ -291,6 +318,24 @@ function DeadlinesBody() {
   const lateCount = all.filter((item) => item.state === 'overdue').length;
   const counts = (id: string) => all.filter((item) => item.state !== 'done' && (id === 'all' || item.companyId === id)).length;
 
+  /** A dot on the timeline opens its row. If the list is filtered to another company, the filter gives way first. */
+  const goToRow = (event: MouseEvent<HTMLAnchorElement>, deadlineId: string) => {
+    if (document.getElementById(`d-${deadlineId}`)) return;
+    event.preventDefault();
+    setFilter('all');
+    window.setTimeout(() => {
+      const row = document.getElementById(`d-${deadlineId}`);
+      if (!row) return;
+      window.location.hash = `d-${deadlineId}`;
+      row.scrollIntoView({ block: 'center' });
+    }, 60);
+  };
+
+  const addToCalendar = () => {
+    download(calendarFile(open), 'vero-deadlines.ics');
+    toast(`Calendar file saved with ${plural(open.length, 'date', 'dates')}. Open it to add them to your calendar.`);
+  };
+
   return (
     <div className="pg-deadlines">
       <Hero>
@@ -310,7 +355,7 @@ function DeadlinesBody() {
           </div>
           {open.length > 0 ? (
             <div className="acts">
-              <button className="btn btn-g" type="button" onClick={() => download(calendarFile(open), 'vero-deadlines.ics')} data-testid="deadlines-calendar">
+              <button className="btn btn-g" type="button" onClick={addToCalendar} data-testid="deadlines-calendar">
                 <Icon name="cal" />
                 Add to calendar
               </button>
@@ -444,8 +489,12 @@ function DeadlinesBody() {
                     </div>
                   </div>
                 </div>
-                <div className="tlscroll" data-lenis-prevent-horizontal="">
-                  <Timeline lanes={lanes} where={where} />
+                <p className={`swipe${side.more ? '' : ' end'}`} aria-hidden="true">
+                  Swipe sideways to see the whole year
+                  <Icon name="arrow" />
+                </p>
+                <div className={`tlscroll${side.more ? ' more' : ''}`} ref={side.box} data-lenis-prevent-horizontal="" tabIndex={0} role="region" aria-label="The next 12 months, by company">
+                  <Timeline lanes={lanes} where={where} onGo={goToRow} />
                 </div>
               </Reveal>
             ) : null}
@@ -538,7 +587,7 @@ function DeadlinesBody() {
                   <p className="muted">Dates you told Vero are done. Undo one if it turns out it isn&apos;t.</p>
                   <ul className="plain rows-in">
                     {done.map((item, index) => (
-                      <li key={item.id} data-testid="done-row" style={{ '--r': index } as CSSProperties}>
+                      <li key={item.id} className="isdone" data-testid="done-row" style={{ '--r': index } as CSSProperties}>
                         <div className="ft2">
                           <b>{item.title}</b>
                           <small>

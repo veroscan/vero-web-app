@@ -285,7 +285,7 @@ function ReportBody() {
                 </tr>
                 <tr>
                   <th scope="row">Rule packs</th>
-                  <td data-testid="report-packs">{overview.rulePacks.length > 0 ? overview.rulePacks.map(reportPackWords).join('. ') : 'Not recorded'}</td>
+                  <td data-testid="report-packs">{overview.rulePacks.length > 0 ? `${overview.rulePacks.map(reportPackWords).join('. ')}.` : 'Not recorded'}</td>
                 </tr>
               </tbody>
             </table>

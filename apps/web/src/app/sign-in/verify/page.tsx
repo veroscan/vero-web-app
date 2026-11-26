@@ -14,7 +14,7 @@ function appLink(token: string): string {
   return `vero://sign-in?token=${encodeURIComponent(token)}`;
 }
 
-type State ={ kind: 'working' } | { kind: 'expired' } | { kind: 'used' } | { kind: 'invalid' } | { kind: 'failed'; error: ApiError };
+type State = { kind: 'working' } | { kind: 'expired' } | { kind: 'used' } | { kind: 'invalid' } | { kind: 'failed'; error: ApiError };
 
 const SIGN_UP_TOP = (
   <>
@@ -62,7 +62,7 @@ function Verify() {
         const next = takeNext();
         // A first sign-in goes straight to finding the company, as in the design.
         const invited = next?.startsWith('/invitations/accept') ?? false;
-        router.replace(result.isNewUser && !invited ? `/onboarding/company${next ? `?next=${encodeURIComponent(next)}` : ''}` : (next ?? '/'));
+        router.replace(result.isNewUser && !invited ? `/onboarding/company${next ? `?next=${encodeURIComponent(next)}` : ''}` : (next ?? '/scan'));
       },
       (failure: unknown) => {
         const error = asApiError(failure);
@@ -135,6 +135,14 @@ function Verify() {
           <button className="cta" type="button" onClick={() => setAttempt((value) => value + 1)}>
             Try again
           </button>
+          <p className="alt">
+            <span>
+              Still stuck?
+              <TLink href="/sign-in" prefetch={false}>
+                Ask for a new link
+              </TLink>
+            </span>
+          </p>
         </div>
       </SignInFrame>
     );
@@ -142,7 +150,7 @@ function Verify() {
   const words = {
     used: { title: 'This link has already been used', body: "Each sign-in link works once. Enter your email and we'll send a new one.", id: 'link-used' },
     expired: { title: 'This link has expired', body: "Sign-in links last 15 minutes, so this one has run out. Enter your email and we'll send a new one.", id: 'link-expired' },
-    invalid: { title: "This link isn't valid", body: "Part of the link may be missing. Enter your email and we'll send a new one.", id: 'link-invalid' },
+    invalid: { title: "This link isn't valid", body: "Part of the link may be missing, or it was opened from an older email. Enter your email and we'll send a new one.", id: 'link-invalid' },
   }[state.kind];
   return (
     <SignInFrame top={SIGN_UP_TOP}>

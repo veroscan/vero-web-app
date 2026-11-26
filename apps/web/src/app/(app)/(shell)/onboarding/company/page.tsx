@@ -58,6 +58,9 @@ function FindCompany() {
     }
   };
 
+  // Nothing is drawn while the redirect above runs, so the search never flashes before the next step.
+  if (session.root && !adding && params.get('add') !== '1') return null;
+
   const others = (recent ?? []).filter((row) => row.key !== session.root?.id);
   return (
     <div className="pg-scan">
@@ -92,9 +95,7 @@ function FindCompany() {
             <NextSteps i={2} />
           </section>
         ) : (
-          <div style={{ marginTop: 20, maxWidth: 560 }}>
-            <NextSteps />
-          </div>
+          <NextSteps wide />
         )}
       </Finder>
     </div>

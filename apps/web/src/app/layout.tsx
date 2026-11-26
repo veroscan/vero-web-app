@@ -14,6 +14,7 @@ import './styles/motion.css';
 import './styles/kit-dark.css';
 import { IconSprite } from '@/components/Icon';
 import { RouteBar, SmoothScroll } from '@/components/Motion';
+import { PageTitle } from '@/components/PageTitle';
 import { ThemeSync } from '@/components/Theme';
 import { ToastProvider } from '@/components/Toast';
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <IconSprite />
         <ThemeSync />
+        <PageTitle />
         <SmoothScroll />
         <RouteBar />
         <ToastProvider>{children}</ToastProvider>

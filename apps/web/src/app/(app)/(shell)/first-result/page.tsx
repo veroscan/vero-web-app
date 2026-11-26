@@ -57,7 +57,16 @@ export default function FirstResultPage() {
     if (!hasResult) router.replace(root ? '/onboarding/scanning' : '/onboarding/company');
   }, [hasResult, root, router]);
 
-  if (!overview || !root || !hasResult) return null;
+  if (!overview || !root || !hasResult) {
+    // On the way to the scan or the search. Never a blank screen while that happens.
+    return (
+      <div className="pg-scan">
+        <Hero>
+          <Loading what="Getting your result" />
+        </Hero>
+      </div>
+    );
+  }
   const { score, coverage, nextAction } = overview;
   const level = overview.countryCoverage?.level;
   const register = registerFor(root.incorporationCountry);

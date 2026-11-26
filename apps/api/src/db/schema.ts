@@ -238,6 +238,8 @@ export const scan = pgTable('scan', {
   attempts: integer('attempts').notNull().default(0),
   leaseUntil: ts('lease_until'),
   finalisedSeq: bigint('finalised_seq', { mode: 'number' }),
+  /** When the scan was cancelled (migration 0028). A cancelled scan has no result. */
+  cancelledAt: ts('cancelled_at'),
   requestedBy: uuid('requested_by'),
   id: id(),
   organisationId: organisationId(),
@@ -535,6 +537,16 @@ export const deadline = pgTable('deadline', {
   ...timestamps,
 });
 
+/** Reminder lead times an organisation chose: its default (no deadline) or one date's own. See migration 0024. */
+export const deadlineReminderSetting = pgTable('deadline_reminder_setting', {
+  id: id(),
+  organisationId: organisationId(),
+  deadlineId: uuid('deadline_id'),
+  leadDays: integer('lead_days').array().notNull(),
+  setBy: uuid('set_by'),
+  ...timestamps,
+});
+
 // ---- Notifications and system ----
 
 export const notification = pgTable('notification', {
@@ -550,6 +562,22 @@ export const notification = pgTable('notification', {
   readAt: ts('read_at'),
   ...timestamps,
 });
+
+/** Which kinds of notification also send an email, per person. No row means all on. See migration 0027. */
+export const notificationPreference = pgTable(
+  'notification_preference',
+  {
+    organisationId: organisationId(),
+    userId: uuid('user_id').notNull(),
+    emailDeadline: boolean('email_deadline').notNull().default(true),
+    emailScore: boolean('email_score').notNull().default(true),
+    emailTeam: boolean('email_team').notNull().default(true),
+    emailLookup: boolean('email_lookup').notNull().default(true),
+    emailSystem: boolean('email_system').notNull().default(true),
+    ...timestamps,
+  },
+  (table) => [primaryKey({ columns: [table.organisationId, table.userId] })],
+);
 
 export const auditLog = pgTable('audit_log', {
   id: id(),
@@ -618,6 +646,10 @@ export const sharedReport = pgTable('shared_report', {
   createdBy: uuid('created_by'),
   expiresAt: ts('expires_at').notNull(),
   revokedAt: ts('revoked_at'),
+  /** A name the team gave the link, and how often it has been opened. No viewer data. See migration 0026. */
+  name: text('name'),
+  viewCount: integer('view_count').notNull().default(0),
+  lastViewedAt: ts('last_viewed_at'),
   ...timestamps,
 });
 
@@ -702,6 +734,23 @@ export const monitoringChange = pgTable('monitoring_change', {
   notChecked: text('not_checked').array().notNull().default(sql`'{}'`),
   meaningful: text('meaningful').array().notNull().default(sql`'{}'`),
   notified: boolean('notified').notNull().default(false),
+  ...timestamps,
+});
+
+/** What a scan changed on the register, field by field. See migration 0025. */
+export const registryChange = pgTable('registry_change', {
+  id: id(),
+  organisationId: organisationId(),
+  companyId: uuid('company_id').notNull(),
+  scanId: uuid('scan_id').notNull(),
+  field: text('field').notNull(),
+  oldValue: jsonb('old_value'),
+  newValue: jsonb('new_value'),
+  detailWithheld: boolean('detail_withheld').notNull().default(false),
+  source: text('source'),
+  sourceName: text('source_name'),
+  isFixture: boolean('is_fixture').notNull().default(false),
+  changedAt: ts('changed_at').notNull(),
   ...timestamps,
 });
 

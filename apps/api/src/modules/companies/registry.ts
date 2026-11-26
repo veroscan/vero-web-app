@@ -72,6 +72,15 @@ function notAvailable(country: string, checkedAt: Date): RegistrySearchResponse 
   };
 }
 
+/** Fact names a register uses for the company's status. */
+const STATUS_KEYS = ['status', 'company_status', 'vendor_status'];
+
+/** "active" reads "Active", "voluntary-liquidation" reads "Voluntary liquidation". Anything else stays as the register said it. */
+function statusWords(status: string): string {
+  const words = status.trim().replace(/[-_]+/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function toResponse(result: SourceResult, connector: Connector, country: string, checkedAt: Date, fallbackName: string): RegistrySearchResponse {
   const base = {
     sourceName: connector.sourceName,
@@ -83,6 +92,8 @@ function toResponse(result: SourceResult, connector: Connector, country: string,
   const generic = genericFields(connector.factPrefix);
   const pick = (keys: string[]) => keys.map((key) => asString(facts.get(key))).find((value) => value !== null) ?? null;
   const fields = known ?? { name: '', number: '', type: '', formed: '' };
+  // The register's own word for the company's status, only when the answer holds one.
+  const status = pick(STATUS_KEYS.map((name) => `${connector.factPrefix}.${name}`));
   const read = (field: 'name' | 'number' | 'type' | 'formed') => (known ? asString(facts.get(fields[field])) : pick(generic[field]));
   switch (result.status) {
     case 'found':
@@ -98,6 +109,7 @@ function toResponse(result: SourceResult, connector: Connector, country: string,
             entityType: read('type'),
             incorporatedOn: read('formed'),
             matchConfidence: result.matchConfidence,
+            status: status === null ? null : statusWords(status),
           },
         ],
       };
@@ -113,6 +125,7 @@ function toResponse(result: SourceResult, connector: Connector, country: string,
           entityType: null,
           incorporatedOn: null,
           matchConfidence: result.matchConfidence,
+          status: candidate.status ? statusWords(candidate.status) : null,
         })),
       };
     case 'not_found':
